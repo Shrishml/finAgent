@@ -47,10 +47,8 @@
         .cta-box .checklist { text-align: left; max-width: 440px; margin: 0 auto 28px; }
         .cta-box .checklist li { font-size: 15px; margin-bottom: 8px; list-style: none; padding-left: 24px; position: relative; opacity: 0.95; }
         .cta-box .checklist li::before { content: "✓"; position: absolute; left: 0; font-weight: 700; }
-        .email-form { display: flex; gap: 10px; max-width: 440px; margin: 0 auto; }
-        .email-form input { flex: 1; padding: 14px 18px; border: none; border-radius: 8px; font-size: 15px; font-family: inherit; }
-        .email-form button { padding: 14px 28px; background: #1a1a2e; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
-        .email-form button:hover { background: #2a2a4e; }
+        .email-form-btn { display: inline-block; padding: 16px 36px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 17px; font-weight: 600; text-decoration: none; font-family: inherit; }
+        .email-form-btn:hover { background: #2a2a4e; }
         .cta-note { font-size: 13px; opacity: 0.7; margin-top: 12px; }
         
         /* Open Source */
@@ -163,10 +161,7 @@
                     <li>Loan prepayment vs investment — the math most people get wrong</li>
                     <li>The "financial blind spots" that come from using 5 different apps</li>
                 </ul>
-                <form class="email-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-                    <input type="email" name="email" placeholder="your@email.com" required>
-                    <button type="submit">Get Early Access</button>
-                </form>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzKlk4-j9thsqNsLPSqWJG4ymIw9u5o_nS_ebQFoA1i8FDAA/viewform" target="_blank" class="email-form-btn">Get Early Access →</a>
                 <p class="cta-note">No spam. We'll notify you when FinAgent is ready to analyze your portfolio.</p>
             </div>
         </section>

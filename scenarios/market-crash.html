@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Crash Panic — FinAgent</title>
+    <meta name="description" content="Portfolio down 18%? FinAgent gives you data-driven calm instead of generic 'stay the course' advice.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fafafa; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        .back { display: inline-block; padding: 16px 0; font-size: 14px; color: #667eea; text-decoration: none; font-weight: 600; }
+        .back:hover { text-decoration: underline; }
+        .hero { padding: 40px 0 48px; text-align: center; }
+        .hero .tag { display: inline-block; background: #e3f2fd; color: #1565c0; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-bottom: 20px; }
+        .hero h1 { font-size: 36px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
+        .hero h1 span { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero .quote { font-size: 20px; color: #555; font-style: italic; max-width: 600px; margin: 0 auto; }
+        section { padding: 40px 0; }
+        h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; }
+        p, li { font-size: 16px; color: #444; margin-bottom: 12px; }
+        ul { padding-left: 20px; }
+        .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .red { color: #c62828; }
+        .green { color: #2e7d32; }
+        .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .vs-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 20px; }
+        .vs-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .vs-card p { font-size: 14px; margin-bottom: 0; }
+        .cta-box { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 40px 32px; color: #fff; text-align: center; margin: 40px 0; }
+        .cta-box h2 { color: #fff; margin-bottom: 8px; }
+        .cta-box p { color: rgba(255,255,255,0.9); }
+        .cta-btn { display: inline-block; padding: 14px 32px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; margin-top: 16px; }
+        .cta-btn:hover { background: #2a2a4e; }
+        .footer { padding: 32px 0; text-align: center; border-top: 1px solid #e8e8e8; color: #888; font-size: 14px; }
+        .footer a { color: #667eea; text-decoration: none; }
+        @media (max-width: 640px) { .hero h1 { font-size: 28px; } .vs-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back">← Back to FinAgent</a>
+
+        <section class="hero">
+            <div class="tag">📉 Market Volatility</div>
+            <h1>"Portfolio down 18%. <span>Should I stop my SIPs?</span>"</h1>
+            <p class="quote">Every market correction triggers the same panic on r/IndiaInvestments. The advice is always generic. Your situation isn't.</p>
+        </section>
+
+        <section>
+            <h2>The Emotional Trap</h2>
+            <p>When markets crash, investors do one of three things — all potentially wrong:</p>
+            <div class="card">
+                <h3 class="red">The panic responses</h3>
+                <ul>
+                    <li><strong>Panic-sell</strong> — lock in losses at the worst possible time</li>
+                    <li><strong>Stop SIPs</strong> — miss buying at lower NAVs, which is literally the point of SIPs</li>
+                    <li><strong>Shift everything to FDs</strong> — emotional reallocation that costs years of compounding</li>
+                </ul>
+            </div>
+            <p>The generic advice — "stay the course" — isn't wrong, but it's useless. It ignores that someone with job uncertainty needs completely different advice than someone with stable income and a 20-year horizon.</p>
+        </section>
+
+        <section>
+            <h2>What Actually Matters During a Crash</h2>
+            <p>FinAgent doesn't react to market movements. It looks at what matters for <em>your</em> situation:</p>
+            <div class="vs-grid">
+                <div class="vs-card">
+                    <h4 class="green">Stable income, long horizon</h4>
+                    <p><em>"Your allocation shifted from 70:30 to 62:38 equity:debt. That's actually closer to your target. Your SIPs are buying at lower NAVs — this is the plan working. No action needed."</em></p>
+                </div>
+                <div class="vs-card">
+                    <h4 class="red">Job uncertainty</h4>
+                    <p><em>"With potential job risk, pause equity SIPs and build emergency fund to 9 months of expenses. Here's the reallocation plan — move ₹2L from liquid fund to savings, reduce equity SIP by 50%."</em></p>
+                </div>
+            </div>
+            <div class="vs-grid">
+                <div class="vs-card">
+                    <h4>Near a financial goal</h4>
+                    <p><em>"Your daughter's college fund is 2 years away and 85% in equity. Move 40% to short-duration debt now — you can't afford another 18% drop this close to the goal."</em></p>
+                </div>
+                <div class="vs-card">
+                    <h4>Has cash to deploy</h4>
+                    <p><em>"Markets are down 18% from peak. You have ₹5L idle. Deploy ₹1.5L now, ₹1.5L if markets drop another 10%, keep ₹2L as reserve. Here's the STP plan."</em></p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Data-Driven Calm, Not Generic Advice</h2>
+            <div class="card">
+                <h3 class="green">FinAgent during a crash</h3>
+                <ul>
+                    <li>Shows your actual allocation vs target — often the shift is smaller than you think</li>
+                    <li>Checks if your emergency fund is intact before suggesting any equity action</li>
+                    <li>Adjusts advice based on your income stability, not just your portfolio</li>
+                    <li>Calculates whether rebalancing makes sense after tax impact</li>
+                    <li>Reminds you of your investment horizon — 18% drop matters less with 15 years to go</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="cta-box">
+            <h2>Next time markets crash, have a plan — not a panic attack</h2>
+            <p>Personalized advice based on your actual situation, not Reddit vibes.</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzKlk4-j9thsqNsLPSqWJG4ymIw9u5o_nS_ebQFoA1i8FDAA/viewform" target="_blank" class="cta-btn">Get Early Access →</a>
+        </div>
+
+        <footer class="footer">
+            <a href="../">← FinAgent Home</a> · <a href="https://github.com/suraj1074/finagent">GitHub</a>
+        </footer>
+    </div>
+</body>
+</html>

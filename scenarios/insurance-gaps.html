@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Claim Rejection — FinAgent</title>
+    <meta name="description" content="Health insurance claims get rejected for reasons buried in fine print. FinAgent reads your policy and finds gaps before you need to file a claim.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fafafa; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        .back { display: inline-block; padding: 16px 0; font-size: 14px; color: #667eea; text-decoration: none; font-weight: 600; }
+        .back:hover { text-decoration: underline; }
+        .hero { padding: 40px 0 48px; text-align: center; }
+        .hero .tag { display: inline-block; background: #fce4ec; color: #c62828; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-bottom: 20px; }
+        .hero h1 { font-size: 36px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
+        .hero h1 span { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero .quote { font-size: 20px; color: #555; font-style: italic; max-width: 600px; margin: 0 auto; }
+        section { padding: 40px 0; }
+        h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; }
+        p, li { font-size: 16px; color: #444; margin-bottom: 12px; }
+        ul { padding-left: 20px; }
+        .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .red { color: #c62828; }
+        .green { color: #2e7d32; }
+        .gap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .gap-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 20px; }
+        .gap-card .label { font-size: 13px; font-weight: 700; color: #c62828; text-transform: uppercase; margin-bottom: 6px; }
+        .gap-card .desc { font-size: 15px; color: #444; }
+        .cta-box { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 40px 32px; color: #fff; text-align: center; margin: 40px 0; }
+        .cta-box h2 { color: #fff; margin-bottom: 8px; }
+        .cta-box p { color: rgba(255,255,255,0.9); }
+        .cta-btn { display: inline-block; padding: 14px 32px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; margin-top: 16px; }
+        .cta-btn:hover { background: #2a2a4e; }
+        .footer { padding: 32px 0; text-align: center; border-top: 1px solid #e8e8e8; color: #888; font-size: 14px; }
+        .footer a { color: #667eea; text-decoration: none; }
+        @media (max-width: 640px) { .hero h1 { font-size: 28px; } .gap-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back">← Back to FinAgent</a>
+
+        <section class="hero">
+            <div class="tag">🛡️ Insurance</div>
+            <h1>Your policy has gaps you'll only discover <span>when it's too late</span></h1>
+            <p class="quote">"My family's health insurance claim got rejected for not disclosing an unrelated condition."</p>
+        </section>
+
+        <section>
+            <h2>The Hidden Gaps in Your Policy</h2>
+            <p>Most people buy health insurance based on premium and sum insured. But the fine print has clauses that can reduce your effective coverage by 50% or more:</p>
+            <div class="gap-grid">
+                <div class="gap-card">
+                    <div class="label">Room Rent Cap</div>
+                    <div class="desc">Policy says ₹5,000/day. Private hospital rooms in Bangalore or Mumbai cost ₹8,000–15,000/day. You pay the difference.</div>
+                </div>
+                <div class="gap-card">
+                    <div class="label">Copay Clause</div>
+                    <div class="desc">20% copay on claims above ₹2L means you pay ₹60,000 out of pocket on a ₹5L surgery.</div>
+                </div>
+                <div class="gap-card">
+                    <div class="label">Sub-Limits</div>
+                    <div class="desc">Cataract surgery capped at ₹40,000 when actual cost is ₹80,000+. The "₹10L cover" doesn't mean ₹10L for everything.</div>
+                </div>
+                <div class="gap-card">
+                    <div class="label">Non-Disclosure</div>
+                    <div class="desc">Forgot to mention a condition you didn't think was relevant? Entire claim rejected — even years later.</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>What People Do Today</h2>
+            <div class="card">
+                <h3 class="red">A broken process</h3>
+                <ul>
+                    <li>Buy insurance based on premium comparison alone</li>
+                    <li>Never read the 40-page policy document</li>
+                    <li>Discover gaps only when filing a claim — during a medical emergency</li>
+                    <li>Even "advisory" platforms have trust issues — advisors vanish after the sale</li>
+                    <li>Nobody analyzes your <em>existing</em> policy — everyone just wants to sell you a new one</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>How FinAgent Solves This</h2>
+            <div class="card">
+                <h3>Upload your policy PDF</h3>
+                <p>FinAgent reads the full document and extracts every clause that matters.</p>
+            </div>
+            <div class="card">
+                <h3>Get a gap report</h3>
+                <p>Clear, specific findings — not generic advice:</p>
+                <ul>
+                    <li><em>"Your room rent limit of ₹5,000/day won't cover private hospitals in metros (₹8,000–15,000/day)"</em></li>
+                    <li><em>"You have a 20% copay on claims above ₹2L — consider a policy without copay"</em></li>
+                    <li><em>"No maternity cover — if relevant, this needs a separate rider or policy"</em></li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3 class="green">Get better alternatives under your budget</h3>
+                <p><em>"3 policies under ₹25,000/year with no room rent cap, no copay, and ₹10L sum insured. Here's how they compare to your current policy."</em></p>
+            </div>
+        </section>
+
+        <div class="cta-box">
+            <h2>Find your policy gaps before a claim does</h2>
+            <p>A 2-minute upload today can save lakhs during an emergency.</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzKlk4-j9thsqNsLPSqWJG4ymIw9u5o_nS_ebQFoA1i8FDAA/viewform" target="_blank" class="cta-btn">Get Early Access →</a>
+        </div>
+
+        <footer class="footer">
+            <a href="../">← FinAgent Home</a> · <a href="https://github.com/suraj1074/finagent">GitHub</a>
+        </footer>
+    </div>
+</body>
+</html>

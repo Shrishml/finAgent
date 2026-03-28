@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Over-Diversification — FinAgent</title>
+    <meta name="description" content="Am I over-diversified? How FinAgent analyzes your mutual fund portfolio for overlap, expense leaks, and gives specific rebalancing recommendations.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fafafa; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        .back { display: inline-block; padding: 16px 0; font-size: 14px; color: #667eea; text-decoration: none; font-weight: 600; }
+        .back:hover { text-decoration: underline; }
+        .hero { padding: 40px 0 48px; text-align: center; }
+        .hero .tag { display: inline-block; background: #ede7f6; color: #5e35b1; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-bottom: 20px; }
+        .hero h1 { font-size: 36px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
+        .hero h1 span { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero .quote { font-size: 20px; color: #555; font-style: italic; max-width: 600px; margin: 0 auto; }
+        section { padding: 40px 0; }
+        h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; }
+        p, li { font-size: 16px; color: #444; margin-bottom: 12px; }
+        ul { padding-left: 20px; }
+        .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .red { color: #c62828; }
+        .green { color: #2e7d32; }
+        .cta-box { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 40px 32px; color: #fff; text-align: center; margin: 40px 0; }
+        .cta-box h2 { color: #fff; margin-bottom: 8px; }
+        .cta-box p { color: rgba(255,255,255,0.9); }
+        .cta-btn { display: inline-block; padding: 14px 32px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; margin-top: 16px; }
+        .cta-btn:hover { background: #2a2a4e; }
+        .footer { padding: 32px 0; text-align: center; border-top: 1px solid #e8e8e8; color: #888; font-size: 14px; }
+        .footer a { color: #667eea; text-decoration: none; }
+        @media (max-width: 640px) { .hero h1 { font-size: 28px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back">← Back to FinAgent</a>
+
+        <section class="hero">
+            <div class="tag">📊 Portfolio Review</div>
+            <h1>"Am I over-diversified with <span>7 funds</span>?"</h1>
+            <p class="quote">One of the most common questions on r/IndiaInvestments — asked in different forms every single week.</p>
+        </section>
+
+        <section>
+            <h2>The Problem</h2>
+            <p>Every week, investors post their full portfolio on Reddit asking strangers to review it. The responses?</p>
+            <div class="card">
+                <h3 class="red">What happens today</h3>
+                <ul>
+                    <li>5 different people give 5 conflicting opinions</li>
+                    <li>Nobody actually checks if your funds hold the same stocks</li>
+                    <li>Nobody compares expense ratios across your regular vs direct plans</li>
+                    <li>Nobody calculates the tax impact of switching funds</li>
+                    <li>You end up more confused than before</li>
+                </ul>
+            </div>
+            <p>Common variations we see constantly:</p>
+            <ul>
+                <li><em>"I have 7 mutual funds — am I over-diversified?"</em></li>
+                <li><em>"I have 4 SIPs. Which should I keep, cancel, or replace?"</em></li>
+                <li><em>"I have ₹50K/month to invest. How should I split across funds?"</em></li>
+                <li><em>"Should I consolidate from 8 funds to 4?"</em></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>How FinAgent Solves This</h2>
+            <div class="card">
+                <h3>Step 1: Upload your CAS statement</h3>
+                <p>Your Consolidated Account Statement from CAMS/KFintech has every mutual fund you own. One upload gives FinAgent your complete picture.</p>
+            </div>
+            <div class="card">
+                <h3>Step 2: Overlap matrix</h3>
+                <p>FinAgent checks the actual stock holdings of each fund. <em>"Fund A and Fund B have 82% overlap — you're paying two expense ratios for essentially the same portfolio."</em></p>
+            </div>
+            <div class="card">
+                <h3>Step 3: Expense ratio audit</h3>
+                <p>Flags regular plans where a direct plan exists, calculates the exact rupee cost of the higher expense ratio compounded over your investment horizon.</p>
+            </div>
+            <div class="card">
+                <h3 class="green">Step 4: Specific recommendations</h3>
+                <p><em>"Stop SIP in Fund X (82% overlap with Fund Y, 0.8% higher expense ratio). Increase Fund Y SIP by the same amount. Switch existing Fund X units to direct plan — here's the tax impact: ₹2,400 STCG on recent units, ₹0 on units held >1 year."</em></p>
+            </div>
+        </section>
+
+        <div class="cta-box">
+            <h2>Stop asking strangers to review your portfolio</h2>
+            <p>Get analysis based on actual data — not opinions.</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzKlk4-j9thsqNsLPSqWJG4ymIw9u5o_nS_ebQFoA1i8FDAA/viewform" target="_blank" class="cta-btn">Get Early Access →</a>
+        </div>
+
+        <footer class="footer">
+            <a href="../">← FinAgent Home</a> · <a href="https://github.com/suraj1074/finagent">GitHub</a>
+        </footer>
+    </div>
+</body>
+</html>

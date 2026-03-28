@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The FD Tax Trap — FinAgent</title>
+    <meta name="description" content="Your Fixed Deposit might be costing you ₹14K/year in hidden tax. See the math and how FinAgent finds better alternatives.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fafafa; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        .back { display: inline-block; padding: 16px 0; font-size: 14px; color: #667eea; text-decoration: none; font-weight: 600; }
+        .back:hover { text-decoration: underline; }
+        .hero { padding: 40px 0 48px; text-align: center; }
+        .hero .tag { display: inline-block; background: #fff3e0; color: #e65100; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-bottom: 20px; }
+        .hero h1 { font-size: 36px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
+        .hero h1 span { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero .quote { font-size: 20px; color: #555; font-style: italic; max-width: 600px; margin: 0 auto; }
+        section { padding: 40px 0; }
+        h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; }
+        p, li { font-size: 16px; color: #444; margin-bottom: 12px; }
+        ul { padding-left: 20px; }
+        .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .red { color: #c62828; }
+        .green { color: #2e7d32; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e8e8e8; }
+        th, td { padding: 14px 16px; text-align: left; font-size: 15px; border-bottom: 1px solid #e8e8e8; }
+        th { background: #f5f5f5; font-weight: 700; font-size: 14px; }
+        .highlight-row { background: #e8f5e9; font-weight: 600; }
+        .cta-box { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 40px 32px; color: #fff; text-align: center; margin: 40px 0; }
+        .cta-box h2 { color: #fff; margin-bottom: 8px; }
+        .cta-box p { color: rgba(255,255,255,0.9); }
+        .cta-btn { display: inline-block; padding: 14px 32px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; margin-top: 16px; }
+        .cta-btn:hover { background: #2a2a4e; }
+        .footer { padding: 32px 0; text-align: center; border-top: 1px solid #e8e8e8; color: #888; font-size: 14px; }
+        .footer a { color: #667eea; text-decoration: none; }
+        @media (max-width: 640px) { .hero h1 { font-size: 28px; } table { font-size: 13px; } th, td { padding: 10px 8px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back">← Back to FinAgent</a>
+
+        <section class="hero">
+            <div class="tag">💰 Tax Efficiency</div>
+            <h1>Your FD is costing you <span>₹14K/year</span> in hidden tax</h1>
+            <p class="quote">"I have ₹10L in a Fixed Deposit. Is there something better?" — asked on r/IndiaInvestments almost every week.</p>
+        </section>
+
+        <section>
+            <h2>The Math Nobody Shows You</h2>
+            <p>Here's what happens to ₹10 lakh in two instruments, assuming the 30% tax bracket:</p>
+            <table>
+                <tr><th></th><th>Fixed Deposit</th><th>Arbitrage Fund</th></tr>
+                <tr><td>Return rate</td><td>7.0%</td><td>7.2%</td></tr>
+                <tr><td>Gross return on ₹10L</td><td>₹70,000</td><td>₹72,000</td></tr>
+                <tr><td>Tax treatment</td><td class="red">Income tax @ 30%</td><td class="green">LTCG @ 12.5% (after 1 yr)</td></tr>
+                <tr><td>Tax paid</td><td class="red">₹21,000</td><td class="green">₹9,000</td></tr>
+                <tr class="highlight-row"><td>Post-tax return</td><td>₹49,000</td><td>₹63,000</td></tr>
+            </table>
+            <p><strong>Difference: ₹14,000/year.</strong> Same liquidity. Same risk profile. Just better tax treatment.</p>
+        </section>
+
+        <section>
+            <h2>Why This Happens</h2>
+            <ul>
+                <li><strong>FD interest is taxed as income</strong> — at your marginal rate (up to 30% + cess)</li>
+                <li><strong>TDS adds friction</strong> — bank deducts 10% TDS, you claim it back while filing, cash flow disrupted</li>
+                <li><strong>Arbitrage funds get equity taxation</strong> — LTCG at 12.5% after 1 year, significantly lower</li>
+                <li><strong>Most people don't know alternatives exist</strong> — banks certainly won't tell you</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>How FinAgent Solves This</h2>
+            <div class="card">
+                <h3 class="green">Personalized to your tax bracket</h3>
+                <p>FinAgent calculates post-tax returns in <em>your specific</em> bracket. The math is different for someone in the 20% bracket vs 30%.</p>
+            </div>
+            <div class="card">
+                <h3 class="green">Suggests alternatives with same liquidity</h3>
+                <p>Not all alternatives work for emergency funds. FinAgent filters for instant/next-day redemption options when that matters to you.</p>
+            </div>
+            <div class="card">
+                <h3 class="green">Shows the exact switch plan</h3>
+                <p><em>"Break your ₹10L FD (penalty: ₹1,200). Move to arbitrage fund. Net gain in year 1 after penalty: ₹12,800. Every year after: ₹14,000."</em></p>
+            </div>
+        </section>
+
+        <div class="cta-box">
+            <h2>How much is your FD silently costing you?</h2>
+            <p>Get a personalized post-tax analysis of your savings.</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzKlk4-j9thsqNsLPSqWJG4ymIw9u5o_nS_ebQFoA1i8FDAA/viewform" target="_blank" class="cta-btn">Get Early Access →</a>
+        </div>
+
+        <footer class="footer">
+            <a href="../">← FinAgent Home</a> · <a href="https://github.com/suraj1074/finagent">GitHub</a>
+        </footer>
+    </div>
+</body>
+</html>

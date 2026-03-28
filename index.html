@@ -18,6 +18,7 @@
         .hero h1 { font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; letter-spacing: -1px; }
         .hero h1 span { background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 20px; color: #555; max-width: 600px; margin: 0 auto; }
+        .hero .validation { font-size: 15px; color: #667eea; font-style: italic; margin-top: 16px; }
         
         /* Problem */
         .problem { padding: 60px 0; }
@@ -39,6 +40,17 @@
         .feature h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
         .feature p { color: #555; font-size: 15px; }
         
+        /* Scenarios */
+        .scenarios { padding: 60px 0; }
+        .scenarios h2 { font-size: 32px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+        .scenarios .subtitle { text-align: center; color: #555; font-size: 18px; margin-bottom: 40px; }
+        .scenario-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 28px; margin-bottom: 20px; }
+        .scenario-card .quote { font-style: italic; color: #333; font-size: 17px; margin-bottom: 12px; padding-left: 16px; border-left: 3px solid #667eea; }
+        .scenario-card .today { color: #c62828; font-size: 14px; margin-bottom: 6px; }
+        .scenario-card .with-fa { color: #2e7d32; font-size: 14px; margin-bottom: 12px; }
+        .scenario-card .detail-link { font-size: 14px; font-weight: 600; color: #667eea; text-decoration: none; }
+        .scenario-card .detail-link:hover { text-decoration: underline; }
+
         /* CTA / Lead Magnet */
         .cta { padding: 60px 0; text-align: center; }
         .cta-box { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 48px 32px; color: #fff; }
@@ -80,6 +92,7 @@
             <div class="hero-badge">🚀 Open Source — Early Development</div>
             <h1>Your money. Your agent. <span>Your rules.</span></h1>
             <p>An open-source AI agent that works exclusively for you on all financial matters. No commissions. No hidden incentives. Just honest analysis.</p>
+            <p class="validation">"Is there a financial advisor minus the human and 1% fee?" — an actual question from r/IndiaInvestments</p>
         </section>
 
         <!-- Problem -->
@@ -146,6 +159,36 @@
                         <p>Every recommendation is auditable. No black-box algorithms. You can self-host it, fork it, or verify every line of reasoning.</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Real Scenarios -->
+        <section class="scenarios">
+            <h2>Real problems. Real solutions.</h2>
+            <p class="subtitle">These aren't hypotheticals — they're questions Indian investors ask every single day.</p>
+
+            <div class="scenario-card">
+                <div class="quote">"Am I over-diversified with 7 funds? Should I consolidate to 4?"</div>
+                <div class="today">❌ Today: Post on Reddit, get 5 conflicting opinions from strangers. Nobody checks overlap or expense ratios.</div>
+                <div class="with-fa">✅ With FinAgent: Upload your CAS → get an overlap matrix, expense audit, and specific "stop this SIP, increase that one" recommendations with math.</div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="quote">"I have ₹10L in a Fixed Deposit. Is there something better?"</div>
+                <div class="today">❌ Today: Your FD at 7% in the 30% tax bracket yields ₹49K post-tax. You're silently losing ₹14K/year to tax inefficiency.</div>
+                <div class="with-fa">✅ With FinAgent: "Switch to an arbitrage fund at 7.2% — LTCG at 12.5% gives you ₹63K post-tax. Same liquidity, ₹14K more per year." The math, done for you.</div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="quote">"My family's health insurance claim got rejected for not disclosing an unrelated condition."</div>
+                <div class="today">❌ Today: Nobody reviews your policy until a claim is denied. Then it's too late.</div>
+                <div class="with-fa">✅ With FinAgent: Upload your policy PDF → instantly see gaps: room rent limits, copay clauses, exclusions, and waiting periods. Fix them before you need to file a claim.</div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="quote">"Portfolio down 18% this month. Should I stop my SIPs?"</div>
+                <div class="today">❌ Today: Panic-sell, or get generic "stay the course" advice that ignores your actual situation.</div>
+                <div class="with-fa">✅ With FinAgent: "Your allocation shifted from 70:30 to 62:38. That's actually closer to your target. Your SIPs are buying at lower NAVs — this is the plan working. No action needed."</div>
             </div>
         </section>
 

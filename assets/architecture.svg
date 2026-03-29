@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#43e97b"/>
+      <stop offset="100%" stop-color="#38f9d7"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="720" height="480" rx="16" fill="#fafafa"/>
+
+  <!-- Title -->
+  <text x="360" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a2e">How FinAgent Works</text>
+
+  <!-- Layer 1: User Layer -->
+  <rect x="40" y="56" width="640" height="64" rx="12" fill="url(#purple)" filter="url(#shadow)"/>
+  <text x="360" y="82" text-anchor="middle" font-size="13" font-weight="600" fill="rgba(255,255,255,0.7)">USER LAYER</text>
+  <text x="180" y="104" text-anchor="middle" font-size="12" fill="#fff">📄 Upload Documents</text>
+  <text x="360" y="104" text-anchor="middle" font-size="12" fill="#fff">💬 Chat Interface</text>
+  <text x="540" y="104" text-anchor="middle" font-size="12" fill="#fff">📊 Web Dashboard</text>
+
+  <!-- Arrow 1 -->
+  <path d="M360 120 L360 140" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#667eea"/></marker></defs>
+
+  <!-- Layer 2: Orchestrator -->
+  <rect x="40" y="144" width="640" height="80" rx="12" fill="#fff" stroke="#e8e8e8" filter="url(#shadow)"/>
+  <text x="360" y="168" text-anchor="middle" font-size="13" font-weight="600" fill="#667eea">ORCHESTRATOR</text>
+  <rect x="72" y="178" width="140" height="34" rx="8" fill="#f3f0ff"/>
+  <text x="142" y="200" text-anchor="middle" font-size="11" fill="#5b21b6">🎯 Intent Classifier</text>
+  <rect x="232" y="178" width="120" height="34" rx="8" fill="#f3f0ff"/>
+  <text x="292" y="200" text-anchor="middle" font-size="11" fill="#5b21b6">🔀 Router</text>
+  <rect x="372" y="178" width="140" height="34" rx="8" fill="#f3f0ff"/>
+  <text x="442" y="200" text-anchor="middle" font-size="11" fill="#5b21b6">🧠 Cross-Domain</text>
+  <rect x="532" y="178" width="120" height="34" rx="8" fill="#f3f0ff"/>
+  <text x="592" y="200" text-anchor="middle" font-size="11" fill="#5b21b6">💾 Memory</text>
+
+  <!-- Arrow 2 -->
+  <path d="M360 224 L360 248" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Layer 3: Domain Agents -->
+  <rect x="40" y="252" width="640" height="88" rx="12" fill="#fff" stroke="#e8e8e8" filter="url(#shadow)"/>
+  <text x="360" y="276" text-anchor="middle" font-size="13" font-weight="600" fill="#667eea">DOMAIN AGENTS</text>
+  <text x="360" y="292" text-anchor="middle" font-size="10" fill="#888">Each agent: analyze · research · cross-domain modes</text>
+  <rect x="60" y="300" width="130" height="30" rx="8" fill="#e8f5e9"/>
+  <text x="125" y="320" text-anchor="middle" font-size="11" fill="#2e7d32">📈 Mutual Funds</text>
+  <rect x="206" y="300" width="110" height="30" rx="8" fill="#e8f5e9"/>
+  <text x="261" y="320" text-anchor="middle" font-size="11" fill="#2e7d32">🛡️ Insurance</text>
+  <rect x="332" y="300" width="90" height="30" rx="8" fill="#e8f5e9"/>
+  <text x="377" y="320" text-anchor="middle" font-size="11" fill="#2e7d32">🏦 Loans</text>
+  <rect x="438" y="300" width="80" height="30" rx="8" fill="#e8f5e9"/>
+  <text x="478" y="320" text-anchor="middle" font-size="11" fill="#2e7d32">💰 Tax</text>
+  <rect x="534" y="300" width="130" height="30" rx="8" fill="#fff3e0"/>
+  <text x="599" y="320" text-anchor="middle" font-size="11" fill="#e65100">🔌 Your Agent</text>
+
+  <!-- Arrow 3 -->
+  <path d="M360 340 L360 364" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Layer 4: Connectors -->
+  <rect x="40" y="368" width="640" height="64" rx="12" fill="#fff" stroke="#e8e8e8" filter="url(#shadow)"/>
+  <text x="360" y="392" text-anchor="middle" font-size="13" font-weight="600" fill="#667eea">CONNECTORS (Pluggable)</text>
+  <text x="108" y="418" text-anchor="middle" font-size="10" fill="#555">📄 PDF Parser</text>
+  <text x="228" y="418" text-anchor="middle" font-size="10" fill="#555">🏦 Plaid / Open Banking</text>
+  <text x="370" y="418" text-anchor="middle" font-size="10" fill="#555">📊 Market Data APIs</text>
+  <text x="510" y="418" text-anchor="middle" font-size="10" fill="#555">🔗 Broker APIs</text>
+  <text x="620" y="418" text-anchor="middle" font-size="10" fill="#555">📋 Tax APIs</text>
+
+  <!-- Data Layer -->
+  <rect x="200" y="446" width="320" height="28" rx="8" fill="#f5f5f5" stroke="#e0e0e0"/>
+  <text x="360" y="465" text-anchor="middle" font-size="11" fill="#888">💾 SQLite (local-first) · Knowledge Graph</text>
+  <path d="M360 432 L360 446" stroke="#ccc" stroke-width="1.5" stroke-dasharray="4"/>
+</svg>

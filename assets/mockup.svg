@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="mp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea"/><stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <filter id="ms" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.12"/>
+    </filter>
+    <clipPath id="screen"><rect x="40" y="70" width="640" height="440" rx="0"/></clipPath>
+  </defs>
+
+  <!-- Browser Chrome -->
+  <rect width="720" height="520" rx="12" fill="#e8e8e8" filter="url(#ms)"/>
+  <rect x="0" y="0" width="720" height="40" rx="12" fill="#f0f0f0"/>
+  <rect x="0" y="28" width="720" height="12" fill="#f0f0f0"/>
+  <circle cx="20" cy="20" r="6" fill="#ff5f57"/><circle cx="40" cy="20" r="6" fill="#febc2e"/><circle cx="60" cy="20" r="6" fill="#28c840"/>
+  <rect x="140" y="10" width="440" height="20" rx="10" fill="#fff"/>
+  <text x="360" y="24" text-anchor="middle" font-size="10" fill="#888">localhost:8000</text>
+
+  <!-- Toolbar -->
+  <rect x="0" y="40" width="720" height="30" fill="url(#mp)"/>
+  <text x="20" y="60" font-size="13" font-weight="700" fill="#fff">🤖 FinAgent</text>
+  <text x="680" y="60" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.7)">3 documents loaded</text>
+
+  <!-- Chat area -->
+  <rect x="0" y="70" width="720" height="450" fill="#fafafa"/>
+  <g clip-path="url(#screen)">
+
+    <!-- User message 1 -->
+    <rect x="300" y="86" width="400" height="44" rx="12" fill="url(#mp)"/>
+    <text x="316" y="106" font-size="12" fill="#fff">Analyze my portfolio. Am I over-diversified?</text>
+    <text x="316" y="120" font-size="10" fill="rgba(255,255,255,0.6)">📎 CAS_March2026.pdf uploaded</text>
+
+    <!-- Agent response -->
+    <rect x="20" y="146" width="520" height="230" rx="12" fill="#fff" stroke="#e8e8e8"/>
+    <text x="40" y="170" font-size="12" font-weight="600" fill="#1a1a2e">📊 Portfolio Analysis — 7 Mutual Funds</text>
+
+    <!-- Mini table -->
+    <text x="40" y="194" font-size="10" font-weight="600" fill="#888">FUND</text>
+    <text x="280" y="194" font-size="10" font-weight="600" fill="#888">OVERLAP</text>
+    <text x="370" y="194" font-size="10" font-weight="600" fill="#888">EXPENSE</text>
+    <text x="460" y="194" font-size="10" font-weight="600" fill="#888">ACTION</text>
+    <line x1="40" y1="200" x2="520" y2="200" stroke="#f0f0f0" stroke-width="1"/>
+
+    <text x="40" y="216" font-size="10" fill="#333">Parag Parikh Flexi Cap</text>
+    <text x="280" y="216" font-size="10" fill="#2e7d32">12%</text>
+    <text x="370" y="216" font-size="10" fill="#2e7d32">0.63%</text>
+    <text x="460" y="216" font-size="10" font-weight="600" fill="#2e7d32">✓ Keep</text>
+
+    <text x="40" y="236" font-size="10" fill="#333">UTI Nifty 50 Index</text>
+    <text x="280" y="236" font-size="10" fill="#e65100">67%</text>
+    <text x="370" y="236" font-size="10" fill="#2e7d32">0.18%</text>
+    <text x="460" y="236" font-size="10" font-weight="600" fill="#e65100">⚠ Overlaps</text>
+
+    <text x="40" y="256" font-size="10" fill="#333">HDFC Top 100</text>
+    <text x="280" y="256" font-size="10" fill="#c62828">82%</text>
+    <text x="370" y="256" font-size="10" fill="#c62828">1.62%</text>
+    <text x="460" y="256" font-size="10" font-weight="600" fill="#c62828">✗ Stop SIP</text>
+
+    <text x="40" y="276" font-size="10" fill="#888">... 4 more funds analyzed</text>
+
+    <!-- Summary box -->
+    <rect x="40" y="290" width="480" height="40" rx="8" fill="#f3f0ff"/>
+    <text x="56" y="308" font-size="11" fill="#5b21b6">💡 Verdict: Consolidate 7 → 4 funds. Save ₹18,400/year in expenses.</text>
+    <text x="56" y="322" font-size="10" fill="#5b21b6">XIRR improves from 11.2% → 12.8% with recommended changes.</text>
+
+    <!-- Insight badges -->
+    <rect x="40" y="340" width="480" height="28" rx="6" fill="#fff3e0"/>
+    <text x="56" y="358" font-size="10" fill="#e65100">🔗 Cross-check: Your ELSS (₹1.5L) already fills Section 80C via EPF. Consider switching to index fund.</text>
+
+    <!-- User message 2 -->
+    <rect x="340" y="390" width="360" height="32" rx="12" fill="url(#mp)"/>
+    <text x="356" y="410" font-size="12" fill="#fff">Which 4 funds should I keep? Show me the math.</text>
+
+    <!-- Typing indicator -->
+    <rect x="20" y="438" width="100" height="28" rx="12" fill="#fff" stroke="#e8e8e8"/>
+    <circle cx="44" cy="452" r="4" fill="#667eea" opacity="0.4"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite"/></circle>
+    <circle cx="60" cy="452" r="4" fill="#667eea" opacity="0.4"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" begin="0.2s" repeatCount="indefinite"/></circle>
+    <circle cx="76" cy="452" r="4" fill="#667eea" opacity="0.4"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" begin="0.4s" repeatCount="indefinite"/></circle>
+
+  </g>
+
+  <!-- Input bar -->
+  <rect x="0" y="484" width="720" height="36" fill="#fff" stroke="#e8e8e8"/>
+  <rect x="16" y="490" width="600" height="24" rx="12" fill="#f5f5f5"/>
+  <text x="32" y="506" font-size="11" fill="#aaa">Ask about your portfolio, insurance, loans...</text>
+  <rect x="628" y="490" width="72" height="24" rx="12" fill="url(#mp)"/>
+  <text x="664" y="506" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">Send</text>
+</svg>

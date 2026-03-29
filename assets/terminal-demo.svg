@@ -36,7 +36,7 @@
 
   <text x="16" y="234" font-size="11" fill="#cdd6f4">  Funds analyzed:     <tspan fill="#fab387">7</tspan></text>
   <text x="16" y="252" font-size="11" fill="#cdd6f4">  Overlap detected:   <tspan fill="#f38ba8">HDFC Top 100 ↔ UTI Nifty 50 (82%)</tspan></text>
-  <text x="16" y="270" font-size="11" fill="#cdd6f4">  Excess expenses:    <tspan fill="#f38ba8">$240/year</tspan> (consolidate to save)</text>
+  <text x="16" y="270" font-size="11" fill="#cdd6f4">  Excess expenses:    <tspan fill="#f38ba8">₹18,400/year</tspan> (consolidate to save)</text>
   <text x="16" y="288" font-size="11" fill="#cdd6f4">  Recommendation:     <tspan fill="#a6e3a1">7 → 4 funds, +1.6% XIRR improvement</tspan></text>
 
   <!-- Next prompt -->

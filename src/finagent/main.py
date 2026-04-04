@@ -13,7 +13,7 @@ from finagent.config import get_config
 from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings
 
 # Logging setup
 _LOG_DIR = Path(__file__).parent.parent / "data"
@@ -96,6 +96,13 @@ async def get_holdings():
         ],
     })
 
+
+@app.post("/clear")
+async def clear():
+    """Clear all stored holdings."""
+    clear_holdings()
+    log.info("All holdings cleared")
+    return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
 def main():
     cfg = get_config()

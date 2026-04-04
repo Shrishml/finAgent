@@ -1,9 +1,12 @@
 """CAMS/KFintech CAS PDF connector using casparser."""
+import logging
 from datetime import datetime
 from pathlib import Path
 
 from .base import Connector
 from finagent.models.mf import MFHolding, MFTransaction
+
+log = logging.getLogger("finagent.connector.cams")
 
 
 class CAMSConnector(Connector):
@@ -21,11 +24,27 @@ class CAMSConnector(Connector):
         data = casparser.read_cas_pdf(str(file_path), password)
         holdings = []
 
+        log.debug("=== RAW CASPARSER OUTPUT ===")
+        log.debug(f"CAS type: {data.cas_type}, File type: {data.file_type}")
+        log.debug(f"Period: {data.statement_period}")
+        log.debug(f"Investor: {data.investor_info}")
+        log.debug(f"Number of folios: {len(data.folios)}")
+
         for folio_obj in data.folios:
             folio = folio_obj.folio or ""
             amc = folio_obj.amc or ""
+            log.debug(f"\n--- Folio: {folio} | AMC: {amc} ---")
+            log.debug(f"  Schemes in folio: {len(folio_obj.schemes)}")
 
             for scheme in folio_obj.schemes:
+                log.debug(f"  Scheme: {scheme.scheme}")
+                log.debug(f"    ISIN: {scheme.isin} | AMFI: {scheme.amfi} | RTA: {scheme.rta}")
+                log.debug(f"    open(units): {scheme.open} | close(nav): {scheme.close}")
+                log.debug(f"    close_calculated: {scheme.close_calculated} | valuation: {scheme.valuation}")
+                log.debug(f"    Transactions: {len(scheme.transactions or [])}")
+                for i, t in enumerate(scheme.transactions or []):
+                    log.debug(f"      [{i}] {t.date} | {t.type} | amt={t.amount} | units={t.units} | nav={t.nav} | bal={t.balance}")
+
                 transactions = [
                     MFTransaction(
                         date=_parse_date(t.date),
@@ -63,7 +82,9 @@ class CAMSConnector(Connector):
                     current_value=value,
                     transactions=transactions,
                 ))
+                log.debug(f"    → MFHolding: units={units}, nav={nav}, value={value}, plan={plan}")
 
+        log.debug(f"\n=== TOTAL: {len(holdings)} holdings parsed ===")
         return holdings
 
 

@@ -34,6 +34,10 @@
               class="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700">
         Upload & Parse
       </button>
+      <button type="button" id="clear-btn"
+              class="bg-red-500 text-white rounded px-4 py-2 text-sm hover:bg-red-600">
+        Clear Data
+      </button>
     </form>
     <div id="upload-status" class="text-sm mt-2 hidden"></div>
   </div>
@@ -135,6 +139,19 @@ fetch('/holdings').then(r => r.json()).then(data => {
   if (data.count > 0) {
     statusEl.textContent = `${data.count} schemes loaded`;
     statusEl.className = 'text-sm text-green-600';
+  }
+});
+
+// Clear data
+document.getElementById('clear-btn').addEventListener('click', async () => {
+  const res = await fetch('/clear', { method: 'POST' });
+  const data = await res.json();
+  if (data.status === 'ok') {
+    statusEl.textContent = 'No data loaded';
+    statusEl.className = 'text-sm text-gray-400';
+    uploadStatus.textContent = '🗑️ Data cleared';
+    uploadStatus.className = 'text-sm mt-2 text-orange-600';
+    uploadStatus.classList.remove('hidden');
   }
 });
 </script>

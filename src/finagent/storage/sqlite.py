@@ -27,6 +27,7 @@ def _get_conn() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS nav_cache (
             amfi_code TEXT PRIMARY KEY,
             nav REAL,
+            expense_ratio REAL DEFAULT 0,
             scheme_name TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -83,22 +84,22 @@ def clear_holdings():
     conn.close()
 
 
-def save_nav_cache(amfi_code: str, nav: float, scheme_name: str = ""):
+def save_nav_cache(amfi_code: str, nav: float, scheme_name: str = "", expense_ratio: float = 0):
     conn = _get_conn()
     conn.execute(
-        "INSERT OR REPLACE INTO nav_cache (amfi_code, nav, scheme_name, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
-        (amfi_code, nav, scheme_name),
+        "INSERT OR REPLACE INTO nav_cache (amfi_code, nav, expense_ratio, scheme_name, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        (amfi_code, nav, expense_ratio, scheme_name),
     )
     conn.commit()
     conn.close()
 
 
-def get_cached_nav(amfi_code: str) -> float | None:
-    """Get cached NAV if less than 24h old."""
+def get_cached_nav(amfi_code: str) -> dict | None:
+    """Get cached data if less than 24h old. Returns {nav, expense_ratio} or None."""
     conn = _get_conn()
     row = conn.execute(
-        "SELECT nav FROM nav_cache WHERE amfi_code = ? AND updated_at > datetime('now', '-24 hours')",
+        "SELECT nav, expense_ratio FROM nav_cache WHERE amfi_code = ? AND updated_at > datetime('now', '-24 hours')",
         (amfi_code,),
     ).fetchone()
     conn.close()
-    return row[0] if row else None
+    return {"nav": row[0], "expense_ratio": row[1]} if row else None

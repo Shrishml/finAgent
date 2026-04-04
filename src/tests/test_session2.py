@@ -121,8 +121,10 @@ class TestSQLiteStorage:
         assert len(storage_mod.load_holdings()) == 0
 
     def test_nav_cache(self):
-        storage_mod.save_nav_cache("120503", 45.67, "Axis Bluechip")
-        assert storage_mod.get_cached_nav("120503") == 45.67
+        storage_mod.save_nav_cache("120503", 45.67, "Axis Bluechip", 0.005)
+        cached = storage_mod.get_cached_nav("120503")
+        assert cached["nav"] == 45.67
+        assert cached["expense_ratio"] == 0.005
 
     def test_nav_cache_miss(self):
         assert storage_mod.get_cached_nav("nonexistent") is None
@@ -200,12 +202,13 @@ class TestAMFIEnrichment:
 
     def test_enrichment_uses_cache(self):
         from finagent.connectors.amfi import enrich_holdings
-        storage_mod.save_nav_cache("120503", 60.0, "Test")
+        storage_mod.save_nav_cache("120503", 60.0, "Test", 0.005)
         h = self._make_holding(units=100)
         with patch("finagent.connectors.amfi._fetch_scheme") as mock_fetch:
             enrich_holdings([h])
             mock_fetch.assert_not_called()
         assert h.nav == 60.0
+        assert h.expense_ratio == 0.005
 
     def test_enrichment_skips_no_amfi(self):
         from finagent.connectors.amfi import enrich_holdings

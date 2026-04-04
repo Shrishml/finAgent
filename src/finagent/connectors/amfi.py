@@ -18,11 +18,11 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
             log.debug(f"Skipping {h.scheme_name}: no AMFI code")
             continue
 
-        # Check cache first (24h TTL)
+        # Check cache first (24h TTL) — returns {nav, expense_ratio} or None
         cached = get_cached_nav(h.amfi_code)
         if cached:
-            log.debug(f"Cache hit for {h.amfi_code}: NAV={cached}")
-            _apply_nav(h, cached)
+            log.debug(f"Cache hit for {h.amfi_code}: NAV={cached['nav']}, ER={cached['expense_ratio']}")
+            _apply_data(h, cached["nav"], cached["expense_ratio"])
             continue
 
         # Fetch from mfdata.in
@@ -32,11 +32,8 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
                 nav = float(data.get("nav", 0))
                 expense = float(data.get("expense_ratio", 0)) / 100  # API returns percentage
                 log.info(f"AMFI {h.amfi_code}: NAV={nav}, ER={expense*100:.2f}%, category={data.get('category')}")
-                save_nav_cache(h.amfi_code, nav, data.get("name", ""))
-                _apply_nav(h, nav)
-                if expense > 0:
-                    h.expense_ratio = expense
-                    h.annual_expense = h.current_value * expense
+                save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
+                _apply_data(h, nav, expense)
             else:
                 log.warning(f"No data for AMFI {h.amfi_code}")
         except Exception as e:
@@ -59,9 +56,10 @@ def _fetch_scheme(amfi_code: str) -> dict | None:
     return None
 
 
-def _apply_nav(h: MFHolding, nav: float):
-    """Update holding with fresh NAV data."""
+def _apply_data(h: MFHolding, nav: float, expense_ratio: float = 0):
+    """Update holding with fresh NAV and expense ratio."""
     h.nav = nav
     h.current_value = h.units * nav
-    if h.expense_ratio > 0:
-        h.annual_expense = h.current_value * h.expense_ratio
+    if expense_ratio > 0:
+        h.expense_ratio = expense_ratio
+        h.annual_expense = h.current_value * expense_ratio

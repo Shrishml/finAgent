@@ -11,7 +11,7 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
     "python-multipart>=0.0.9",
-    "casparser>=0.8",
+    "casparser[fast]>=0.8",
     "mftool>=3.0",
     "toml>=0.10",
 ]

@@ -54,10 +54,11 @@ class TestCAMSConnector:
 
         tx = MagicMock(date="15-Jan-2026", description="SIP", amount=5000,
                        units=10.5, nav=45.67, balance=100.5, type="PURCHASE", dividend_rate=None)
+        valuation = MagicMock(nav=45.67, value=4589.0, cost=4000.0)
         scheme = MagicMock(scheme="Axis Bluechip Fund - Direct Growth", isin="INF846K01DP8",
-                           amfi="120503", rta="CAMS", open=100.5, close=45.67,
-                           valuation=4589.0, transactions=[tx], advisor=None, rta_code=None,
-                           type=None, nominees=None, close_calculated=None)
+                           amfi="120503", rta="CAMS", open=100.5, close=100.5,
+                           valuation=valuation, transactions=[tx], advisor=None, rta_code=None,
+                           type=None, nominees=None, close_calculated=100.5)
         folio = MagicMock(folio="12345", amc="Axis Mutual Fund", schemes=[scheme])
         cas_data = MagicMock(folios=[folio])
 

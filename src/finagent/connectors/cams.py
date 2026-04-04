@@ -58,16 +58,23 @@ class CAMSConnector(Connector):
                     for t in (scheme.transactions or [])
                 ]
 
-                units = _safe_float(scheme.open) or (
+                units = _safe_float(scheme.close) or _safe_float(scheme.close_calculated) or (
                     transactions[-1].balance if transactions else 0.0
                 )
-                nav = _safe_float(scheme.close) or (
-                    transactions[-1].nav if transactions else 0.0
-                )
+
+                # NAV and value come from the valuation object
+                val = scheme.valuation
+                if val:
+                    nav = _safe_float(getattr(val, 'nav', None))
+                    value = _safe_float(getattr(val, 'value', None))
+                    invested = _safe_float(getattr(val, 'cost', None))
+                else:
+                    nav = transactions[-1].nav if transactions else 0.0
+                    value = units * nav if units and nav else 0.0
+                    invested = 0.0
 
                 scheme_name = scheme.scheme or ""
                 plan = "direct" if "direct" in scheme_name.lower() else "regular"
-                value = _safe_float(scheme.valuation) or (units * nav if units and nav else 0.0)
 
                 holdings.append(MFHolding(
                     scheme_name=scheme_name,
@@ -80,6 +87,7 @@ class CAMSConnector(Connector):
                     units=units,
                     nav=nav,
                     current_value=value,
+                    invested_value=invested,
                     transactions=transactions,
                 ))
                 log.debug(f"    → MFHolding: units={units}, nav={nav}, value={value}, plan={plan}")

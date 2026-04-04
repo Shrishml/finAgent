@@ -1,5 +1,7 @@
 """FinAgent — FastAPI application."""
+import logging
 import tempfile
+import traceback
 from pathlib import Path
 
 import uvicorn
@@ -12,6 +14,19 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.orchestrator.engine import handle_query
 from finagent.storage.sqlite import save_holdings, load_holdings
+
+# Logging setup
+_LOG_DIR = Path(__file__).parent.parent / "data"
+_LOG_DIR.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    handlers=[
+        logging.FileHandler(_LOG_DIR / "finagent.log"),
+        logging.StreamHandler(),
+    ],
+)
+log = logging.getLogger("finagent")
 
 app = FastAPI(title="FinAgent", version="0.1.0")
 
@@ -44,6 +59,7 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
     try:
         domain, holdings = _registry.parse(tmp_path, password)
         save_holdings(holdings)
+        log.info(f"Parsed {len(holdings)} holdings from {file.filename}")
         return JSONResponse({
             "status": "ok",
             "domain": domain,
@@ -51,6 +67,7 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
             "schemes": [h.scheme_name for h in holdings],
         })
     except Exception as e:
+        log.error(f"Upload failed: {e}\n{traceback.format_exc()}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
     finally:
         tmp_path.unlink(missing_ok=True)
@@ -63,6 +80,7 @@ async def chat(query: str = Form(...)):
         response = await handle_query(query)
         return JSONResponse({"status": "ok", "response": response})
     except Exception as e:
+        log.error(f"Chat failed: {e}\n{traceback.format_exc()}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 

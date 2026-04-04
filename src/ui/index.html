@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinAgent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .chat-msg { white-space: pre-wrap; }
+  #chat-box { scroll-behavior: smooth; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b px-6 py-4 flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-bold text-gray-800">🤖 FinAgent</h1>
+    <p class="text-sm text-gray-500">Your money, your agent, your rules.</p>
+  </div>
+  <div id="status" class="text-sm text-gray-400">No data loaded</div>
+</header>
+
+<div class="flex-1 flex flex-col max-w-3xl mx-auto w-full p-4 gap-4">
+
+  <!-- Upload Section -->
+  <div id="upload-section" class="bg-white rounded-lg border p-4">
+    <h2 class="font-semibold text-gray-700 mb-2">📄 Upload CAS Statement</h2>
+    <form id="upload-form" class="flex flex-col gap-2">
+      <input type="file" id="file-input" accept=".pdf" class="text-sm" required>
+      <input type="password" id="password-input" placeholder="PDF Password (usually your PAN)"
+             class="border rounded px-3 py-2 text-sm">
+      <button type="submit" id="upload-btn"
+              class="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700">
+        Upload & Parse
+      </button>
+    </form>
+    <div id="upload-status" class="text-sm mt-2 hidden"></div>
+  </div>
+
+  <!-- Chat -->
+  <div class="bg-white rounded-lg border flex-1 flex flex-col min-h-[400px]">
+    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="text-gray-400 text-sm text-center py-8">
+        Upload a CAMS/KFintech PDF, then ask about your portfolio.
+      </div>
+    </div>
+    <form id="chat-form" class="border-t p-3 flex gap-2">
+      <input type="text" id="chat-input" placeholder="Ask about your portfolio..."
+             class="flex-1 border rounded px-3 py-2 text-sm" autocomplete="off">
+      <button type="submit" class="bg-green-600 text-white rounded px-4 py-2 text-sm hover:bg-green-700">
+        Send
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+const chatBox = document.getElementById('chat-box');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const uploadForm = document.getElementById('upload-form');
+const uploadStatus = document.getElementById('upload-status');
+const statusEl = document.getElementById('status');
+
+function addMsg(text, sender) {
+  const first = chatBox.querySelector('.text-center');
+  if (first) first.remove();
+  const div = document.createElement('div');
+  div.className = sender === 'user'
+    ? 'chat-msg bg-blue-50 rounded-lg p-3 text-sm ml-12'
+    : 'chat-msg bg-gray-100 rounded-lg p-3 text-sm mr-12';
+  div.textContent = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+uploadForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  const pw = document.getElementById('password-input').value;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('password', pw);
+
+  document.getElementById('upload-btn').textContent = 'Parsing...';
+  uploadStatus.classList.remove('hidden');
+  uploadStatus.textContent = 'Uploading and parsing PDF...';
+  uploadStatus.className = 'text-sm mt-2 text-blue-600';
+
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      uploadStatus.textContent = `✅ Parsed ${data.holdings_count} scheme(s): ${data.schemes.join(', ')}`;
+      uploadStatus.className = 'text-sm mt-2 text-green-600';
+      statusEl.textContent = `${data.holdings_count} schemes loaded`;
+      statusEl.className = 'text-sm text-green-600';
+      addMsg(`Loaded ${data.holdings_count} mutual fund scheme(s). Ask me anything!`, 'agent');
+    } else {
+      uploadStatus.textContent = `❌ ${data.message}`;
+      uploadStatus.className = 'text-sm mt-2 text-red-600';
+    }
+  } catch (err) {
+    uploadStatus.textContent = `❌ ${err.message}`;
+    uploadStatus.className = 'text-sm mt-2 text-red-600';
+  }
+  document.getElementById('upload-btn').textContent = 'Upload & Parse';
+});
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = chatInput.value.trim();
+  if (!q) return;
+  addMsg(q, 'user');
+  chatInput.value = '';
+  addMsg('Thinking...', 'agent');
+
+  try {
+    const fd = new FormData();
+    fd.append('query', q);
+    const res = await fetch('/chat', { method: 'POST', body: fd });
+    const data = await res.json();
+    chatBox.lastChild.remove(); // remove "Thinking..."
+    addMsg(data.status === 'ok' ? data.response : `Error: ${data.message}`, 'agent');
+  } catch (err) {
+    chatBox.lastChild.remove();
+    addMsg(`Error: ${err.message}`, 'agent');
+  }
+});
+
+// Load existing holdings on page load
+fetch('/holdings').then(r => r.json()).then(data => {
+  if (data.count > 0) {
+    statusEl.textContent = `${data.count} schemes loaded`;
+    statusEl.className = 'text-sm text-green-600';
+  }
+});
+</script>
+</body>
+</html>

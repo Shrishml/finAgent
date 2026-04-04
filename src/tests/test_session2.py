@@ -50,25 +50,18 @@ class TestCAMSConnector:
 
     def test_parse_maps_fields(self):
         """Test that casparser output is correctly mapped to MFHolding."""
-        fake_data = {
-            "folios": [{
-                "folio": "12345",
-                "amc": "Axis Mutual Fund",
-                "schemes": [{
-                    "scheme": "Axis Bluechip Fund - Direct Growth",
-                    "isin": "INF846K01DP8",
-                    "amfi": "120503",
-                    "rta": "CAMS",
-                    "open": 100.5,
-                    "close": 45.67,
-                    "transactions": [
-                        {"date": "15-Jan-2026", "description": "SIP", "amount": 5000,
-                         "units": 10.5, "nav": 45.67, "balance": 100.5, "type": "PURCHASE"},
-                    ],
-                }],
-            }],
-        }
-        with patch("casparser.read_cas_pdf", return_value=fake_data):
+        from unittest.mock import MagicMock
+
+        tx = MagicMock(date="15-Jan-2026", description="SIP", amount=5000,
+                       units=10.5, nav=45.67, balance=100.5, type="PURCHASE", dividend_rate=None)
+        scheme = MagicMock(scheme="Axis Bluechip Fund - Direct Growth", isin="INF846K01DP8",
+                           amfi="120503", rta="CAMS", open=100.5, close=45.67,
+                           valuation=4589.0, transactions=[tx], advisor=None, rta_code=None,
+                           type=None, nominees=None, close_calculated=None)
+        folio = MagicMock(folio="12345", amc="Axis Mutual Fund", schemes=[scheme])
+        cas_data = MagicMock(folios=[folio])
+
+        with patch("casparser.read_cas_pdf", return_value=cas_data):
             c = CAMSConnector()
             holdings = c.parse(Path("fake.pdf"), "password")
 

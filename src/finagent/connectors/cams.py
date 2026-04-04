@@ -18,48 +18,49 @@ class CAMSConnector(Connector):
     def parse(self, file_path: Path, password: str = "") -> list[MFHolding]:
         import casparser
 
-        data = casparser.read_cas_pdf(str(file_path), password, output="dict")
+        data = casparser.read_cas_pdf(str(file_path), password)
         holdings = []
 
-        for folio_data in data.get("folios", []):
-            folio = folio_data.get("folio", "")
-            amc = folio_data.get("amc", "")
+        for folio_obj in data.folios:
+            folio = folio_obj.folio or ""
+            amc = folio_obj.amc or ""
 
-            for scheme in folio_data.get("schemes", []):
+            for scheme in folio_obj.schemes:
                 transactions = [
                     MFTransaction(
-                        date=_parse_date(t.get("date", "")),
-                        description=t.get("description", ""),
-                        amount=float(t.get("amount", 0)),
-                        units=_safe_float(t.get("units")),
-                        nav=_safe_float(t.get("nav")),
-                        balance=_safe_float(t.get("balance")),
-                        type=t.get("type", ""),
+                        date=_parse_date(t.date),
+                        description=t.description or "",
+                        amount=float(t.amount or 0),
+                        units=_safe_float(t.units),
+                        nav=_safe_float(t.nav),
+                        balance=_safe_float(t.balance),
+                        type=t.type or "",
                     )
-                    for t in scheme.get("transactions", [])
+                    for t in (scheme.transactions or [])
                 ]
 
-                # Determine current units/nav from last transaction or scheme data
-                units = _safe_float(scheme.get("open")) or (
+                units = _safe_float(scheme.open) or (
                     transactions[-1].balance if transactions else 0.0
                 )
-                nav = _safe_float(scheme.get("close")) or (
+                nav = _safe_float(scheme.close) or (
                     transactions[-1].nav if transactions else 0.0
                 )
 
-                plan = "direct" if "direct" in scheme.get("scheme", "").lower() else "regular"
+                scheme_name = scheme.scheme or ""
+                plan = "direct" if "direct" in scheme_name.lower() else "regular"
+                value = _safe_float(scheme.valuation) or (units * nav if units and nav else 0.0)
 
                 holdings.append(MFHolding(
-                    scheme_name=scheme.get("scheme", ""),
+                    scheme_name=scheme_name,
                     folio=folio,
                     amc=amc,
-                    isin=scheme.get("isin", ""),
-                    amfi_code=scheme.get("amfi", ""),
+                    isin=scheme.isin or "",
+                    amfi_code=scheme.amfi or "",
                     plan=plan,
-                    rta=scheme.get("rta", ""),
+                    rta=scheme.rta or "",
                     units=units,
                     nav=nav,
-                    current_value=units * nav if units and nav else 0.0,
+                    current_value=value,
                     transactions=transactions,
                 ))
 
@@ -67,8 +68,12 @@ class CAMSConnector(Connector):
 
 
 def _parse_date(val) -> datetime:
-    if isinstance(val, datetime):
-        return val.date() if hasattr(val, 'date') else val
+    if val is None:
+        return datetime(1970, 1, 1).date()
+    if hasattr(val, 'date'):
+        return val.date() if callable(getattr(val, 'date')) else val
+    if hasattr(val, 'year'):
+        return val
     if isinstance(val, str) and val:
         for fmt in ("%d-%b-%Y", "%d/%m/%Y", "%Y-%m-%d"):
             try:

@@ -220,3 +220,15 @@ class TestAMFIEnrichment:
         with patch("finagent.connectors.amfi._fetch_scheme", side_effect=Exception("timeout")):
             enrich_holdings([h])
         assert h.nav == 50
+
+    def test_fetch_scheme_sends_user_agent(self):
+        from finagent.connectors.amfi import _fetch_scheme
+        with patch("finagent.connectors.amfi.urllib.request.urlopen") as mock_urlopen:
+            mock_resp = MagicMock()
+            mock_resp.read.return_value = json.dumps({"status": "success", "data": {"nav": 50}}).encode()
+            mock_resp.__enter__ = lambda s: s
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            mock_urlopen.return_value = mock_resp
+            _fetch_scheme("120503")
+            req = mock_urlopen.call_args[0][0]
+            assert req.get_header("User-agent") == "FinAgent/0.1"

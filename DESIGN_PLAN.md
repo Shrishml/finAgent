@@ -362,7 +362,35 @@ By Apr 11 (end of Week 2), the prototype should:
 
 ---
 
-## 7. Resolved Questions
+
+## 7. Fund Comparison Feature
+
+### Problem
+25% of Reddit questions are "which fund should I pick?" or "is there a better alternative?" Users can't easily compare their funds against category peers.
+
+### Data Source
+mfdata.in API (`/api/v1/search?q=...`) returns peer funds with: NAV, expense_ratio, AUM, morningstar rating, category, risk_label. Free, no auth.
+
+### How It Works
+1. For each holding, fetch category peers from mfdata.in (e.g., all "Flexi Cap" direct plans)
+2. Rank peers by expense ratio and morningstar rating
+3. Flag if user's fund is in bottom quartile for its category
+4. Suggest cheaper/better-rated alternatives
+
+### UI Cues
+- Portfolio panel: funds with cheaper alternatives get a 💡 icon
+- Clicking the icon shows: "3 funds in this category have lower expense ratios"
+- Suggestion chip: "Are there cheaper alternatives to my funds?"
+- Chat response includes comparison table
+
+### Implementation
+- `MFAgent.research()` enhanced with live mfdata.in peer lookup
+- New endpoint: `GET /compare/{amfi_code}` — returns peer comparison data
+- Portfolio panel gets clickable 💡 indicators
+
+---
+
+## 8. Resolved Questions
 
 | Question | Answer | Source |
 |----------|--------|--------|

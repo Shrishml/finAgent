@@ -2,6 +2,7 @@
 import json
 import logging
 import urllib.request
+import urllib.parse
 
 from finagent.models.mf import MFHolding
 from finagent.storage.sqlite import save_nav_cache, get_cached_nav
@@ -63,3 +64,32 @@ def _apply_data(h: MFHolding, nav: float, expense_ratio: float = 0):
     if expense_ratio > 0:
         h.expense_ratio = expense_ratio
         h.annual_expense = h.current_value * expense_ratio
+
+
+def fetch_category_peers(amfi_code: str) -> list[dict]:
+    """Fetch peer funds in the same category for comparison."""
+    scheme = _fetch_scheme(amfi_code)
+    if not scheme or not scheme.get("category"):
+        return []
+
+    category = scheme["category"]
+    plan_type = scheme.get("plan_type", "direct")
+
+    # Search for peers in same category
+    url = f"https://mfdata.in/api/v1/search?q={urllib.parse.quote(category)}"
+    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "FinAgent/0.1"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read().decode())
+            if result.get("status") != "success":
+                return []
+            peers = [
+                p for p in result.get("data", [])
+                if p.get("plan_type") == plan_type and p.get("amfi_code") != amfi_code
+            ]
+            # Sort by expense ratio
+            peers.sort(key=lambda p: float(p.get("expense_ratio", 99)))
+            return peers[:10]  # top 10 cheapest
+    except Exception as e:
+        log.debug(f"Peer fetch failed: {e}")
+        return []

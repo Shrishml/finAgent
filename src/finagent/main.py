@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from finagent.config import get_config
 from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
-from finagent.connectors.amfi import enrich_holdings
+from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
 from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings
 
@@ -146,7 +146,15 @@ async def suggestions():
         questions.append("Do any of my funds overlap?")
 
     questions.append("Which fund is my best performer?")
+    questions.append("Are there cheaper alternatives to my funds?")
     return JSONResponse({"suggestions": questions[:6]})
+
+
+@app.get("/compare/{amfi_code}")
+async def compare(amfi_code: str):
+    """Get category peer comparison for a fund."""
+    peers = fetch_category_peers(amfi_code)
+    return JSONResponse({"amfi_code": amfi_code, "peers": peers})
 
 def main():
     cfg = get_config()

@@ -107,8 +107,9 @@ function showPortfolio(holdings) {
     .map(h => {
       const pct = total > 0 ? (h.value / total * 100).toFixed(1) : 0;
       const er = h.expense_ratio ? (h.expense_ratio * 100).toFixed(2) + '%' : '—';
+      const hint = h.expense_ratio > 0.007 ? `<span class="compare-hint cursor-pointer" data-amfi="${h.amfi_code || ''}" title="Find cheaper alternatives">💡</span>` : '';
       return `<div class="border rounded p-2 text-xs">
-        <div class="font-medium text-gray-700 truncate" title="${h.scheme}">${h.scheme.replace(/ - Direct.*| - Regular.*/, '')}</div>
+        <div class="font-medium text-gray-700 truncate flex justify-between" title="${h.scheme}"><span>${h.scheme.replace(/ - Direct.*| - Regular.*/, '')}</span>${hint}</div>
         <div class="flex justify-between text-gray-500 mt-1">
           <span>₹${h.value.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
           <span>${pct}%</span>
@@ -124,6 +125,15 @@ function showPortfolio(holdings) {
   uploadSection.classList.add('hidden');
   toggleUpload.classList.remove('hidden');
   clearBtn.classList.remove('hidden');
+
+  // Wire up compare hints
+  document.querySelectorAll('.compare-hint').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.closest('.border').querySelector('.font-medium span').textContent;
+      chatInput.value = `Are there cheaper alternatives to ${name}?`;
+      chatForm.dispatchEvent(new Event('submit'));
+    });
+  });
   statusEl.textContent = `${holdings.length} schemes`;
   statusEl.className = 'text-sm text-green-600';
 }

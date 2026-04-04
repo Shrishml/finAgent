@@ -143,3 +143,30 @@ class TestTaxSection:
         r = response.lower()
         assert "80c" in r or "elss" in r or "tax" in r, \
             f"Response doesn't mention tax benefits: {response[:200]}"
+
+
+# --- Live AMFI API test ---
+
+class TestAMFILive:
+    """Live test that hits mfdata.in API. Requires internet."""
+
+    def test_fetch_known_scheme(self):
+        from finagent.connectors.amfi import _fetch_scheme
+        # Parag Parikh Conservative Hybrid Fund - Direct Growth
+        data = _fetch_scheme("148958")
+        assert data is not None, "mfdata.in returned no data for AMFI 148958"
+        assert "nav" in data, f"No NAV in response: {data}"
+        assert "expense_ratio" in data, f"No expense_ratio in response: {data}"
+        assert float(data["nav"]) > 0, f"NAV should be positive: {data['nav']}"
+        assert float(data["expense_ratio"]) > 0, f"Expense ratio should be positive: {data['expense_ratio']}"
+        print(f"\n  ✅ AMFI 148958: NAV={data['nav']}, ER={data['expense_ratio']}%, category={data.get('category')}")
+
+    def test_fetch_multiple_schemes(self):
+        from finagent.connectors.amfi import _fetch_scheme
+        # Test a few of your actual fund AMFI codes
+        codes = {"120505": "Axis Mid Cap", "118989": "HDFC Mid Cap", "122639": "Parag Parikh Flexi Cap"}
+        for code, name in codes.items():
+            data = _fetch_scheme(code)
+            assert data is not None, f"mfdata.in returned no data for {name} (AMFI {code})"
+            assert float(data.get("nav", 0)) > 0, f"No NAV for {name}"
+            print(f"  ✅ {name}: NAV={data['nav']}, ER={data.get('expense_ratio', 'N/A')}%")

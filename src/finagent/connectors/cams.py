@@ -93,7 +93,28 @@ class CAMSConnector(Connector):
                 log.debug(f"    → MFHolding: units={units}, nav={nav}, value={value}, plan={plan}")
 
         log.debug(f"\n=== TOTAL: {len(holdings)} holdings parsed ===")
-        return holdings
+        return _merge_by_isin(holdings)
+
+
+def _merge_by_isin(holdings: list[MFHolding]) -> list[MFHolding]:
+    """Merge holdings with same ISIN (same fund across multiple folios)."""
+    by_isin: dict[str, MFHolding] = {}
+    for h in holdings:
+        key = h.isin or f"{h.scheme_name}:{h.folio}"  # fallback if no ISIN
+        if key in by_isin:
+            existing = by_isin[key]
+            existing.units += h.units
+            existing.current_value += h.current_value
+            existing.invested_value += h.invested_value
+            existing.transactions.extend(h.transactions)
+            existing.folio = f"{existing.folio},{h.folio}"
+            log.info(f"Merged duplicate ISIN {h.isin}: {h.scheme_name} (folios: {existing.folio})")
+        else:
+            by_isin[key] = h
+    merged = list(by_isin.values())
+    if len(merged) < len(holdings):
+        log.info(f"Merged {len(holdings)} → {len(merged)} holdings (deduplicated by ISIN)")
+    return merged
 
 
 def _parse_date(val) -> datetime:

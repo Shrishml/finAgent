@@ -92,8 +92,15 @@ async def chat(query: str = Form(...)):
 
 @app.get("/holdings")
 async def get_holdings():
-    """Get current stored holdings summary."""
+    """Get current stored holdings summary. Triggers lazy enrichment if needed."""
     holdings = load_holdings()
+    if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
+        try:
+            holdings = enrich_holdings(holdings)
+            save_holdings(holdings)
+            log.info("Lazy enrichment on /holdings complete")
+        except Exception as e:
+            log.debug(f"Lazy enrichment failed: {e}")
     return JSONResponse({
         "count": len(holdings),
         "holdings": [

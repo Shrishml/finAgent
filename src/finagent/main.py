@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from finagent.config import get_config
 from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
+from finagent.connectors.amfi import enrich_holdings
 from finagent.orchestrator.engine import handle_query
 from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings
 
@@ -58,8 +59,13 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
 
     try:
         domain, holdings = _registry.parse(tmp_path, password)
-        save_holdings(holdings)
         log.info(f"Parsed {len(holdings)} holdings from {file.filename}")
+        try:
+            holdings = enrich_holdings(holdings)
+            log.info("AMFI enrichment complete")
+        except Exception as e:
+            log.warning(f"AMFI enrichment failed (continuing without): {e}")
+        save_holdings(holdings)
         return JSONResponse({
             "status": "ok",
             "domain": domain,

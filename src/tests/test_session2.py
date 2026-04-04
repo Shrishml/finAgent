@@ -3,7 +3,7 @@ import json
 import pytest
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 from finagent.connectors.cams import CAMSConnector, _parse_date, _safe_float
 from finagent.storage import sqlite as storage_mod
@@ -173,3 +173,60 @@ class TestMFAgent:
 
     def test_supported_connectors(self):
         assert "cams" in MFAgent().supported_connectors()
+
+
+# --- AMFI Enrichment ---
+
+class TestAMFIEnrichment:
+    @pytest.fixture(autouse=True)
+    def use_tmp_db(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(storage_mod, "_DB_DIR", tmp_path)
+        monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
+
+    def _make_holding(self, amfi="120503", units=100, nav=50):
+        return MFHolding(scheme_name="Test Fund", folio="F1", amc="AMC",
+                         amfi_code=amfi, units=units, nav=nav,
+                         current_value=units * nav, expense_ratio=0.01)
+
+    def _mock_mftool(self):
+        mock_mf = MagicMock()
+        mock_module = MagicMock()
+        mock_module.Mftool.return_value = mock_mf
+        return mock_module, mock_mf
+
+    def test_enrichment_updates_nav(self):
+        from finagent.connectors.amfi import enrich_holdings
+        h = self._make_holding(units=100, nav=50)
+        mock_mod, mock_mf = self._mock_mftool()
+        mock_mf.get_scheme_quote.return_value = {"nav": "55.50", "scheme_name": "Test"}
+        with patch.dict("sys.modules", {"mftool": mock_mod}):
+            enrich_holdings([h])
+        assert h.nav == 55.50
+        assert h.current_value == 5550.0
+
+    def test_enrichment_uses_cache(self):
+        from finagent.connectors.amfi import enrich_holdings
+        storage_mod.save_nav_cache("120503", 60.0, "Test")
+        h = self._make_holding(units=100)
+        mock_mod, mock_mf = self._mock_mftool()
+        with patch.dict("sys.modules", {"mftool": mock_mod}):
+            enrich_holdings([h])
+            mock_mf.get_scheme_quote.assert_not_called()
+        assert h.nav == 60.0
+
+    def test_enrichment_skips_no_amfi(self):
+        from finagent.connectors.amfi import enrich_holdings
+        h = self._make_holding(amfi="")
+        mock_mod, mock_mf = self._mock_mftool()
+        with patch.dict("sys.modules", {"mftool": mock_mod}):
+            enrich_holdings([h])
+            mock_mf.get_scheme_quote.assert_not_called()
+
+    def test_enrichment_handles_failure(self):
+        from finagent.connectors.amfi import enrich_holdings
+        h = self._make_holding(units=100, nav=50)
+        mock_mod, mock_mf = self._mock_mftool()
+        mock_mf.get_scheme_quote.side_effect = Exception("timeout")
+        with patch.dict("sys.modules", {"mftool": mock_mod}):
+            enrich_holdings([h])
+        assert h.nav == 50

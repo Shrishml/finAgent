@@ -15,6 +15,11 @@ def use_tmp_db(tmp_path, monkeypatch):
     monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
 
 
+@pytest.fixture(autouse=True)
+def skip_enrichment(monkeypatch):
+    monkeypatch.setattr("finagent.main.enrich_holdings", lambda h: h)
+
+
 @pytest.fixture
 def client():
     return TestClient(app)

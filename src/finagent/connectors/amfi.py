@@ -48,7 +48,7 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
 def _fetch_scheme(amfi_code: str) -> dict | None:
     """Fetch scheme data from mfdata.in API."""
     url = f"{MFDATA_API}/{amfi_code}"
-    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "FinAgent/0.1"})
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = json.loads(resp.read().decode())

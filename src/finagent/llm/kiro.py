@@ -6,12 +6,12 @@ from typing import AsyncIterator
 from .base import LLMProvider
 
 # Markers kiro-cli may emit that aren't part of the LLM response
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 _STRIP_PATTERNS = [
     re.compile(r"^╭.*╮$", re.MULTILINE),
     re.compile(r"^╰.*╯$", re.MULTILINE),
     re.compile(r"^│.*│$", re.MULTILINE),
     re.compile(r"^\s*kiro-cli.*$", re.MULTILINE),
-    re.compile(r"^\s*>.*$", re.MULTILINE),  # prompt lines
 ]
 
 
@@ -56,7 +56,7 @@ class KiroCLIProvider(LLMProvider):
         return "\n\n".join(parts)
 
     def _extract_response(self, raw: str, json_mode: bool) -> str:
-        text = raw
+        text = _ANSI_RE.sub("", raw)  # strip ANSI color codes first
         for pat in _STRIP_PATTERNS:
             text = pat.sub("", text)
         text = text.strip()

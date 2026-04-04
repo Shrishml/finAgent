@@ -147,6 +147,13 @@ class TestKiroExtractResponse:
         result = self.provider._extract_response(raw, json_mode=True)
         assert result == "No JSON here, just text"
 
+    def test_strips_ansi_codes(self):
+        raw = "\x1b[38;5;141m> \x1b[0mHello \x1b[1mworld\x1b[22m\x1b[0m"
+        result = self.provider._extract_response(raw, json_mode=False)
+        assert "\x1b" not in result
+        assert "Hello" in result
+        assert "world" in result
+
 
 # --- ConnectorRegistry ---
 

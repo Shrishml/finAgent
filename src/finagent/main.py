@@ -97,7 +97,7 @@ async def get_holdings():
     return JSONResponse({
         "count": len(holdings),
         "holdings": [
-            {"scheme": h.scheme_name, "folio": h.folio, "value": h.current_value, "plan": h.plan}
+            {"scheme": h.scheme_name, "folio": h.folio, "value": h.current_value, "plan": h.plan, "expense_ratio": h.expense_ratio}
             for h in holdings
         ],
     })

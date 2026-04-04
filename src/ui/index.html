@@ -13,49 +13,61 @@
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
 <!-- Header -->
-<header class="bg-white border-b px-6 py-4 flex items-center justify-between">
+<header class="bg-white border-b px-6 py-3 flex items-center justify-between">
   <div>
     <h1 class="text-xl font-bold text-gray-800">🤖 FinAgent</h1>
-    <p class="text-sm text-gray-500">Your money, your agent, your rules.</p>
+    <p class="text-xs text-gray-400">Your money, your agent, your rules.</p>
   </div>
-  <div id="status" class="text-sm text-gray-400">No data loaded</div>
+  <div class="flex items-center gap-3">
+    <span id="status" class="text-sm text-gray-400">No data loaded</span>
+    <button id="toggle-upload" class="text-xs text-blue-600 hover:underline hidden">Upload PDF</button>
+    <button id="clear-btn" class="text-xs text-red-500 hover:underline hidden">Clear</button>
+  </div>
 </header>
 
-<div class="flex-1 flex flex-col max-w-3xl mx-auto w-full p-4 gap-4">
+<div class="flex-1 flex max-w-5xl mx-auto w-full p-4 gap-4">
 
-  <!-- Upload Section -->
-  <div id="upload-section" class="bg-white rounded-lg border p-4">
-    <h2 class="font-semibold text-gray-700 mb-2">📄 Upload CAS Statement</h2>
-    <form id="upload-form" class="flex flex-col gap-2">
-      <input type="file" id="file-input" accept=".pdf" class="text-sm" required>
-      <input type="password" id="password-input" placeholder="PDF Password (usually your PAN)"
-             class="border rounded px-3 py-2 text-sm">
-      <button type="submit" id="upload-btn"
-              class="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700">
-        Upload & Parse
-      </button>
-      <button type="button" id="clear-btn"
-              class="bg-red-500 text-white rounded px-4 py-2 text-sm hover:bg-red-600">
-        Clear Data
-      </button>
-    </form>
-    <div id="upload-status" class="text-sm mt-2 hidden"></div>
+  <!-- Left: Chat (primary) -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Upload (collapsible) -->
+    <div id="upload-section" class="bg-white rounded-lg border p-4 mb-4">
+      <h2 class="font-semibold text-gray-700 mb-2">📄 Upload CAS Statement</h2>
+      <p class="text-xs text-gray-400 mb-2">Get yours from <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-blue-500 underline">camsonline.com</a> (Detailed, password = PAN)</p>
+      <form id="upload-form" class="flex flex-col gap-2">
+        <input type="file" id="file-input" accept=".pdf" class="text-sm" required>
+        <input type="password" id="password-input" placeholder="PDF Password (your PAN)"
+               class="border rounded px-3 py-2 text-sm">
+        <button type="submit" id="upload-btn"
+                class="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700">
+          Upload & Parse
+        </button>
+      </form>
+      <div id="upload-status" class="text-sm mt-2 hidden"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="bg-white rounded-lg border flex-1 flex flex-col min-h-[400px]">
+      <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div class="text-gray-400 text-sm text-center py-8" id="chat-placeholder">
+          Upload a CAMS PDF to get started, then ask about your portfolio.
+        </div>
+      </div>
+      <form id="chat-form" class="border-t p-3 flex gap-2">
+        <input type="text" id="chat-input" placeholder="Ask about your portfolio..."
+               class="flex-1 border rounded px-3 py-2 text-sm" autocomplete="off">
+        <button type="submit" class="bg-green-600 text-white rounded px-4 py-2 text-sm hover:bg-green-700">Send</button>
+      </form>
+    </div>
   </div>
 
-  <!-- Chat -->
-  <div class="bg-white rounded-lg border flex-1 flex flex-col min-h-[400px]">
-    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
-      <div class="text-gray-400 text-sm text-center py-8">
-        Upload a CAMS/KFintech PDF, then ask about your portfolio.
-      </div>
+  <!-- Right: Portfolio Panel (hidden until data loaded) -->
+  <div id="portfolio-panel" class="w-72 hidden flex-shrink-0">
+    <div class="bg-white rounded-lg border p-4 sticky top-4">
+      <h2 class="font-semibold text-gray-700 mb-1">📊 Portfolio</h2>
+      <div id="portfolio-summary" class="text-xs text-gray-500 mb-3"></div>
+      <div id="portfolio-list" class="space-y-2 max-h-[70vh] overflow-y-auto"></div>
     </div>
-    <form id="chat-form" class="border-t p-3 flex gap-2">
-      <input type="text" id="chat-input" placeholder="Ask about your portfolio..."
-             class="flex-1 border rounded px-3 py-2 text-sm" autocomplete="off">
-      <button type="submit" class="bg-green-600 text-white rounded px-4 py-2 text-sm hover:bg-green-700">
-        Send
-      </button>
-    </form>
   </div>
 </div>
 
@@ -64,12 +76,18 @@ const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const uploadForm = document.getElementById('upload-form');
+const uploadSection = document.getElementById('upload-section');
 const uploadStatus = document.getElementById('upload-status');
 const statusEl = document.getElementById('status');
+const portfolioPanel = document.getElementById('portfolio-panel');
+const portfolioList = document.getElementById('portfolio-list');
+const portfolioSummary = document.getElementById('portfolio-summary');
+const toggleUpload = document.getElementById('toggle-upload');
+const clearBtn = document.getElementById('clear-btn');
 
 function addMsg(text, sender) {
-  const first = chatBox.querySelector('.text-center');
-  if (first) first.remove();
+  const ph = document.getElementById('chat-placeholder');
+  if (ph) ph.remove();
   const div = document.createElement('div');
   div.className = sender === 'user'
     ? 'chat-msg bg-blue-50 rounded-lg p-3 text-sm ml-12'
@@ -79,29 +97,56 @@ function addMsg(text, sender) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+function showPortfolio(holdings) {
+  if (!holdings || holdings.length === 0) return;
+  const total = holdings.reduce((s, h) => s + h.value, 0);
+  portfolioSummary.innerHTML = `<span class="font-medium text-gray-700">₹${(total).toLocaleString('en-IN', {maximumFractionDigits: 0})}</span> across ${holdings.length} schemes`;
+
+  portfolioList.innerHTML = holdings
+    .sort((a, b) => b.value - a.value)
+    .map(h => {
+      const pct = total > 0 ? (h.value / total * 100).toFixed(1) : 0;
+      const er = h.expense_ratio ? (h.expense_ratio * 100).toFixed(2) + '%' : '—';
+      return `<div class="border rounded p-2 text-xs">
+        <div class="font-medium text-gray-700 truncate" title="${h.scheme}">${h.scheme.replace(/ - Direct.*| - Regular.*/, '')}</div>
+        <div class="flex justify-between text-gray-500 mt-1">
+          <span>₹${h.value.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          <span>${pct}%</span>
+        </div>
+        <div class="flex justify-between text-gray-400 mt-0.5">
+          <span>${h.plan}</span>
+          <span>ER: ${er}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+  portfolioPanel.classList.remove('hidden');
+  uploadSection.classList.add('hidden');
+  toggleUpload.classList.remove('hidden');
+  clearBtn.classList.remove('hidden');
+  statusEl.textContent = `${holdings.length} schemes`;
+  statusEl.className = 'text-sm text-green-600';
+}
+
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const file = document.getElementById('file-input').files[0];
   if (!file) return;
-  const pw = document.getElementById('password-input').value;
   const fd = new FormData();
   fd.append('file', file);
-  fd.append('password', pw);
-
+  fd.append('password', document.getElementById('password-input').value);
   document.getElementById('upload-btn').textContent = 'Parsing...';
   uploadStatus.classList.remove('hidden');
-  uploadStatus.textContent = 'Uploading and parsing PDF...';
+  uploadStatus.textContent = 'Uploading and parsing...';
   uploadStatus.className = 'text-sm mt-2 text-blue-600';
-
   try {
     const res = await fetch('/upload', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.status === 'ok') {
-      uploadStatus.textContent = `✅ Parsed ${data.holdings_count} scheme(s): ${data.schemes.join(', ')}`;
+      uploadStatus.textContent = `✅ ${data.holdings_count} schemes parsed`;
       uploadStatus.className = 'text-sm mt-2 text-green-600';
-      statusEl.textContent = `${data.holdings_count} schemes loaded`;
-      statusEl.className = 'text-sm text-green-600';
       addMsg(`Loaded ${data.holdings_count} mutual fund scheme(s). Ask me anything!`, 'agent');
+      fetch('/holdings').then(r => r.json()).then(d => showPortfolio(d.holdings));
     } else {
       uploadStatus.textContent = `❌ ${data.message}`;
       uploadStatus.className = 'text-sm mt-2 text-red-600';
@@ -120,39 +165,38 @@ chatForm.addEventListener('submit', async (e) => {
   addMsg(q, 'user');
   chatInput.value = '';
   addMsg('Thinking...', 'agent');
-
   try {
     const fd = new FormData();
     fd.append('query', q);
     const res = await fetch('/chat', { method: 'POST', body: fd });
     const data = await res.json();
-    chatBox.lastChild.remove(); // remove "Thinking..."
+    chatBox.lastChild.remove();
     addMsg(data.status === 'ok' ? data.response : `Error: ${data.message}`, 'agent');
+    // Refresh portfolio in case enrichment happened
+    fetch('/holdings').then(r => r.json()).then(d => { if (d.count > 0) showPortfolio(d.holdings); });
   } catch (err) {
     chatBox.lastChild.remove();
     addMsg(`Error: ${err.message}`, 'agent');
   }
 });
 
-// Load existing holdings on page load
-fetch('/holdings').then(r => r.json()).then(data => {
-  if (data.count > 0) {
-    statusEl.textContent = `${data.count} schemes loaded`;
-    statusEl.className = 'text-sm text-green-600';
-  }
+toggleUpload.addEventListener('click', () => {
+  uploadSection.classList.toggle('hidden');
 });
 
-// Clear data
-document.getElementById('clear-btn').addEventListener('click', async () => {
-  const res = await fetch('/clear', { method: 'POST' });
-  const data = await res.json();
-  if (data.status === 'ok') {
-    statusEl.textContent = 'No data loaded';
-    statusEl.className = 'text-sm text-gray-400';
-    uploadStatus.textContent = '🗑️ Data cleared';
-    uploadStatus.className = 'text-sm mt-2 text-orange-600';
-    uploadStatus.classList.remove('hidden');
-  }
+clearBtn.addEventListener('click', async () => {
+  await fetch('/clear', { method: 'POST' });
+  portfolioPanel.classList.add('hidden');
+  uploadSection.classList.remove('hidden');
+  toggleUpload.classList.add('hidden');
+  clearBtn.classList.add('hidden');
+  statusEl.textContent = 'No data loaded';
+  statusEl.className = 'text-sm text-gray-400';
+});
+
+// Load existing data on page load
+fetch('/holdings').then(r => r.json()).then(data => {
+  if (data.count > 0) showPortfolio(data.holdings);
 });
 </script>
 </body>

@@ -21,3 +21,8 @@ dev = ["pytest", "pytest-asyncio", "httpx"]
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.pytest.ini_options]
+markers = ["e2e: end-to-end benchmark tests (require kiro-cli)"]
+addopts = "-m 'not e2e'"
+asyncio_mode = "auto"

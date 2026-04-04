@@ -18,7 +18,7 @@ source .venv/bin/activate
 
 # Install deps
 echo "📦 Installing dependencies..."
-pip install -e . --quiet 2>&1 | tail -1
+pip install -e . 2>&1 || { echo "❌ Dependency install failed"; exit 1; }
 
 # Check LLM CLI
 echo ""

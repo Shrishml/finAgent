@@ -110,6 +110,37 @@ async def clear():
     log.info("All holdings cleared")
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
+
+@app.get("/suggestions")
+async def suggestions():
+    """Generate personalized question suggestions based on portfolio."""
+    holdings = load_holdings()
+    if not holdings:
+        return JSONResponse({"suggestions": [
+            "Upload a CAMS PDF to get started",
+        ]})
+
+    questions = []
+    total = sum(h.current_value for h in holdings)
+    regular = [h for h in holdings if h.plan == "regular"]
+    high_er = [h for h in holdings if h.expense_ratio > 0.01]
+    small_caps = [h for h in holdings if "small" in h.scheme_name.lower()]
+
+    questions.append(f"Give me a summary of my ₹{total:,.0f} portfolio")
+    questions.append("What are my expense ratios?")
+
+    if regular:
+        questions.append(f"I have {len(regular)} regular plan fund(s) — should I switch to direct?")
+    if high_er:
+        questions.append(f"Which of my funds has the highest expense ratio?")
+    if len(small_caps) > 1:
+        questions.append(f"I have {len(small_caps)} small cap funds — is that too many?")
+    if len(holdings) > 5:
+        questions.append("Do any of my funds overlap?")
+
+    questions.append("Which fund is my best performer?")
+    return JSONResponse({"suggestions": questions[:6]})
+
 def main():
     cfg = get_config()
     server = cfg.get("server", {})

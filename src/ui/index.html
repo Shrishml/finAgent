@@ -175,17 +175,17 @@ function fmtAum(v) {
   if (v >= 1e7) return '₹' + (v/1e7).toFixed(0) + ' Cr';
   return '₹' + (v/1e5).toFixed(0) + ' L';
 }
-const AMC_COLORS = {'axis':'#8B2346','hdfc':'#004B87','sbi':'#1A4C8B','icici':'#F58220','kotak':'#ED1C24','nippon':'#003DA5','dsp':'#00A651','tata':'#005DAA','mirae':'#0072CE','uti':'#1B3C6D','aditya':'#6F2C91','motilal':'#003366','parag':'#2E86AB','quant':'#FF6B35','canara':'#FFD700','franklin':'#006747','invesco':'#003B5C','bandhan':'#E31837','pgim':'#00205B','edelweiss':'#FF8C00','hsbc':'#DB0011','sundaram':'#0066B3','baroda':'#F47920','union':'#003399','mahindra':'#E31837','quantum':'#00A3E0','ppfas':'#1A1A2E','groww':'#5367FF','navi':'#0A2463','360one':'#1B1B3A','whiteoak':'#2D5016'};
+const AMC_LOGOS = {'axis':'axis','hdfc':'hdfc','sbi':'sbi','icici':'icici','kotak':'kotak','nippon':'nippon','dsp':'dsp','tata':'tata','mirae':'mirae','uti':'uti','aditya':'absl','motilal':'motilal-oswal','quant':'quant','canara':'canara-robeco','franklin':'franklin-templeton','invesco':'invesco','bandhan':'bandhan','pgim':'pgim-india','edelweiss':'edelweiss','hsbc':'hsbc','sundaram':'sundaram','baroda':'baroda-bnp-paribas','union':'union-amc','mahindra':'mahindra-manu','quantum':'quantum','ppfas':'ppfas','parag':'ppfas','navi':'navi','whiteoak':'white-oak','lic':'lic','jm':'jm-financial','360 one':'iifl','bank of india':'boi','trust':'trust'};
 function amcLogo(scheme) {
   const s = scheme.toLowerCase();
-  for (const [key, color] of Object.entries(AMC_COLORS)) {
+  for (const [key, file] of Object.entries(AMC_LOGOS)) {
     if (s.startsWith(key) || s.includes(key + ' ')) {
-      const initials = key.slice(0, 2).toUpperCase();
-      return `<div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style="background:${color}">${initials}</div>`;
+      const fb = key.slice(0,2).toUpperCase();
+      return `<img src="/static/assets/amc-logos/${file}.png" alt="${key}" class="w-8 h-8 rounded-lg object-contain flex-shrink-0 bg-white border" onerror="this.outerHTML='<div class=\\'w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-gray-400\\'>${fb}</div>'">`;
     }
   }
-  const initials = scheme.slice(0, 2).toUpperCase();
-  return `<div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-gray-400">${initials}</div>`;
+  const fb = scheme.slice(0,2).toUpperCase();
+  return `<div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-gray-400">${fb}</div>`;
 }
 </script>
 <script id="render-summary">

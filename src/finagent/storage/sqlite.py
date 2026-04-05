@@ -2,9 +2,10 @@
 import json
 import sqlite3
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 
-from finagent.models.mf import MFHolding
+from finagent.models.mf import MFHolding, MFTransaction
 
 _DB_DIR = Path(__file__).parent.parent.parent / "data"
 _DB_PATH = _DB_DIR / "finagent.db"
@@ -61,7 +62,18 @@ def load_holdings() -> list[MFHolding]:
     holdings = []
     for (data_json,) in rows:
         d = json.loads(data_json)
-        # Reconstruct without transactions for simplicity — raw data preserved in JSON
+        txns = [
+            MFTransaction(
+                date=date.fromisoformat(t["date"]) if isinstance(t.get("date"), str) else t.get("date", date.today()),
+                description=t.get("description", ""),
+                amount=float(t.get("amount", 0)),
+                units=t.get("units"),
+                nav=t.get("nav"),
+                balance=t.get("balance"),
+                type=t.get("type", ""),
+            )
+            for t in d.get("transactions", [])
+        ]
         holdings.append(MFHolding(
             scheme_name=d["scheme_name"], folio=d["folio"], amc=d["amc"],
             isin=d.get("isin", ""), amfi_code=d.get("amfi_code", ""),
@@ -72,6 +84,7 @@ def load_holdings() -> list[MFHolding]:
             expense_ratio=d.get("expense_ratio", 0),
             annual_expense=d.get("annual_expense", 0),
             xirr=d.get("xirr", 0), tax_section=d.get("tax_section", ""),
+            transactions=txns,
         ))
     return holdings
 

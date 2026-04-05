@@ -175,6 +175,18 @@ function fmtAum(v) {
   if (v >= 1e7) return '₹' + (v/1e7).toFixed(0) + ' Cr';
   return '₹' + (v/1e5).toFixed(0) + ' L';
 }
+const AMC_COLORS = {'axis':'#8B2346','hdfc':'#004B87','sbi':'#1A4C8B','icici':'#F58220','kotak':'#ED1C24','nippon':'#003DA5','dsp':'#00A651','tata':'#005DAA','mirae':'#0072CE','uti':'#1B3C6D','aditya':'#6F2C91','motilal':'#003366','parag':'#2E86AB','quant':'#FF6B35','canara':'#FFD700','franklin':'#006747','invesco':'#003B5C','bandhan':'#E31837','pgim':'#00205B','edelweiss':'#FF8C00','hsbc':'#DB0011','sundaram':'#0066B3','baroda':'#F47920','union':'#003399','mahindra':'#E31837','quantum':'#00A3E0','ppfas':'#1A1A2E','groww':'#5367FF','navi':'#0A2463','360one':'#1B1B3A','whiteoak':'#2D5016'};
+function amcLogo(scheme) {
+  const s = scheme.toLowerCase();
+  for (const [key, color] of Object.entries(AMC_COLORS)) {
+    if (s.startsWith(key) || s.includes(key + ' ')) {
+      const initials = key.slice(0, 2).toUpperCase();
+      return `<div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style="background:${color}">${initials}</div>`;
+    }
+  }
+  const initials = scheme.slice(0, 2).toUpperCase();
+  return `<div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-gray-400">${initials}</div>`;
+}
 </script>
 <script id="render-summary">
 function renderSummary(holdings) {
@@ -253,12 +265,17 @@ function renderFundCards(holdings) {
 
     return `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
       <td class="px-4 py-3">
-        <div class="font-medium text-gray-800 text-sm leading-tight">${shortName(h.scheme)}</div>
-        <div class="flex items-center gap-1.5 mt-0.5">
-          <span class="tag-blue rounded px-1.5 py-0.5 text-[10px]">${cat}</span>
-          <span class="text-gray-400 text-[10px]">${h.plan}</span>
-          ${ms}
-          ${performanceTag(retPct)}
+        <div class="flex items-center gap-3">
+          ${amcLogo(h.scheme)}
+          <div>
+            <div class="font-medium text-gray-800 text-sm leading-tight">${shortName(h.scheme)}</div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="tag-blue rounded px-1.5 py-0.5 text-[10px]">${cat}</span>
+              <span class="text-gray-400 text-[10px]">${h.plan}</span>
+              ${ms}
+              ${performanceTag(retPct)}
+            </div>
+          </div>
         </div>
       </td>
       <td class="px-3 py-3 text-right ${xc} font-semibold">${xirr != null ? sign(xirr) + xirr.toFixed(1) + '%' : '—'}</td>

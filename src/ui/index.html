@@ -86,18 +86,32 @@
           </div>
         </div>
 
-        <!-- Fund Table Header -->
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-700">Your Funds</h3>
-          <div class="flex gap-2 text-[10px]">
-            <span class="tag-green rounded-full px-2 py-0.5">● In-form</span>
-            <span class="tag-yellow rounded-full px-2 py-0.5">● Moderate</span>
-            <span class="tag-red rounded-full px-2 py-0.5">● Underperforming</span>
+        <!-- Fund Table -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b">
+            <h3 class="text-sm font-semibold text-gray-700">Your Funds</h3>
+            <div class="flex gap-2 text-[10px]">
+              <span class="tag-green rounded-full px-2 py-0.5">● In-form</span>
+              <span class="tag-yellow rounded-full px-2 py-0.5">● Moderate</span>
+              <span class="tag-red rounded-full px-2 py-0.5">● Underperforming</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-gray-400 text-[10px] uppercase tracking-wider border-b bg-gray-50">
+                  <th class="px-4 py-2.5 font-medium">Fund</th>
+                  <th class="px-3 py-2.5 font-medium text-right">XIRR</th>
+                  <th class="px-3 py-2.5 font-medium text-right">Return %</th>
+                  <th class="px-3 py-2.5 font-medium text-right">1D Change</th>
+                  <th class="px-3 py-2.5 font-medium text-right">Current (Invested)</th>
+                </tr>
+              </thead>
+              <tbody id="fund-table-body"></tbody>
+            </table>
           </div>
         </div>
-
-        <!-- Fund Cards -->
-        <div id="fund-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-8"></div>
+        <div class="pb-8"></div>
       </div>
     </div>
   </div>
@@ -228,58 +242,33 @@ function renderCharts(holdings) {
 <script id="render-fund-cards">
 function renderFundCards(holdings) {
   const total = holdings.reduce((s, h) => s + h.value, 0);
-  $('fund-grid').innerHTML = holdings.sort((a, b) => b.value - a.value).map(h => {
-    const wt = total > 0 ? (h.value / total * 100).toFixed(1) : 0;
-    const er = h.expense_ratio ? (h.expense_ratio * 100).toFixed(2) + '%' : '—';
-    const absRet = h.absolute_return || 0;
+  $('fund-table-body').innerHTML = holdings.sort((a, b) => b.value - a.value).map(h => {
     const retPct = h.return_pct || 0;
     const xirr = h.xirr;
-    const rc = absRet >= 0 ? 'text-green-600' : 'text-red-600';
+    const rc = retPct >= 0 ? 'text-green-600' : 'text-red-600';
+    const xc = xirr != null ? (xirr >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
     const dc = (h.day_change_pct||0) >= 0 ? 'text-green-600' : 'text-red-600';
     const cat = classifyCap(h.category);
+    const ms = h.morningstar ? '<span class="star text-[10px] ml-1">' + '★'.repeat(h.morningstar) + '</span>' : '';
 
-    return `<div class="fund-card bg-white border rounded-xl p-4 text-xs">
-      <div class="flex justify-between items-start mb-1">
-        <div class="font-semibold text-gray-800 text-sm leading-tight pr-2" title="${h.scheme}">${shortName(h.scheme)}</div>
-        ${performanceTag(retPct)}
-      </div>
-      <div class="flex items-center gap-2 mb-3">
-        <span class="tag-blue rounded px-1.5 py-0.5 text-[10px]">${cat}</span>
-        <span class="text-gray-400 text-[10px]">${h.plan}</span>
-        ${h.morningstar ? '<span class="star text-[10px]">' + stars(h.morningstar) + '</span>' : ''}
-      </div>
-      <div class="grid grid-cols-3 gap-y-2.5 gap-x-2">
-        <div>
-          <div class="text-gray-400">Current</div>
-          <div class="font-bold text-gray-800">${INR(h.value)}</div>
+    return `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+      <td class="px-4 py-3">
+        <div class="font-medium text-gray-800 text-sm leading-tight">${shortName(h.scheme)}</div>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span class="tag-blue rounded px-1.5 py-0.5 text-[10px]">${cat}</span>
+          <span class="text-gray-400 text-[10px]">${h.plan}</span>
+          ${ms}
+          ${performanceTag(retPct)}
         </div>
-        <div>
-          <div class="text-gray-400">Invested</div>
-          <div class="text-gray-600">${INR(h.invested||0)}</div>
-        </div>
-        <div>
-          <div class="text-gray-400">Return</div>
-          <div class="${rc} font-semibold">${sign(absRet)}${INR(absRet)}</div>
-        </div>
-        <div>
-          <div class="text-gray-400">Return %</div>
-          <div class="${rc} font-semibold">${sign(retPct)}${retPct.toFixed(1)}%</div>
-        </div>
-        <div>
-          <div class="text-gray-400 cursor-help" title="Based on transactions in your CAS">XIRR ⓘ</div>
-          <div class="${xirr!=null?(xirr>=0?'text-green-600':'text-red-600'):'text-gray-400'} font-semibold">${xirr!=null?sign(xirr)+xirr.toFixed(1)+'%':'—'}</div>
-        </div>
-        <div>
-          <div class="text-gray-400">1D Change</div>
-          <div class="${dc} font-medium">${sign(h.day_change_pct||0)}${(h.day_change_pct||0).toFixed(1)}%</div>
-        </div>
-      </div>
-      <div class="flex justify-between items-center text-gray-400 mt-3 pt-2 border-t border-gray-100">
-        <span>Wt: ${wt}% · ER: ${er}</span>
-        <span>AUM: ${fmtAum(h.aum)}</span>
-      </div>
-      ${h.nav_date ? '<div class="text-[10px] text-gray-300 mt-1">NAV ₹'+h.nav.toFixed(2)+' as of '+h.nav_date+'</div>' : ''}
-    </div>`;
+      </td>
+      <td class="px-3 py-3 text-right ${xc} font-semibold">${xirr != null ? sign(xirr) + xirr.toFixed(1) + '%' : '—'}</td>
+      <td class="px-3 py-3 text-right ${rc} font-semibold">${sign(retPct)}${retPct.toFixed(1)}%</td>
+      <td class="px-3 py-3 text-right ${dc} font-medium">${sign(h.day_change_pct||0)}${(h.day_change_pct||0).toFixed(1)}%</td>
+      <td class="px-3 py-3 text-right">
+        <div class="font-semibold text-gray-800">${INR(h.value)}</div>
+        <div class="text-gray-400 text-[10px]">(${INR(h.invested||0)})</div>
+      </td>
+    </tr>`;
   }).join('');
 }
 </script>

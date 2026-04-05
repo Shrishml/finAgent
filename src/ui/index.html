@@ -62,7 +62,7 @@
   </div>
 
   <!-- Right: Portfolio Panel (hidden until data loaded) -->
-  <div id="portfolio-panel" class="w-72 hidden flex-shrink-0">
+  <div id="portfolio-panel" class="w-80 hidden flex-shrink-0">
     <div class="bg-white rounded-lg border p-4 sticky top-4">
       <h2 class="font-semibold text-gray-700 mb-1">📊 Portfolio</h2>
       <div id="portfolio-summary" class="text-xs text-gray-500 mb-3"></div>
@@ -100,22 +100,47 @@ function addMsg(text, sender) {
 function showPortfolio(holdings) {
   if (!holdings || holdings.length === 0) return;
   const total = holdings.reduce((s, h) => s + h.value, 0);
-  portfolioSummary.innerHTML = `<span class="font-medium text-gray-700">₹${(total).toLocaleString('en-IN', {maximumFractionDigits: 0})}</span> across ${holdings.length} schemes`;
+  const totalInvested = holdings.reduce((s, h) => s + (h.invested || 0), 0);
+  const totalReturn = total - totalInvested;
+  const totalReturnPct = totalInvested > 0 ? ((totalReturn / totalInvested) * 100).toFixed(1) : 0;
+  const retColor = totalReturn >= 0 ? 'text-green-600' : 'text-red-600';
+  const retSign = totalReturn >= 0 ? '+' : '';
+
+  portfolioSummary.innerHTML = `
+    <div class="space-y-1">
+      <div class="flex justify-between items-baseline">
+        <span class="text-lg font-bold text-gray-800">₹${total.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+        <span class="text-xs text-gray-400">${holdings.length} schemes</span>
+      </div>
+      <div class="flex justify-between text-xs">
+        <span class="text-gray-500">Invested: ₹${totalInvested.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+        <span class="${retColor} font-medium">${retSign}₹${Math.abs(totalReturn).toLocaleString('en-IN', {maximumFractionDigits: 0})} (${retSign}${totalReturnPct}%)</span>
+      </div>
+    </div>`;
 
   portfolioList.innerHTML = holdings
     .sort((a, b) => b.value - a.value)
     .map(h => {
       const pct = total > 0 ? (h.value / total * 100).toFixed(1) : 0;
       const er = h.expense_ratio ? (h.expense_ratio * 100).toFixed(2) + '%' : '—';
+      const absRet = h.absolute_return || 0;
+      const retPct = h.return_pct || 0;
+      const xirr = h.xirr;
+      const c = absRet >= 0 ? 'text-green-600' : 'text-red-600';
+      const s = absRet >= 0 ? '+' : '';
       const hint = h.expense_ratio > 0.007 ? `<span class="compare-hint cursor-pointer" data-amfi="${h.amfi_code || ''}" title="Find cheaper alternatives">💡</span>` : '';
-      return `<div class="border rounded p-2 text-xs">
-        <div class="font-medium text-gray-700 truncate flex justify-between" title="${h.scheme}"><span>${h.scheme.replace(/ - Direct.*| - Regular.*/, '')}</span>${hint}</div>
-        <div class="flex justify-between text-gray-500 mt-1">
-          <span>₹${h.value.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
-          <span>${pct}%</span>
+      return `<div class="border rounded-lg p-3 text-xs hover:shadow-sm transition-shadow">
+        <div class="font-medium text-gray-700 truncate flex justify-between" title="${h.scheme}">
+          <span>${h.scheme.replace(/ - Direct.*| - Regular.*/, '')}</span>${hint}
         </div>
-        <div class="flex justify-between text-gray-400 mt-0.5">
-          <span>${h.plan}</span>
+        <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
+          <div><span class="text-gray-400">Current</span><div class="font-semibold text-gray-800">₹${h.value.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div></div>
+          <div><span class="text-gray-400">Invested</span><div class="text-gray-600">₹${(h.invested || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</div></div>
+          <div><span class="text-gray-400">Return</span><div class="${c} font-medium">${s}₹${Math.abs(absRet).toLocaleString('en-IN', {maximumFractionDigits: 0})} (${s}${retPct.toFixed(1)}%)</div></div>
+          <div><span class="text-gray-400 cursor-help" title="Based on transactions in your CAS statement. Accuracy depends on the date range of your CAS PDF.">XIRR ⓘ</span><div class="${xirr !== null ? (xirr >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'} font-medium">${xirr !== null ? (xirr >= 0 ? '+' : '') + xirr.toFixed(1) + '%' : '—'}</div></div>
+        </div>
+        <div class="flex justify-between text-gray-400 mt-2 pt-1 border-t border-gray-100">
+          <span>${h.plan} · ${pct}%</span>
           <span>ER: ${er}</span>
         </div>
       </div>`;

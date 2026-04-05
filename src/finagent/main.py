@@ -15,6 +15,7 @@ from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
 from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings
+from finagent.utils.returns import compute_holding_returns
 
 # Logging setup
 _LOG_DIR = Path(__file__).parent.parent / "data"
@@ -104,7 +105,12 @@ async def get_holdings():
     return JSONResponse({
         "count": len(holdings),
         "holdings": [
-            {"scheme": h.scheme_name, "folio": h.folio, "value": h.current_value, "plan": h.plan, "expense_ratio": h.expense_ratio}
+            {
+                "scheme": h.scheme_name, "folio": h.folio, "value": h.current_value,
+                "invested": h.invested_value, "plan": h.plan, "expense_ratio": h.expense_ratio,
+                "amfi_code": h.amfi_code,
+                **compute_holding_returns(h),
+            }
             for h in holdings
         ],
     })

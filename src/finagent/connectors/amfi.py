@@ -35,6 +35,7 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
                 log.info(f"AMFI {h.amfi_code}: NAV={nav}, ER={expense*100:.2f}%, category={data.get('category')}")
                 save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
                 _apply_data(h, nav, expense)
+                h.category = data.get("category", "")
             else:
                 log.warning(f"No data for AMFI {h.amfi_code}")
         except Exception as e:

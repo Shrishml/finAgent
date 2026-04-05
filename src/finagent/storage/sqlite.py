@@ -84,6 +84,7 @@ def load_holdings() -> list[MFHolding]:
             expense_ratio=d.get("expense_ratio", 0),
             annual_expense=d.get("annual_expense", 0),
             xirr=d.get("xirr", 0), tax_section=d.get("tax_section", ""),
+            category=d.get("category", ""),
             transactions=txns,
         ))
     return holdings

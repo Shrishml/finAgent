@@ -108,7 +108,7 @@ async def get_holdings():
             {
                 "scheme": h.scheme_name, "folio": h.folio, "value": h.current_value,
                 "invested": h.invested_value, "plan": h.plan, "expense_ratio": h.expense_ratio,
-                "amfi_code": h.amfi_code,
+                "amfi_code": h.amfi_code, "category": h.category,
                 **compute_holding_returns(h),
             }
             for h in holdings

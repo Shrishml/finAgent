@@ -39,6 +39,7 @@ class MFHolding:
     # Cost
     expense_ratio: float = 0.0
     annual_expense: float = 0.0  # expense_ratio × current_value
+    category: str = ""  # e.g. "Equity - Large Cap", "Debt - Short Duration"
 
     # Performance
     xirr: float = 0.0

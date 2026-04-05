@@ -41,6 +41,14 @@ class MFHolding:
     annual_expense: float = 0.0  # expense_ratio × current_value
     category: str = ""  # e.g. "Equity - Large Cap", "Debt - Short Duration"
 
+    # Enrichment from mfdata.in
+    nav_date: str = ""  # date of the NAV, e.g. "2026-03-27"
+    day_change: float = 0.0  # absolute NAV change from previous day
+    day_change_pct: float = 0.0  # percentage NAV change
+    morningstar: int = 0  # 1-5 star rating
+    aum: float = 0.0  # assets under management in INR
+    risk_label: str = ""  # e.g. "Very High Risk"
+
     # Performance
     xirr: float = 0.0
 

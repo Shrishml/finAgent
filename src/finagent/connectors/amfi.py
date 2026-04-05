@@ -36,6 +36,12 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
                 save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
                 _apply_data(h, nav, expense)
                 h.category = data.get("category", "")
+                h.nav_date = data.get("nav_date", "")
+                h.day_change = float(data.get("day_change", 0))
+                h.day_change_pct = float(data.get("day_change_pct", 0))
+                h.morningstar = int(data.get("morningstar", 0))
+                h.aum = float(data.get("aum", 0))
+                h.risk_label = data.get("risk_label", "")
             else:
                 log.warning(f"No data for AMFI {h.amfi_code}")
         except Exception as e:

@@ -85,6 +85,12 @@ def load_holdings() -> list[MFHolding]:
             annual_expense=d.get("annual_expense", 0),
             xirr=d.get("xirr", 0), tax_section=d.get("tax_section", ""),
             category=d.get("category", ""),
+            nav_date=d.get("nav_date", ""),
+            day_change=d.get("day_change", 0),
+            day_change_pct=d.get("day_change_pct", 0),
+            morningstar=d.get("morningstar", 0),
+            aum=d.get("aum", 0),
+            risk_label=d.get("risk_label", ""),
             transactions=txns,
         ))
     return holdings

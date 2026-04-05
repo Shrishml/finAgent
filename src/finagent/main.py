@@ -108,7 +108,9 @@ async def get_holdings():
             {
                 "scheme": h.scheme_name, "folio": h.folio, "value": h.current_value,
                 "invested": h.invested_value, "plan": h.plan, "expense_ratio": h.expense_ratio,
-                "amfi_code": h.amfi_code, "category": h.category,
+                "amfi_code": h.amfi_code, "category": h.category, "units": h.units, "nav": h.nav,
+                "nav_date": h.nav_date, "day_change": h.day_change, "day_change_pct": h.day_change_pct,
+                "morningstar": h.morningstar, "aum": h.aum, "risk_label": h.risk_label,
                 **compute_holding_returns(h),
             }
             for h in holdings

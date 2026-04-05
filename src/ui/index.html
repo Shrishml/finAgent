@@ -86,29 +86,41 @@
           </div>
         </div>
 
-        <!-- Fund Table -->
-        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b">
-            <h3 class="text-sm font-semibold text-gray-700">Your Funds</h3>
-            <div class="flex gap-2 text-[10px]">
-              <span class="tag-green rounded-full px-2 py-0.5">● In-form</span>
-              <span class="tag-yellow rounded-full px-2 py-0.5">● Moderate</span>
-              <span class="tag-red rounded-full px-2 py-0.5">● Underperforming</span>
+        <!-- Fund Table + Detail Panel -->
+        <div class="flex gap-4">
+          <!-- Left: Fund Table -->
+          <div class="flex-1 min-w-0 bg-white rounded-xl border shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+              <h3 class="text-sm font-semibold text-gray-700">Your Funds</h3>
+              <div class="flex gap-2 text-[10px]">
+                <span class="tag-green rounded-full px-2 py-0.5">● In-form</span>
+                <span class="tag-yellow rounded-full px-2 py-0.5">● Moderate</span>
+                <span class="tag-red rounded-full px-2 py-0.5">● Underperforming</span>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-left text-gray-400 text-[10px] uppercase tracking-wider border-b bg-gray-50">
+                    <th class="px-4 py-2.5 font-medium">Fund</th>
+                    <th class="px-3 py-2.5 font-medium text-right">XIRR</th>
+                    <th class="px-3 py-2.5 font-medium text-right">Return %</th>
+                    <th class="px-3 py-2.5 font-medium text-right">1D Chg</th>
+                    <th class="px-3 py-2.5 font-medium text-right">Current (Inv)</th>
+                  </tr>
+                </thead>
+                <tbody id="fund-table-body"></tbody>
+              </table>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead>
-                <tr class="text-left text-gray-400 text-[10px] uppercase tracking-wider border-b bg-gray-50">
-                  <th class="px-4 py-2.5 font-medium">Fund</th>
-                  <th class="px-3 py-2.5 font-medium text-right">XIRR</th>
-                  <th class="px-3 py-2.5 font-medium text-right">Return %</th>
-                  <th class="px-3 py-2.5 font-medium text-right">1D Change</th>
-                  <th class="px-3 py-2.5 font-medium text-right">Current (Invested)</th>
-                </tr>
-              </thead>
-              <tbody id="fund-table-body"></tbody>
-            </table>
+
+          <!-- Right: Fund Detail Panel -->
+          <div id="fund-detail" class="w-80 flex-shrink-0 hidden">
+            <div class="bg-white rounded-xl border shadow-sm p-4 sticky top-16">
+              <div id="fund-detail-content">
+                <p class="text-gray-400 text-xs text-center py-8">Click a fund to see details</p>
+              </div>
+            </div>
           </div>
         </div>
         <div class="pb-8"></div>
@@ -253,8 +265,9 @@ function renderCharts(holdings) {
 </script>
 <script id="render-fund-cards">
 function renderFundCards(holdings) {
-  const total = holdings.reduce((s, h) => s + h.value, 0);
-  $('fund-table-body').innerHTML = holdings.sort((a, b) => b.value - a.value).map(h => {
+  _holdings = holdings.sort((a, b) => b.value - a.value);
+  const total = _holdings.reduce((s, h) => s + h.value, 0);
+  $('fund-table-body').innerHTML = _holdings.map((h, idx) => {
     const retPct = h.return_pct || 0;
     const xirr = h.xirr;
     const rc = retPct >= 0 ? 'text-green-600' : 'text-red-600';
@@ -263,7 +276,7 @@ function renderFundCards(holdings) {
     const cat = classifyCap(h.category);
     const ms = h.morningstar ? '<span class="star text-[10px] ml-1">' + '★'.repeat(h.morningstar) + '</span>' : '';
 
-    return `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+    return `<tr class="border-b border-gray-50 hover:bg-blue-50 transition-colors cursor-pointer" onclick="showFundDetail(${idx})">
       <td class="px-4 py-3">
         <div class="flex items-center gap-3">
           ${amcLogo(h.scheme)}
@@ -287,6 +300,87 @@ function renderFundCards(holdings) {
       </td>
     </tr>`;
   }).join('');
+}
+</script>
+<script id="fund-detail-panel">
+let _holdings = [];
+let detailChart = null;
+function showFundDetail(idx) {
+  const h = _holdings[idx];
+  if (!h) return;
+  // Highlight selected row
+  document.querySelectorAll('#fund-table-body tr').forEach((r,i) => {
+    r.classList.toggle('bg-blue-50', i === idx);
+  });
+  const panel = $('fund-detail');
+  panel.classList.remove('hidden');
+  const rc = (h.return_pct||0) >= 0 ? 'text-green-600' : 'text-red-600';
+  const dc = (h.day_change_pct||0) >= 0 ? 'text-green-600' : 'text-red-600';
+  const xc = h.xirr != null ? (h.xirr >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
+  const ms = h.morningstar ? '<span class="star">' + '★'.repeat(h.morningstar) + '<span class="star-empty">' + '★'.repeat(5-h.morningstar) + '</span></span>' : '';
+
+  $('fund-detail-content').innerHTML = `
+    <div class="flex items-center gap-3 mb-3">
+      ${amcLogo(h.scheme)}
+      <div>
+        <div class="font-semibold text-gray-800 text-sm">${shortName(h.scheme)}</div>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span class="tag-blue rounded px-1.5 py-0.5 text-[10px]">${classifyCap(h.category)}</span>
+          <span class="text-gray-400 text-[10px]">${h.plan}</span>
+          ${ms}
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-xs mb-4">
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">Current</div>
+        <div class="font-bold text-gray-800">${INR(h.value)}</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">Invested</div>
+        <div class="text-gray-700">${INR(h.invested||0)}</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">Return</div>
+        <div class="${rc} font-semibold">${sign(h.return_pct||0)}${(h.return_pct||0).toFixed(1)}% (${sign(h.absolute_return||0)}${INR(h.absolute_return||0)})</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">XIRR</div>
+        <div class="${xc} font-semibold">${h.xirr!=null?sign(h.xirr)+h.xirr.toFixed(1)+'%':'—'}</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">1D Change</div>
+        <div class="${dc} font-medium">${sign(h.day_change_pct||0)}${(h.day_change_pct||0).toFixed(1)}%</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-2.5">
+        <div class="text-gray-400">Expense Ratio</div>
+        <div class="text-gray-700">${h.expense_ratio?(h.expense_ratio*100).toFixed(2)+'%':'—'}</div>
+      </div>
+    </div>
+    ${h.nav_date?'<div class="text-[10px] text-gray-400 mb-3">NAV ₹'+h.nav.toFixed(2)+' as of '+h.nav_date+' · AUM: '+fmtAum(h.aum)+'</div>':''}
+    <div class="border-t pt-3">
+      <h4 class="text-xs font-semibold text-gray-600 mb-2">Fund vs Category Peers</h4>
+      <div class="chart-container" style="height:160px"><canvas id="chart-detail"></canvas></div>
+      <p id="peer-loading" class="text-[10px] text-gray-400 text-center mt-1">Loading peer comparison...</p>
+    </div>`;
+
+  // Fetch peer comparison
+  if (h.amfi_code) {
+    fetch('/compare/' + h.amfi_code).then(r=>r.json()).then(data => {
+      const el = $('peer-loading');
+      if (detailChart) detailChart.destroy();
+      const peers = (data.peers||[]).slice(0,5);
+      if (!peers.length) { if(el) el.textContent = 'No peer data available'; return; }
+      if(el) el.remove();
+      const labels = [shortName(h.scheme).slice(0,15)+'(You)', ...peers.map(p=>shortName(p.name||'').slice(0,15))];
+      const ers = [h.expense_ratio*100, ...peers.map(p=>parseFloat(p.expense_ratio||0))];
+      detailChart = new Chart($('chart-detail'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Expense Ratio %', data: ers, backgroundColor: ['#3b82f6', ...peers.map(()=>'#d1d5db')], borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v=>v.toFixed(2)+'%', font:{size:9} }, grid:{display:false} }, x: { ticks: { font:{size:8}, maxRotation:45 } } } }
+      });
+    }).catch(() => { const el=$('peer-loading'); if(el) el.textContent='Failed to load peers'; });
+  }
 }
 </script>
 <script id="app-logic">

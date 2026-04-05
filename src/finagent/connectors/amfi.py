@@ -21,7 +21,7 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
 
         # Check cache first (24h TTL) — returns {nav, expense_ratio} or None
         cached = get_cached_nav(h.amfi_code)
-        if cached:
+        if cached and h.category:
             log.debug(f"Cache hit for {h.amfi_code}: NAV={cached['nav']}, ER={cached['expense_ratio']}")
             _apply_data(h, cached["nav"], cached["expense_ratio"])
             continue

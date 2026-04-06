@@ -167,7 +167,7 @@ function classifyAsset(cat) {
   const c = cat.toLowerCase().replace(/-/g, ' ');
   if (c.includes('equity') || c.includes('elss') || c.includes('large cap') || c.includes('mid cap') || c.includes('small cap') || c.includes('flexi cap') || c.includes('multi cap')) return 'Equity';
   if (c.includes('debt') || c.includes('liquid') || c.includes('money market') || c.includes('gilt') || c.includes('overnight')) return 'Debt';
-  if (c.includes('hybrid')) return 'Hybrid';
+  if (c.includes('hybrid') || c.includes('allocation') || c.includes('balanced') || c.includes('arbitrage') || c.includes('equity savings')) return 'Hybrid';
   return 'Other';
 }
 function classifyCap(cat) {

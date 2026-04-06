@@ -555,17 +555,59 @@ Current state: upload endpoint catches exceptions but returns raw error strings.
 
 ---
 
+#### Task 5: NAV History Engine (2 hrs)
+
+**Why:** Historical NAV data unlocks ~50% of what Reddit users ask — fund comparison, rolling returns, crash stress tests, SIP simulation, consistency scores. The mfdata.in API (`/mf/{amfi_code}`) returns full daily NAV history back to fund inception (up to ~20 years, ~4900 data points), no auth, no pagination.
+
+**Files to create/modify:**
+- **Create** `src/finagent/analytics/nav_history.py`
+  ```python
+  class NAVHistoryEngine:
+      """Fetch + cache historical NAV, compute derived metrics."""
+      # fetch(amfi_code) → list of (date, nav) from api.mfapi.in
+      # Cache in SQLite: nav_history table (amfi_code, date, nav), refresh weekly
+      # Compute: cagr, rolling_returns(1Y/3Y/5Y/10Y), volatility, max_drawdown,
+      #          sharpe_ratio, crash_stress_test(covid/gfc/nbfc), sip_simulation,
+      #          consistency_score (% of rolling 3Y periods with positive returns)
+  ```
+- **Modify** `src/finagent/agents/mf.py` — add `deep_dive` mode using NAVHistoryEngine
+- **Modify** `src/finagent/storage/sqlite.py` — add `nav_history` table
+- **Modify** `src/finagent/api/chat.py` — route deep-dive intents (e.g. "how did X do in COVID?")
+
+**Key metrics to compute from NAV:**
+| Metric | Method | User question it answers |
+|--------|--------|--------------------------|
+| CAGR | `(end/start)^(1/years) - 1` | "How has this fund performed?" |
+| Rolling returns | Every possible N-year window | "Is this fund consistent?" |
+| Volatility | Annualized std dev of daily returns | "How risky is this fund?" |
+| Max drawdown | Worst peak-to-trough | "What's the worst case?" |
+| Sharpe ratio | `(CAGR - risk_free) / volatility` | "Is the return worth the risk?" |
+| Crash stress test | Drawdown + recovery during known crashes | "How did it do in COVID/2008?" |
+| SIP simulation | Monthly investment × NAV units | "What if I did ₹10K SIP since 2015?" |
+| Consistency score | % rolling 3Y periods > 0 | "How reliable is this fund?" |
+
+**Acceptance criteria:**
+- `engine.fetch(amfi_code)` returns cached NAV history
+- `engine.rolling_returns(amfi_code, years=3)` returns all rolling windows
+- `engine.crash_test(amfi_code)` returns drawdown + recovery for COVID, GFC, NBFC
+- Chat: "How did Parag Parikh do in COVID?" returns specific drawdown % and recovery months
+
+---
+
 ### 8.4 Dependency Chain
 
 ```
 Task 1 (Gemini) ──→ Task 2 (Deploy) ──→ Task 4 (CTA + README)
                          ↑
 Task 3 (Errors/Privacy) ─┘
+
+Task 5 (NAV History) ── independent, can run in parallel with Tasks 1-4
 ```
 
 Tasks 1 and 3 are independent — can be done in parallel.
 Task 2 depends on Task 1 (need Gemini provider to deploy).
 Task 4 depends on Task 2 (need the live URL for the CTA button).
+Task 5 is independent — no deploy dependency, enhances the product post-deploy.
 
 ### 8.5 Time Budget
 
@@ -575,8 +617,9 @@ Task 4 depends on Task 2 (need the live URL for the CTA button).
 | Task 3: Error handling + privacy | 1.5 hrs | 2:00 |
 | Task 2: Render deploy | 1.5 hrs | 3:30 |
 | Task 4: Landing page + README | 30 min | 4:00 |
+| Task 5: NAV History Engine | 2 hrs | 6:00 |
 
-**Total: ~4 hours — fits in one Sunday sprint.**
+**Total: ~6 hours across two sessions (deploy sprint + analytics sprint).**
 
 ### 8.6 Post-Deploy: CMO Soft Launch
 
@@ -613,5 +656,5 @@ These come after we validate demand with the POC.
 ---
 
 *Created: April 4, 2026*
-*Updated: April 5, 2026 — added POC deploy plan (Section 8)*
-*Status: v3 — POC deploy sprint in progress*
+*Updated: April 6, 2026 — added NAV History Engine task (Task 5 in Section 8)*
+*Status: v3 — POC deploy sprint in progress, analytics sprint queued*

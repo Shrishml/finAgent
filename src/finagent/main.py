@@ -119,6 +119,41 @@ async def get_holdings():
     })
 
 
+@app.post("/demo")
+async def demo():
+    """Load a demo portfolio for users to explore without uploading."""
+    from datetime import date as _date
+    from finagent.models.mf import MFHolding, MFTransaction
+    _t = lambda d, amt, units, desc="SIP": MFTransaction(date=_date.fromisoformat(d), description=desc, amount=amt, units=units, type="SIP" if amt > 0 else "REDEMPTION")
+    holdings = [
+        MFHolding(scheme_name="Parag Parikh Flexi Cap Fund - Direct Plan - Growth", folio="DEMO-001", amc="PPFAS", amfi_code="122639", plan="direct",
+                  units=1200.5, nav=72.5, current_value=87036.25, invested_value=72000.0,
+                  transactions=[_t("2024-01-15", 5000, 83.3), _t("2024-06-15", 5000, 76.9), _t("2025-01-15", 5000, 71.4), _t("2025-06-15", 5000, 68.5)]),
+        MFHolding(scheme_name="HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", folio="DEMO-002", amc="HDFC", amfi_code="118989", plan="direct",
+                  units=450.2, nav=165.3, current_value=74418.06, invested_value=60000.0,
+                  transactions=[_t("2024-03-10", 10000, 75.0), _t("2024-09-10", 10000, 66.7), _t("2025-03-10", 10000, 62.5)]),
+        MFHolding(scheme_name="SBI Small Cap Fund - Direct Plan - Growth", folio="DEMO-003", amc="SBI", amfi_code="125497", plan="direct",
+                  units=310.8, nav=148.2, current_value=46060.56, invested_value=40000.0,
+                  transactions=[_t("2024-04-01", 10000, 80.0), _t("2025-01-01", 10000, 72.5), _t("2025-07-01", 10000, 68.0)]),
+        MFHolding(scheme_name="ICICI Prudential Balanced Advantage Fund - Direct Plan - Growth", folio="DEMO-004", amc="ICICI", amfi_code="120242", plan="direct",
+                  units=2100.0, nav=62.8, current_value=131880.0, invested_value=120000.0,
+                  transactions=[_t("2023-06-15", 10000, 178.6), _t("2024-01-15", 10000, 166.7), _t("2024-06-15", 10000, 156.3)]),
+        MFHolding(scheme_name="Axis ELSS Tax Saver Fund - Direct Plan - Growth", folio="DEMO-005", amc="Axis", amfi_code="120503", plan="direct",
+                  units=520.0, nav=82.4, current_value=42848.0, invested_value=45000.0, tax_section="80C",
+                  transactions=[_t("2024-02-01", 12500, 166.7), _t("2025-02-01", 12500, 156.3)]),
+        MFHolding(scheme_name="HDFC Corporate Bond Fund - Direct Plan - Growth", folio="DEMO-006", amc="HDFC", amfi_code="119180", plan="direct",
+                  units=3500.0, nav=29.5, current_value=103250.0, invested_value=100000.0,
+                  transactions=[_t("2024-01-01", 50000, 1785.7), _t("2025-01-01", 50000, 1724.1)]),
+    ]
+    try:
+        holdings = enrich_holdings(holdings)
+    except Exception as e:
+        log.warning(f"Demo enrichment failed: {e}")
+    save_holdings(holdings)
+    log.info("Demo portfolio loaded")
+    return JSONResponse({"status": "ok", "holdings_count": len(holdings)})
+
+
 @app.post("/clear")
 async def clear():
     """Clear all stored holdings."""

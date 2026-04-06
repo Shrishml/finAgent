@@ -59,6 +59,8 @@
           <button type="submit" id="upload-btn" class="bg-blue-600 text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors">Upload & Analyse</button>
         </form>
         <div id="upload-status" class="text-sm mt-3 hidden"></div>
+        <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">or</span></div></div>
+        <button id="demo-btn" onclick="loadDemo()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
       </div>
     </div>
 
@@ -489,6 +491,20 @@ $('upload-form').addEventListener('submit', async (e) => {
   }
   $('upload-btn').textContent = 'Upload & Analyse';
 });
+
+async function loadDemo() {
+  $('demo-btn').textContent = 'Loading demo...';
+  $('demo-btn').disabled = true;
+  try {
+    const res = await fetch('/demo', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      fetch('/holdings').then(r=>r.json()).then(d=>showPortfolio(d.holdings));
+    }
+  } catch(e) { alert('Failed to load demo: ' + e.message); }
+  $('demo-btn').textContent = '🎮 Try with a demo portfolio';
+  $('demo-btn').disabled = false;
+}
 
 $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();

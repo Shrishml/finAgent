@@ -164,15 +164,15 @@ const sign = v => v >= 0 ? '+' : '';
 // --- Classification helpers ---
 function classifyAsset(cat) {
   if (!cat) return 'Other';
-  const c = cat.toLowerCase();
-  if (c.includes('equity') || c.includes('elss')) return 'Equity';
+  const c = cat.toLowerCase().replace(/-/g, ' ');
+  if (c.includes('equity') || c.includes('elss') || c.includes('large cap') || c.includes('mid cap') || c.includes('small cap') || c.includes('flexi cap') || c.includes('multi cap')) return 'Equity';
   if (c.includes('debt') || c.includes('liquid') || c.includes('money market') || c.includes('gilt') || c.includes('overnight')) return 'Debt';
   if (c.includes('hybrid')) return 'Hybrid';
   return 'Other';
 }
 function classifyCap(cat) {
   if (!cat) return 'Other';
-  const c = cat.toLowerCase();
+  const c = cat.toLowerCase().replace(/-/g, ' ');
   if (c.includes('large cap') || c.includes('large & mid')) return 'Large Cap';
   if (c.includes('mid cap')) return 'Mid Cap';
   if (c.includes('small cap')) return 'Small Cap';

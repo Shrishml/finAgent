@@ -134,8 +134,17 @@
       <span class="font-semibold text-gray-700 text-sm">💬 Ask your bestie</span>
       <button id="chat-close" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
     </div>
-    <div id="chat-box" class="flex-1 overflow-y-auto p-3 space-y-2 min-w-[340px]">
-      <div id="suggestions-area" class="py-6 text-center"><p class="text-gray-400 text-xs">Ask anything about your portfolio...</p></div>
+    <div id="chat-box" class="flex-1 overflow-y-auto p-3 space-y-2 min-w-[340px] flex flex-col justify-center">
+      <div id="suggestions-area" class="text-center space-y-4">
+        <div class="text-3xl">🤖</div>
+        <p class="text-gray-500 text-sm font-medium">What would you like to know?</p>
+        <div class="space-y-2 px-2">
+          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">How is my portfolio doing?</button>
+          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">Am I paying too much in expense ratios?</button>
+          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">How did my funds do in COVID?</button>
+          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">Should I switch from regular to direct plans?</button>
+        </div>
+      </div>
     </div>
     <form id="chat-form" class="border-t p-2 flex gap-2 min-w-[340px]">
       <input type="text" id="chat-input" placeholder="Ask anything..." class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-200" autocomplete="off">
@@ -391,9 +400,13 @@ function toggleChat() {
 }
 $('chat-toggle').addEventListener('click', toggleChat);
 $('chat-close').addEventListener('click', toggleChat);
+document.querySelectorAll('.suggest-btn').forEach(btn => {
+  btn.addEventListener('click', () => { $('chat-input').value = btn.textContent; $('chat-form').dispatchEvent(new Event('submit')); });
+});
 
 function addMsg(text, sender) {
   const sa = $('suggestions-area'); if (sa) sa.remove();
+  $('chat-box').classList.remove('justify-center');
   const div = document.createElement('div');
   div.className = sender === 'user' ? 'chat-msg bg-blue-50 rounded-lg p-2 text-xs ml-8' : 'chat-msg bg-gray-100 rounded-lg p-2 text-xs mr-8';
   div.textContent = text;

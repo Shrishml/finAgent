@@ -367,11 +367,48 @@ function showFundDetail(idx) {
       </div>
     </div>
     ${h.nav_date?'<div class="text-[10px] text-gray-400 mb-3">NAV ₹'+h.nav.toFixed(2)+' as of '+h.nav_date+' · AUM: '+fmtAum(h.aum)+'</div>':''}
+    <div class="border-t pt-3 mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="text-xs font-semibold text-gray-600">Performance</h4>
+        <div id="period-btns" class="flex gap-1">${['1M','3M','6M','1Y','3Y','5Y','MAX'].map(p=>'<button class="period-btn text-[9px] px-1.5 py-0.5 rounded '+(p==='1Y'?'bg-emerald-600 text-white':'bg-gray-100 text-gray-500 hover:bg-gray-200')+'" data-p="'+p+'">'+p+'</button>').join('')}</div>
+      </div>
+      <div class="chart-container" style="height:140px"><canvas id="chart-nav"></canvas></div>
+      <p id="nav-loading" class="text-[10px] text-gray-400 text-center mt-1">Loading...</p>
+    </div>
     <div class="border-t pt-3">
       <h4 class="text-xs font-semibold text-gray-600 mb-2">Fund vs Category Peers</h4>
       <div class="chart-container" style="height:160px"><canvas id="chart-detail"></canvas></div>
       <p id="peer-loading" class="text-[10px] text-gray-400 text-center mt-1">Loading peer comparison...</p>
     </div>`;
+
+  // Fetch NAV performance chart
+  let navChart = null;
+  function loadNavChart(code, period='1Y') {
+    fetch('/nav-history/'+code+'?period='+period).then(r=>r.json()).then(data => {
+      const el=$('nav-loading'); if(el) el.remove();
+      if(navChart) navChart.destroy();
+      if(!data.dates||!data.dates.length) return;
+      const startNav = data.navs[0];
+      const returns = data.navs.map(n=>((n/startNav-1)*100));
+      navChart = new Chart($('chart-nav'), {
+        type:'line',
+        data:{labels:data.dates, datasets:[{data:returns, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.08)', fill:true, pointRadius:0, borderWidth:1.5, tension:0.3}]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(1)+'%'}}}, scales:{x:{ticks:{maxTicksLimit:5,font:{size:8}},grid:{display:false}}, y:{ticks:{callback:v=>v.toFixed(0)+'%',font:{size:9}},grid:{color:'#f3f4f6'}}}}
+      });
+    }).catch(()=>{ const el=$('nav-loading'); if(el) el.textContent='Chart unavailable'; });
+  }
+  if(h.amfi_code) {
+    loadNavChart(h.amfi_code);
+    setTimeout(()=>{
+      document.querySelectorAll('.period-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          document.querySelectorAll('.period-btn').forEach(b=>{b.className='period-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200';});
+          btn.className='period-btn text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white';
+          loadNavChart(h.amfi_code, btn.dataset.p);
+        });
+      });
+    },0);
+  }
 
   // Fetch peer comparison
   if (h.amfi_code) {

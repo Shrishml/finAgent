@@ -165,6 +165,30 @@ async def compare(amfi_code: str):
     peers = fetch_category_peers(amfi_code)
     return JSONResponse({"amfi_code": amfi_code, "peers": peers})
 
+
+@app.get("/nav-history/{amfi_code}")
+async def nav_history(amfi_code: str, period: str = "1Y"):
+    """Get NAV history for performance chart. period: 1M, 3M, 6M, 1Y, 3Y, 5Y, MAX."""
+    from finagent.analytics.nav_history import NAVHistoryEngine
+    from datetime import timedelta, date as _date
+    engine = NAVHistoryEngine()
+    history = engine.fetch(amfi_code)
+    if not history:
+        return JSONResponse({"dates": [], "navs": []})
+    periods = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365, "3Y": 1095, "5Y": 1825}
+    if period != "MAX" and period in periods:
+        cutoff = history[-1][0] - timedelta(days=periods[period])
+        history = [(d, n) for d, n in history if d >= cutoff]
+    # Downsample for large datasets (keep ~200 points max)
+    step = max(1, len(history) // 200)
+    sampled = history[::step]
+    if sampled[-1] != history[-1]:
+        sampled.append(history[-1])
+    return JSONResponse({
+        "dates": [d.isoformat() for d, _ in sampled],
+        "navs": [round(n, 2) for _, n in sampled],
+    })
+
 def main():
     cfg = get_config()
     server = cfg.get("server", {})

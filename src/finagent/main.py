@@ -83,6 +83,7 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
 @app.post("/chat")
 async def chat(query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
+    log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query)
         return JSONResponse({"status": "ok", "response": response})
@@ -167,10 +168,10 @@ async def compare(amfi_code: str):
 def main():
     cfg = get_config()
     server = cfg.get("server", {})
-    print("🚀 FinAgent starting at http://{}:{}".format(
-        server.get("host", "127.0.0.1"), server.get("port", 8000)
-    ))
-    uvicorn.run(app, host=server.get("host", "127.0.0.1"), port=server.get("port", 8000))
+    host = server.get("host", "0.0.0.0")
+    port = server.get("port", 8000)
+    print(f"🚀 FinAgent starting at http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":

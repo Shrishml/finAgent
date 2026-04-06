@@ -3,16 +3,16 @@ set -e
 cd "$(dirname "$0")/src"
 
 echo "🔍 Checking Python..."
-python3 --version 2>/dev/null | grep -qE "3\.(1[1-9]|[2-9][0-9])" || {
-    echo "❌ Python 3.11+ required. Found: $(python3 --version 2>&1)"
+python3.11 --version 2>/dev/null | grep -qE "3\.(1[1-9]|[2-9][0-9])" || {
+    echo "❌ Python 3.11+ required. Found: $(python3.11 --version 2>&1)"
     exit 1
 }
-echo "✅ $(python3 --version)"
+echo "✅ $(python3.11 --version)"
 
 # Create venv if needed
 if [ ! -d .venv ]; then
     echo "📦 Creating virtual environment..."
-    python3 -m venv .venv
+    python3.11 -m venv .venv
 fi
 source .venv/bin/activate
 
@@ -42,5 +42,5 @@ fi
 
 # Launch
 echo ""
-echo "🚀 Starting FinAgent on http://localhost:8000"
+echo "🚀 Starting FinAgent on http://0.0.0.0:8000"
 python -m finagent.main

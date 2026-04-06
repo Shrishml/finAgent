@@ -1,7 +1,7 @@
 # FinAgent Configuration
 
 [llm]
-default = "kiro"          # "kiro", "claude-cli", "gemini-cli", or "api"
+default = "gemini"          # "gemini", "kiro", "claude-cli", or "api"
 # parsing = "kiro"        # override for PDF extraction tasks
 # reasoning = "kiro"      # override for financial analysis tasks
 

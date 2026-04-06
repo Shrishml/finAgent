@@ -2,9 +2,12 @@ import shutil
 
 from .base import LLMProvider
 from .kiro import KiroCLIProvider
+from .gemini import GeminiCLIProvider
 
 _PROVIDERS: dict[str, type[LLMProvider]] = {
     "kiro": KiroCLIProvider,
+    "gemini": GeminiCLIProvider,
+    "gemini-cli": GeminiCLIProvider,
 }
 
 _instances: dict[str, LLMProvider] = {}
@@ -31,6 +34,10 @@ def get_provider(role: str = "default") -> LLMProvider:
         if provider_name in ("kiro",) and not shutil.which("kiro-cli"):
             raise RuntimeError(
                 "kiro-cli not found. Install it or configure an API key in config.toml"
+            )
+        if provider_name in ("gemini", "gemini-cli") and not shutil.which("gemini"):
+            raise RuntimeError(
+                "gemini (Gemini CLI) not found. Install it or configure an API key in config.toml"
             )
         _instances[provider_name] = cls()
 

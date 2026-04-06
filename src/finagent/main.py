@@ -145,6 +145,7 @@ async def demo():
                   units=3500.0, nav=29.5, current_value=103250.0, invested_value=100000.0,
                   transactions=[_t("2024-01-01", 50000, 1785.7), _t("2025-01-01", 50000, 1724.1)]),
     ]
+    clear_holdings()
     try:
         holdings = enrich_holdings(holdings)
     except Exception as e:

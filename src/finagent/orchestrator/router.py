@@ -5,12 +5,12 @@ from finagent.llm import get_provider
 
 INTENT_SCHEMA = {
     "domain": "mf | insurance | loan | general",
-    "mode": "analyze | research | cross_domain",
+    "mode": "analyze | research | deep_dive | cross_domain",
 }
 
 CLASSIFY_PROMPT = """Classify this user query about personal finance. Respond with JSON only.
 
-{{"domain": "mf" or "insurance" or "loan" or "general", "mode": "analyze" or "research" or "cross_domain"}}
+{{"domain": "mf" or "insurance" or "loan" or "general", "mode": "analyze" or "research" or "deep_dive" or "cross_domain"}}
 
 Rules:
 - "mf" = mutual funds, SIP, portfolio, expense ratio, NAV, XIRR, ELSS, index funds
@@ -19,6 +19,7 @@ Rules:
 - "general" = greetings, unclear, or multi-domain questions
 - "analyze" = questions about user's own data ("my portfolio", "my funds", "what do I have")
 - "research" = searching for new options ("find me", "best fund", "recommend", "compare")
+- "deep_dive" = historical analysis of a specific fund ("how did X perform", "rolling returns", "crash", "SIP simulation", "drawdown", "volatility", "consistency")
 - "cross_domain" = questions spanning multiple domains ("should I prepay loan or invest")
 
 Query: {query}"""
@@ -58,7 +59,12 @@ def _keyword_classify(query: str) -> dict:
 
     # Mode detection
     mode = "analyze"
-    if any(k in q for k in ["find", "best", "recommend", "compare", "suggest", "search", "alternative"]):
+    deep_dive_keywords = ["how did", "rolling return", "crash", "covid", "drawdown", "volatility",
+                          "sip simulation", "consistency", "stress test", "historical", "max drawdown",
+                          "sharpe", "cagr", "2008", "gfc", "nbfc"]
+    if any(k in q for k in deep_dive_keywords):
+        mode = "deep_dive"
+    elif any(k in q for k in ["find", "best", "recommend", "compare", "suggest", "search", "alternative"]):
         mode = "research"
     elif any(k in q for k in ["should i", "versus", "vs", "or invest", "or prepay"]):
         mode = "cross_domain"

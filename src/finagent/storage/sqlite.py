@@ -33,6 +33,20 @@ def _get_conn() -> sqlite3.Connection:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS nav_history (
+            amfi_code TEXT,
+            date TEXT,
+            nav REAL,
+            PRIMARY KEY (amfi_code, date)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS nav_history_meta (
+            amfi_code TEXT PRIMARY KEY,
+            last_fetched TEXT
+        )
+    """)
     conn.commit()
     return conn
 

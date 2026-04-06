@@ -1,8 +1,11 @@
 """Mutual Fund Domain Agent — analyze, research, and summarize."""
 from finagent.agents.base import DomainAgent
+from finagent.analytics.nav_history import NAVHistoryEngine
 from finagent.llm import get_provider
 from finagent.models.mf import MFHolding
 from finagent.models.summary import FinancialSummary
+
+_nav_engine = NAVHistoryEngine()
 
 
 class MFAgent(DomainAgent):
@@ -43,6 +46,55 @@ User Question: {query}
 Constraints: {constraints or 'None specified'}
 
 Provide specific fund recommendations with reasoning. Note: this is research mode — you're searching for options, not analyzing the user's existing portfolio."""
+
+        return await llm.complete(prompt)
+
+    async def deep_dive(self, query: str, amfi_code: str, scheme_name: str = "") -> str:
+        """Deep dive into a fund using historical NAV data."""
+        report = _nav_engine.full_report(amfi_code)
+        if not report.get("cagr_since_inception") and not report.get("volatility"):
+            return f"No historical NAV data available for {scheme_name or amfi_code}. The fund may be too new or the AMFI code may be incorrect."
+
+        # Format report for LLM
+        lines = [f"## Deep Dive: {scheme_name or amfi_code}\n"]
+        if report["cagr_since_inception"] is not None:
+            lines.append(f"CAGR (inception): {report['cagr_since_inception']*100:.1f}%")
+        for period in ["1y", "3y", "5y", "10y"]:
+            val = report.get(f"cagr_{period}")
+            if val is not None:
+                lines.append(f"CAGR ({period}): {val*100:.1f}%")
+        if report["volatility"] is not None:
+            lines.append(f"Volatility: {report['volatility']*100:.1f}%")
+        if report["sharpe_ratio"] is not None:
+            lines.append(f"Sharpe Ratio: {report['sharpe_ratio']}")
+        if report["consistency_score_3y"] is not None:
+            lines.append(f"Consistency (3Y rolling): {report['consistency_score_3y']}%")
+        dd = report.get("max_drawdown")
+        if dd:
+            lines.append(f"Max Drawdown: -{dd['drawdown']}% (peak {dd['peak_date']} → trough {dd['trough_date']})")
+            if dd.get("recovery_months"):
+                lines.append(f"  Recovery: {dd['recovery_months']} months")
+        crashes = report.get("crash_stress_test", [])
+        if crashes:
+            lines.append("\nCrash Stress Tests:")
+            for c in crashes:
+                rec = f", recovered in {c['recovery_months']}mo" if c.get("recovery_months") else ", not yet recovered"
+                lines.append(f"  {c['label']}: -{c['drawdown_pct']}%{rec}")
+        sip = report.get("sip_simulation")
+        if sip:
+            lines.append(f"\nSIP Simulation (₹{sip['monthly_amount']:,.0f}/mo from {sip['start_date']}):")
+            lines.append(f"  Invested: ₹{sip['total_invested']:,.0f} → Value: ₹{sip['final_value']:,.0f}")
+            lines.append(f"  Gain: ₹{sip['absolute_gain']:,.0f}" + (f" | XIRR: {sip['xirr_pct']}%" if sip.get("xirr_pct") else ""))
+
+        analysis = "\n".join(lines)
+        llm = get_provider("reasoning")
+        prompt = f"""You are a mutual fund analyst. Using this historical analysis, answer the user's question.
+
+{analysis}
+
+User Question: {query}
+
+Be specific with numbers. If the user asks about a crash, focus on the stress test data. If asking about SIP, focus on simulation. Always mention both risk and return."""
 
         return await llm.complete(prompt)
 

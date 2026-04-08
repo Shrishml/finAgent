@@ -7,7 +7,7 @@ from finagent.connectors.amfi import enrich_holdings
 _agents = {"mf": MFAgent()}
 
 
-async def handle_query(query: str) -> str:
+async def handle_query(query: str, user_id: int | None = None) -> str:
     """Main entry point: classify intent → route to agent → return response."""
     intent = await classify_intent(query)
     domain = intent.get("domain", "general")
@@ -17,13 +17,13 @@ async def handle_query(query: str) -> str:
     if not agent:
         return f"I can help with mutual funds for now. Ask me about your portfolio, expense ratios, or fund recommendations."
 
-    holdings = load_holdings()
+    holdings = load_holdings(user_id)
 
     # Lazy enrichment: if any holdings lack expense ratios, enrich and save
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
             holdings = enrich_holdings(holdings)
-            save_holdings(holdings)
+            save_holdings(holdings, user_id)
         except Exception:
             pass  # Use unenriched data
 

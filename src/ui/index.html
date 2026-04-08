@@ -6,6 +6,7 @@
 <title>FinBestie</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   .chat-msg { white-space: pre-wrap; }
   #chat-box { scroll-behavior: smooth; }
@@ -37,6 +38,17 @@
     <button id="toggle-upload" class="text-xs text-blue-600 hover:underline hidden">↑ Upload</button>
     <button id="clear-btn" class="text-xs text-red-400 hover:text-red-600 hidden">Clear</button>
     <button id="chat-toggle" class="bg-emerald-600 text-white rounded-full w-9 h-9 flex items-center justify-center text-base hover:bg-emerald-700 shadow-lg" title="Ask your bestie">💬</button>
+    <!-- User avatar / Sign in -->
+    <div id="user-menu" class="relative">
+      <button id="user-btn" class="hidden items-center gap-2 text-sm text-gray-600 hover:text-gray-800" onclick="document.getElementById('user-dropdown').classList.toggle('hidden')">
+        <img id="user-avatar" class="w-7 h-7 rounded-full" src="" alt="">
+        <span id="user-name" class="hidden sm:inline text-xs"></span>
+      </button>
+      <div id="user-dropdown" class="hidden absolute right-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-20 w-32">
+        <button onclick="logout()" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Sign out</button>
+      </div>
+      <div id="signin-placeholder"></div>
+    </div>
   </div>
 </header>
 
@@ -533,6 +545,58 @@ $('clear-btn').addEventListener('click', async () => {
 });
 
 fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+
+// --- Google Auth ---
+const GOOGLE_CLIENT_ID = '440412565683-diu4c0a00ka37ut11qhai74907mgsl23.apps.googleusercontent.com';
+
+async function handleGoogleCredential(response) {
+  const res = await fetch('/auth/google', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({credential: response.credential})
+  });
+  const data = await res.json();
+  if (data.status === 'ok') {
+    showUser(data.user);
+    fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+  }
+}
+
+function showUser(user) {
+  $('user-btn').classList.remove('hidden');
+  $('user-btn').classList.add('flex');
+  $('user-avatar').src = user.picture || '';
+  $('user-name').textContent = user.name?.split(' ')[0] || '';
+  $('signin-placeholder').innerHTML = '';
+}
+
+function renderSignIn() {
+  if (!GOOGLE_CLIENT_ID) return; // dev mode — anonymous usage
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+  });
+  google.accounts.id.renderButton($('signin-placeholder'), {
+    type: 'icon', shape: 'circle', size: 'medium'
+  });
+}
+
+async function logout() {
+  await fetch('/auth/logout', {method: 'POST'});
+  $('user-btn').classList.add('hidden');
+  $('user-dropdown').classList.add('hidden');
+  $('dashboard').classList.add('hidden');
+  $('upload-section').classList.remove('hidden');
+  $('status').textContent = 'No data loaded';
+  $('status').className = 'text-sm text-gray-400';
+  renderSignIn();
+}
+
+// Check existing session on load
+fetch('/auth/me').then(r=>r.json()).then(data => {
+  if (data.status === 'ok') showUser(data.user);
+  else renderSignIn();
+}).catch(() => renderSignIn());
 </script>
 </body>
 </html>

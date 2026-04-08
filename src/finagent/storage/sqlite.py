@@ -15,15 +15,31 @@ def _get_conn() -> sqlite3.Connection:
     _DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(_DB_PATH))
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            google_id TEXT UNIQUE NOT NULL,
+            email TEXT,
+            name TEXT,
+            picture TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS holdings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             folio TEXT,
             scheme_name TEXT,
             data JSON NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(folio, scheme_name)
+            UNIQUE(user_id, folio, scheme_name)
         )
     """)
+    # Migration: add user_id column to existing holdings table
+    try:
+        conn.execute("ALTER TABLE holdings ADD COLUMN user_id INTEGER")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     conn.execute("""
         CREATE TABLE IF NOT EXISTS nav_cache (
             amfi_code TEXT PRIMARY KEY,
@@ -51,27 +67,45 @@ def _get_conn() -> sqlite3.Connection:
     return conn
 
 
-def save_holdings(holdings: list[MFHolding]):
+def get_or_create_user(google_id: str, email: str = "", name: str = "", picture: str = "") -> int:
+    """Get existing user or create new one. Returns user_id."""
+    conn = _get_conn()
+    row = conn.execute("SELECT id FROM users WHERE google_id = ?", (google_id,)).fetchone()
+    if row:
+        conn.execute("UPDATE users SET email=?, name=?, picture=? WHERE id=?", (email, name, picture, row[0]))
+        conn.commit()
+        conn.close()
+        return row[0]
+    cur = conn.execute("INSERT INTO users (google_id, email, name, picture) VALUES (?, ?, ?, ?)", (google_id, email, name, picture))
+    conn.commit()
+    uid = cur.lastrowid
+    conn.close()
+    return uid
+
+
+def save_holdings(holdings: list[MFHolding], user_id: int | None = None):
     """Upsert holdings — replaces existing entries for same folio+scheme."""
     conn = _get_conn()
     for h in holdings:
         data = asdict(h)
-        # Convert date objects to strings for JSON serialization
         for t in data.get("transactions", []):
             if hasattr(t.get("date"), "isoformat"):
                 t["date"] = t["date"].isoformat()
         conn.execute(
-            "INSERT OR REPLACE INTO holdings (folio, scheme_name, data) VALUES (?, ?, ?)",
-            (h.folio, h.scheme_name, json.dumps(data)),
+            "INSERT OR REPLACE INTO holdings (user_id, folio, scheme_name, data) VALUES (?, ?, ?, ?)",
+            (user_id, h.folio, h.scheme_name, json.dumps(data)),
         )
     conn.commit()
     conn.close()
 
 
-def load_holdings() -> list[MFHolding]:
-    """Load all stored holdings."""
+def load_holdings(user_id: int | None = None) -> list[MFHolding]:
+    """Load stored holdings for a user (or all if no user_id)."""
     conn = _get_conn()
-    rows = conn.execute("SELECT data FROM holdings").fetchall()
+    if user_id is not None:
+        rows = conn.execute("SELECT data FROM holdings WHERE user_id = ?", (user_id,)).fetchall()
+    else:
+        rows = conn.execute("SELECT data FROM holdings WHERE user_id IS NULL").fetchall()
     conn.close()
     holdings = []
     for (data_json,) in rows:
@@ -110,10 +144,13 @@ def load_holdings() -> list[MFHolding]:
     return holdings
 
 
-def clear_holdings():
-    """Clear all holdings (for re-upload)."""
+def clear_holdings(user_id: int | None = None):
+    """Clear holdings for a user (or legacy null-user holdings)."""
     conn = _get_conn()
-    conn.execute("DELETE FROM holdings")
+    if user_id is not None:
+        conn.execute("DELETE FROM holdings WHERE user_id = ?", (user_id,))
+    else:
+        conn.execute("DELETE FROM holdings WHERE user_id IS NULL")
     conn.commit()
     conn.close()
 

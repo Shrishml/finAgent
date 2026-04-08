@@ -5,16 +5,17 @@ import traceback
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile, Cookie, Response, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from finagent.auth import create_session, get_session_user, clear_session
 from finagent.config import get_config
 from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user
 from finagent.utils.returns import compute_holding_returns
 
 # Logging setup
@@ -42,6 +43,55 @@ if _UI_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(_UI_DIR)), name="static")
 
 
+def _get_user_id(request: Request) -> int | None:
+    """Extract user_id from session cookie. Returns None if not logged in."""
+    token = request.cookies.get("session")
+    if not token:
+        return None
+    user = get_session_user(token)
+    if not user:
+        return None
+    return get_or_create_user(user["google_id"], user["email"], user["name"], user["picture"])
+
+
+@app.post("/auth/google")
+async def auth_google(request: Request):
+    """Exchange Google credential for a session cookie."""
+    body = await request.json()
+    credential = body.get("credential", "")
+    if not credential:
+        return JSONResponse({"error": "Missing credential"}, status_code=400)
+    try:
+        token, user_info = create_session(credential)
+        user_id = get_or_create_user(user_info["google_id"], user_info["email"], user_info["name"], user_info["picture"])
+        resp = JSONResponse({"status": "ok", "user": {"name": user_info["name"], "email": user_info["email"], "picture": user_info["picture"]}})
+        resp.set_cookie("session", token, max_age=7 * 86400, httponly=True, samesite="lax")
+        return resp
+    except Exception as e:
+        log.error(f"Auth failed: {e}")
+        return JSONResponse({"error": str(e)}, status_code=401)
+
+
+@app.post("/auth/logout")
+async def auth_logout(request: Request):
+    token = request.cookies.get("session")
+    if token:
+        clear_session(token)
+    resp = JSONResponse({"status": "ok"})
+    resp.delete_cookie("session")
+    return resp
+
+
+@app.get("/auth/me")
+async def auth_me(request: Request):
+    """Check current session — returns user info or 401."""
+    token = request.cookies.get("session")
+    user = get_session_user(token)
+    if not user:
+        return JSONResponse({"status": "unauthenticated"}, status_code=401)
+    return JSONResponse({"status": "ok", "user": {"name": user["name"], "email": user["email"], "picture": user["picture"]}})
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     index_file = _UI_DIR / "index.html"
@@ -51,8 +101,9 @@ async def index():
 
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...), password: str = Form("")):
+async def upload(request: Request, file: UploadFile = File(...), password: str = Form("")):
     """Upload a CAMS/KFintech PDF and parse it."""
+    user_id = _get_user_id(request)
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
         content = await file.read()
         tmp.write(content)
@@ -66,7 +117,7 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
             log.info("AMFI enrichment complete")
         except Exception as e:
             log.warning(f"AMFI enrichment failed (continuing without): {e}")
-        save_holdings(holdings)
+        save_holdings(holdings, user_id)
         return JSONResponse({
             "status": "ok",
             "domain": domain,
@@ -81,11 +132,12 @@ async def upload(file: UploadFile = File(...), password: str = Form("")):
 
 
 @app.post("/chat")
-async def chat(query: str = Form(...)):
+async def chat(request: Request, query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
+    user_id = _get_user_id(request)
     log.info(f"💬 User query: {query}")
     try:
-        response = await handle_query(query)
+        response = await handle_query(query, user_id=user_id)
         return JSONResponse({"status": "ok", "response": response})
     except Exception as e:
         log.error(f"Chat failed: {e}\n{traceback.format_exc()}")
@@ -93,13 +145,14 @@ async def chat(query: str = Form(...)):
 
 
 @app.get("/holdings")
-async def get_holdings():
+async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
-    holdings = load_holdings()
+    user_id = _get_user_id(request)
+    holdings = load_holdings(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
             holdings = enrich_holdings(holdings)
-            save_holdings(holdings)
+            save_holdings(holdings, user_id)
             log.info("Lazy enrichment on /holdings complete")
         except Exception as e:
             log.debug(f"Lazy enrichment failed: {e}")
@@ -120,8 +173,9 @@ async def get_holdings():
 
 
 @app.post("/demo")
-async def demo():
+async def demo(request: Request):
     """Load a demo portfolio for users to explore without uploading."""
+    user_id = _get_user_id(request)
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
     _t = lambda d, amt, units, desc="SIP": MFTransaction(date=_date.fromisoformat(d), description=desc, amount=amt, units=units, type="SIP" if amt > 0 else "REDEMPTION")
@@ -145,28 +199,30 @@ async def demo():
                   units=3500.0, nav=29.5, current_value=103250.0, invested_value=100000.0,
                   transactions=[_t("2024-01-01", 50000, 1785.7), _t("2025-01-01", 50000, 1724.1)]),
     ]
-    clear_holdings()
+    clear_holdings(user_id)
     try:
         holdings = enrich_holdings(holdings)
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
-    save_holdings(holdings)
+    save_holdings(holdings, user_id)
     log.info("Demo portfolio loaded")
     return JSONResponse({"status": "ok", "holdings_count": len(holdings)})
 
 
 @app.post("/clear")
-async def clear():
+async def clear(request: Request):
     """Clear all stored holdings."""
-    clear_holdings()
+    user_id = _get_user_id(request)
+    clear_holdings(user_id)
     log.info("All holdings cleared")
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
 
 @app.get("/suggestions")
-async def suggestions():
+async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""
-    holdings = load_holdings()
+    user_id = _get_user_id(request)
+    holdings = load_holdings(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [
             "Upload a CAMS PDF to get started",

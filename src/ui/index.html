@@ -554,16 +554,22 @@ fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.hol
 const GOOGLE_CLIENT_ID = '440412565683-diu4c0a00ka37ut11qhai74907mgsl23.apps.googleusercontent.com';
 
 async function handleGoogleCredential(response) {
-  const res = await fetch('/auth/google', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({credential: response.credential})
-  });
-  const data = await res.json();
-  if (data.status === 'ok') {
-    showUser(data.user);
-    fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
-  }
+  console.log('Google auth callback received', response.credential ? 'with token' : 'NO TOKEN');
+  try {
+    const res = await fetch('/auth/google', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({credential: response.credential})
+    });
+    const data = await res.json();
+    console.log('Auth response:', data);
+    if (data.status === 'ok') {
+      showUser(data.user);
+      fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+    } else {
+      console.error('Auth failed:', data);
+    }
+  } catch(e) { console.error('Auth error:', e); }
 }
 
 function showUser(user) {
@@ -575,13 +581,24 @@ function showUser(user) {
 }
 
 function renderSignIn() {
-  if (!GOOGLE_CLIENT_ID) return; // dev mode — anonymous usage
+  if (!GOOGLE_CLIENT_ID) return;
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleCredential,
   });
+  // Render Google's button in a hidden container for reliable auth
+  const hidden = document.createElement('div');
+  hidden.id = 'g-btn-hidden';
+  hidden.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
+  document.body.appendChild(hidden);
+  google.accounts.id.renderButton(hidden, {type:'standard', size:'large'});
   $('signin-btn').classList.remove('hidden');
-  $('signin-btn').onclick = () => google.accounts.id.prompt();
+  $('signin-btn').onclick = () => {
+    // Click the real Google button inside the hidden container
+    const gBtn = hidden.querySelector('[role="button"]') || hidden.querySelector('div[id^="g_"]');
+    if (gBtn) gBtn.click();
+    else google.accounts.id.prompt();
+  };
 }
 
 async function logout() {

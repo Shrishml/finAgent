@@ -11,15 +11,18 @@ cd "$APP_DIR"
 git pull origin dev
 
 echo "🔄 Restarting app..."
-pkill -f 'python3 -m finagent.main' 2>/dev/null || true
+pkill -f 'finagent.main' 2>/dev/null || true
 sleep 1
+
 cd src
-nohup python3 -m finagent.main > "$LOG" 2>&1 &
-sleep 2
+source .venv/bin/activate
+pip install -e . -q 2>&1
+nohup python -m finagent.main > "$LOG" 2>&1 &
+sleep 3
 
 # Verify
 if curl -sf http://localhost:8000/auth/me > /dev/null 2>&1; then
     echo "✅ FinBestie is running. Logs: $LOG"
 else
-    echo "⚠️  App may still be starting. Check: tail -f $LOG"
+    echo "⚠️  Check logs: tail -f $LOG"
 fi

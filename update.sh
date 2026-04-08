@@ -3,7 +3,7 @@
 # Usage: ./update.sh
 set -e
 
-APP_DIR="$HOME/finagent"
+APP_DIR="$HOME/finAgent"
 LOG="/tmp/finbestie.log"
 
 echo "📦 Pulling latest code..."

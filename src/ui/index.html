@@ -68,7 +68,7 @@
         <p class="text-lg text-gray-500 mb-4">No advisor fees. No conflicts of interest. Just honest, data-driven answers about your portfolio.</p>
         <p class="text-sm text-gray-400 italic mb-8">"Is there a financial advisor minus the human and 1% fee?" — <span class="text-gray-500">r/IndiaInvestments</span></p>
         <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-          <button id="hero-demo-btn" onclick="loadDemo()" class="bg-emerald-600 text-white rounded-lg px-8 py-3 text-base font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">🎮 See it in action</button>
+          <button id="hero-demo-btn" onclick="location.href='?demo'" class="bg-emerald-600 text-white rounded-lg px-8 py-3 text-base font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">🎮 See it in action</button>
           <button id="hero-upload-btn" onclick="$('upload-section').classList.remove('hidden');$('landing-section').classList.add('hidden')" class="bg-white border-2 border-gray-300 text-gray-700 rounded-lg px-8 py-3 text-base font-medium hover:border-gray-400 transition-colors">Upload your statement →</button>
         </div>
         <div class="flex items-center justify-center gap-4 text-xs text-gray-400">
@@ -238,7 +238,7 @@
         </form>
         <div id="upload-status" class="text-sm mt-3 hidden"></div>
         <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">or</span></div></div>
-        <button onclick="loadDemo()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
+        <button onclick="location.href='?demo'" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
       </div>
       <button onclick="$('upload-section').classList.add('hidden');$('landing-section').classList.remove('hidden')" class="block mx-auto mt-4 text-xs text-gray-400 hover:text-gray-600">← Back to home</button>
     </div>
@@ -781,7 +781,14 @@ $('clear-btn').addEventListener('click', async () => {
   $('status').className = 'text-sm text-gray-400';
 });
 
-fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); }).catch(()=>{});
+// Auto-load demo if URL has ?demo
+if (new URLSearchParams(location.search).has('demo')) {
+  fetch('/demo', { method: 'POST' }).then(safeJson).then(d => {
+    if (d.status === 'ok') fetch('/holdings').then(safeJson).then(d => showPortfolio(d.holdings));
+  }).catch(()=>{});
+} else {
+  fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); }).catch(()=>{});
+}
 
 // --- Google Auth ---
 const GOOGLE_CLIENT_ID = '440412565683-diu4c0a00ka37ut11qhai74907mgsl23.apps.googleusercontent.com';

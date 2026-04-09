@@ -74,7 +74,7 @@ def _keyword_classify(query: str) -> dict:
         mode = "deep_dive"
     elif any(k in q for k in ["find", "best", "recommend", "compare", "suggest", "search", "alternative"]):
         mode = "research"
-    elif any(k in q for k in ["should i", "versus", "vs", "or invest", "or prepay"]):
+    elif any(k in q for k in ["versus", "vs", "or invest", "or prepay", "loan or sip", "insurance or"]):
         mode = "cross_domain"
 
     return {"domain": domain, "mode": mode}

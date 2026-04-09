@@ -60,8 +60,68 @@
   <!-- Main: Portfolio Dashboard -->
   <div id="main-area" class="flex-1 overflow-y-auto">
 
-    <!-- Upload Section -->
-    <div id="upload-section" class="max-w-lg mx-auto mt-20 px-4">
+    <!-- Landing Hero (first-time visitors) -->
+    <div id="landing-section">
+      <!-- Hero -->
+      <div class="max-w-3xl mx-auto px-4 pt-16 pb-10 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 mb-3">Your mutual funds, decoded by AI.</h2>
+        <p class="text-lg text-gray-500 mb-8">No advisor fees. No conflicts of interest. Just honest, data-driven answers about your portfolio.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+          <button id="hero-demo-btn" onclick="loadDemo()" class="bg-emerald-600 text-white rounded-lg px-8 py-3 text-base font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">🎮 See it in action</button>
+          <button id="hero-upload-btn" onclick="$('upload-section').classList.remove('hidden');$('landing-section').classList.add('hidden')" class="bg-white border-2 border-gray-300 text-gray-700 rounded-lg px-8 py-3 text-base font-medium hover:border-gray-400 transition-colors">Upload your CAS →</button>
+        </div>
+        <div class="flex items-center justify-center gap-4 text-xs text-gray-400">
+          <span>🔒 Your data stays private</span>
+          <span>·</span>
+          <span>⚡ Results in seconds</span>
+          <span>·</span>
+          <span>🆓 100% free</span>
+        </div>
+      </div>
+
+      <!-- Real problems. Real solutions. -->
+      <div class="max-w-3xl mx-auto px-4 pb-12">
+        <h3 class="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Real problems. Real solutions.</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
+            <div class="text-lg mb-1">💸</div>
+            <p class="text-sm font-medium text-gray-800">"Am I paying too much in expense ratios?"</p>
+            <p class="text-xs text-gray-400 mt-1">FinBestie compares your funds against category peers and finds cheaper alternatives.</p>
+          </div>
+          <div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
+            <div class="text-lg mb-1">📊</div>
+            <p class="text-sm font-medium text-gray-800">"Is my portfolio actually diversified?"</p>
+            <p class="text-xs text-gray-400 mt-1">Instant breakdown by category, asset class, and overlap analysis across your funds.</p>
+          </div>
+          <div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
+            <div class="text-lg mb-1">📉</div>
+            <p class="text-sm font-medium text-gray-800">"How did my funds survive COVID?"</p>
+            <p class="text-xs text-gray-400 mt-1">Crash stress tests show max drawdown and recovery time for every fund you own.</p>
+          </div>
+          <div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
+            <div class="text-lg mb-1">🔄</div>
+            <p class="text-sm font-medium text-gray-800">"Should I switch from regular to direct plans?"</p>
+            <p class="text-xs text-gray-400 mt-1">See exactly how much you'd save per year by switching each fund to direct.</p>
+          </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-4">These are the top questions from real investors on Reddit — FinBestie answers them in seconds with your data.</p>
+      </div>
+
+      <!-- Privacy & trust -->
+      <div class="max-w-3xl mx-auto px-4 pb-16">
+        <div class="bg-gray-50 rounded-xl border p-5 flex flex-col sm:flex-row items-center gap-4">
+          <div class="text-3xl">🛡️</div>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Your data, your control.</p>
+            <p class="text-xs text-gray-500">No selling, no sharing, no advisor kickbacks. Your portfolio data is never used for anything except giving you answers. Open source — verify it yourself.</p>
+          </div>
+          <a href="https://github.com/Suraj1074/finagent" target="_blank" class="flex-shrink-0 text-xs text-gray-500 hover:text-gray-700 border rounded-lg px-3 py-1.5">⭐ GitHub</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Section (hidden by default, shown when user clicks "Upload your CAS") -->
+    <div id="upload-section" class="max-w-lg mx-auto mt-20 px-4 hidden">
       <div class="text-center mb-6">
         <div class="text-5xl mb-3">📊</div>
         <h2 class="text-xl font-bold text-gray-800">Analyse your mutual fund portfolio</h2>
@@ -76,8 +136,9 @@
         </form>
         <div id="upload-status" class="text-sm mt-3 hidden"></div>
         <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">or</span></div></div>
-        <button id="demo-btn" onclick="loadDemo()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
+        <button onclick="loadDemo()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
       </div>
+      <button onclick="$('upload-section').classList.add('hidden');$('landing-section').classList.remove('hidden')" class="block mx-auto mt-4 text-xs text-gray-400 hover:text-gray-600">← Back to home</button>
     </div>
 
     <!-- Dashboard -->
@@ -470,6 +531,7 @@ function addMsg(text, sender) {
 
 function showPortfolio(holdings) {
   if (!holdings || !holdings.length) return;
+  $('landing-section').classList.add('hidden');
   $('upload-section').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
   $('toggle-upload').classList.remove('hidden');
@@ -509,8 +571,8 @@ $('upload-form').addEventListener('submit', async (e) => {
 });
 
 async function loadDemo() {
-  $('demo-btn').textContent = 'Loading demo...';
-  $('demo-btn').disabled = true;
+  const btns = [document.getElementById('hero-demo-btn')].filter(Boolean);
+  btns.forEach(b => { b.textContent = 'Loading demo...'; b.disabled = true; });
   try {
     const res = await fetch('/demo', { method: 'POST' });
     const data = await res.json();
@@ -518,8 +580,7 @@ async function loadDemo() {
       fetch('/holdings').then(r=>r.json()).then(d=>showPortfolio(d.holdings));
     }
   } catch(e) { alert('Failed to load demo: ' + e.message); }
-  $('demo-btn').textContent = '🎮 Try with a demo portfolio';
-  $('demo-btn').disabled = false;
+  btns.forEach(b => { b.textContent = '🎮 See it in action'; b.disabled = false; });
 }
 
 $('chat-form').addEventListener('submit', async (e) => {
@@ -537,11 +598,16 @@ $('chat-form').addEventListener('submit', async (e) => {
   } catch(err) { $('chat-box').lastChild.remove(); addMsg('Error: '+err.message, 'agent'); }
 });
 
-$('toggle-upload').addEventListener('click', () => $('upload-section').classList.toggle('hidden'));
+$('toggle-upload').addEventListener('click', () => {
+  const isHidden = $('upload-section').classList.contains('hidden');
+  $('upload-section').classList.toggle('hidden');
+  $('landing-section').classList.add('hidden');
+});
 $('clear-btn').addEventListener('click', async () => {
   await fetch('/clear', { method: 'POST' });
   $('dashboard').classList.add('hidden');
-  $('upload-section').classList.remove('hidden');
+  $('upload-section').classList.add('hidden');
+  $('landing-section').classList.remove('hidden');
   $('toggle-upload').classList.add('hidden');
   $('clear-btn').classList.add('hidden');
   $('status').textContent = 'No data loaded';
@@ -607,7 +673,10 @@ async function logout() {
   $('user-dropdown').classList.add('hidden');
   $('signin-btn').classList.remove('hidden');
   $('dashboard').classList.add('hidden');
-  $('upload-section').classList.remove('hidden');
+  $('upload-section').classList.add('hidden');
+  $('landing-section').classList.remove('hidden');
+  $('toggle-upload').classList.add('hidden');
+  $('clear-btn').classList.add('hidden');
   $('status').textContent = 'No data loaded';
   $('status').className = 'text-sm text-gray-400';
 }

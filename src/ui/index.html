@@ -735,16 +735,32 @@ $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   addMsg(q, 'user'); $('chat-input').value = '';
-  addMsg('Thinking...', 'agent');
+  addMsg('', 'agent');
+  const msgEl = $('chat-box').lastChild;
   try {
     const fd = new FormData(); fd.append('query', q);
-    const res = await fetch('/chat', { method: 'POST', body: fd });
-    if (!res.ok) { $('chat-box').lastChild.remove(); addMsg('Server error ('+res.status+'). Please try again in a moment.', 'agent'); return; }
-    const data = await res.json();
-    $('chat-box').lastChild.remove();
-    addMsg(data.status === 'ok' ? data.response : 'Error: ' + data.message, 'agent');
+    const res = await fetch('/chat/stream', { method: 'POST', body: fd });
+    if (!res.ok) { msgEl.textContent = 'Server error ('+res.status+'). Please try again.'; return; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      for (const line of text.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const d = line.slice(6);
+        if (d === '[DONE]') break;
+        if (d.startsWith('[ERROR]')) { full += '\n⚠️ ' + d; break; }
+        full += d;
+      }
+      msgEl.textContent = full;
+      msgEl.scrollIntoView({block: 'end'});
+    }
+    if (!full) msgEl.textContent = 'No response received.';
     fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
-  } catch(err) { $('chat-box').lastChild.remove(); addMsg('Something went wrong. The server may be busy — try again.', 'agent'); }
+  } catch(err) { msgEl.textContent = 'Something went wrong. The server may be busy — try again.'; }
 });
 
 $('toggle-upload').addEventListener('click', () => {

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile, Cookie, Response, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from finagent.auth import create_session, get_session_user, clear_session
@@ -148,6 +148,24 @@ async def chat(request: Request, user_id: int = Depends(require_auth), query: st
     except Exception as e:
         log.error(f"Chat failed: {e}\n{traceback.format_exc()}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: Request, user_id: int = Depends(require_auth), query: str = Form(...)):
+    """Streaming chat endpoint — returns SSE events as LLM generates tokens."""
+    from finagent.orchestrator.engine import handle_query_stream
+    log.info(f"💬 [stream] User query: {query}")
+
+    async def event_generator():
+        try:
+            async for chunk in handle_query_stream(query, user_id=user_id):
+                yield f"data: {chunk}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            log.error(f"Stream failed: {e}")
+            yield f"data: [ERROR] {e}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.get("/holdings")

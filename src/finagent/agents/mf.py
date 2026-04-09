@@ -27,7 +27,24 @@ class MFAgent(DomainAgent):
 
         # Use LLM only for natural language presentation
         llm = get_provider("reasoning")
-        prompt = f"""You are a mutual fund analyst. Based on this portfolio data, answer the user's question.
+        prompt = self._analyze_prompt(query, analysis)
+        return await llm.complete(prompt)
+
+    async def analyze_stream(self, query: str, user_data: list):
+        """Streaming version of analyze — yields chunks as LLM generates."""
+        holdings = [h for h in user_data if isinstance(h, MFHolding)]
+        if not holdings:
+            yield "No mutual fund data found. Please upload a CAMS/KFintech PDF first."
+            return
+
+        analysis = self._compute_analysis(holdings)
+        llm = get_provider("reasoning")
+        prompt = self._analyze_prompt(query, analysis)
+        async for chunk in llm.complete_stream(prompt):
+            yield chunk
+
+    def _analyze_prompt(self, query: str, analysis: str) -> str:
+        return f"""You are a mutual fund analyst. Based on this portfolio data, answer the user's question.
 Do NOT use any tools, search files, or access external data. Answer ONLY from the data below.
 
 Portfolio Analysis:
@@ -36,8 +53,6 @@ Portfolio Analysis:
 User Question: {query}
 
 Respond in clear, actionable language. Show specific numbers. If suggesting changes, explain why."""
-
-        return await llm.complete(prompt)
 
     async def research(self, query: str, constraints: dict | None = None) -> str:
         llm = get_provider("reasoning")

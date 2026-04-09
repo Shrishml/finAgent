@@ -164,17 +164,48 @@
         </div>
       </div>
 
-      <!-- Are you losing money? -->
+      <!-- Quick check quiz -->
       <div class="max-w-3xl mx-auto px-4 pb-10">
-        <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-6">
-          <h3 class="text-base font-bold text-gray-800 mb-3">💡 Are you losing money without knowing it?</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
-            <div class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">▸</span> Regular vs Direct plans — the hidden commission you're paying</div>
-            <div class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">▸</span> Funds that underperform their category for 3+ years</div>
-            <div class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">▸</span> Over-diversification — 10 funds doing the job of 4</div>
-            <div class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">▸</span> Expense ratios above category average</div>
+        <div class="bg-white rounded-xl border shadow-sm p-6" id="quiz-section">
+          <h3 class="text-base font-bold text-gray-800 mb-1 text-center">📋 Sound familiar?</h3>
+          <p class="text-xs text-gray-400 text-center mb-5">3 quick questions. No sign-up needed.</p>
+          <div id="quiz-flow">
+            <!-- Q1 -->
+            <div id="quiz-q1" class="quiz-step">
+              <p class="text-sm text-gray-700 font-medium mb-3">I picked most of my funds from YouTube, friends, or articles — not sure if they still make sense.</p>
+              <div class="flex gap-3">
+                <button onclick="quizAnswer(1,true)" class="flex-1 border-2 rounded-lg py-2.5 text-sm font-medium hover:border-emerald-400 hover:bg-emerald-50 transition-colors">That's me</button>
+                <button onclick="quizAnswer(1,false)" class="flex-1 border-2 rounded-lg py-2.5 text-sm font-medium hover:border-gray-400 hover:bg-gray-50 transition-colors">Not really</button>
+              </div>
+            </div>
+            <!-- Q2 -->
+            <div id="quiz-q2" class="quiz-step hidden">
+              <p class="text-sm text-gray-700 font-medium mb-3">When markets drop, I'm not sure if I should do something or just wait.</p>
+              <div class="flex gap-3">
+                <button onclick="quizAnswer(2,true)" class="flex-1 border-2 rounded-lg py-2.5 text-sm font-medium hover:border-emerald-400 hover:bg-emerald-50 transition-colors">That's me</button>
+                <button onclick="quizAnswer(2,false)" class="flex-1 border-2 rounded-lg py-2.5 text-sm font-medium hover:border-gray-400 hover:bg-gray-50 transition-colors">Not really</button>
+              </div>
+            </div>
+            <!-- Q3 -->
+            <div id="quiz-q3" class="quiz-step hidden">
+              <p class="text-sm text-gray-700 font-medium mb-3">When was the last time someone reviewed your entire portfolio?</p>
+              <div class="flex gap-3">
+                <button onclick="quizAnswer(3,'recently')" class="flex-1 border-2 rounded-lg py-2 text-sm font-medium hover:border-emerald-400 hover:bg-emerald-50 transition-colors">Recently</button>
+                <button onclick="quizAnswer(3,'awhile')" class="flex-1 border-2 rounded-lg py-2 text-sm font-medium hover:border-amber-400 hover:bg-amber-50 transition-colors">It's been a while</button>
+                <button onclick="quizAnswer(3,'never')" class="flex-1 border-2 rounded-lg py-2 text-sm font-medium hover:border-red-400 hover:bg-red-50 transition-colors">Never</button>
+              </div>
+            </div>
+            <!-- Result -->
+            <div id="quiz-result" class="quiz-step hidden text-center">
+              <p id="quiz-msg" class="text-sm text-gray-700 font-medium mb-4"></p>
+              <button onclick="loadDemo()" class="bg-emerald-600 text-white rounded-lg px-6 py-2.5 text-sm font-semibold hover:bg-emerald-700 transition-colors">Get your free review →</button>
+            </div>
           </div>
-          <button onclick="loadDemo()" class="mt-4 bg-amber-500 text-white rounded-lg px-6 py-2 text-sm font-semibold hover:bg-amber-600 transition-colors">Find out in 30 seconds →</button>
+          <div class="flex justify-center gap-1.5 mt-4" id="quiz-dots">
+            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <div class="w-2 h-2 rounded-full bg-gray-200"></div>
+            <div class="w-2 h-2 rounded-full bg-gray-200"></div>
+          </div>
         </div>
       </div>
 
@@ -750,6 +781,31 @@ async function logout() {
   $('clear-btn').classList.add('hidden');
   $('status').textContent = 'No data loaded';
   $('status').className = 'text-sm text-gray-400';
+}
+
+// --- Quiz logic ---
+let quizScore = 0;
+function quizAnswer(q, val) {
+  if (q <= 2 && val === true) quizScore++;
+  document.getElementById('quiz-q'+q).classList.add('hidden');
+  const dots = document.querySelectorAll('#quiz-dots div');
+  if (q < 3) {
+    document.getElementById('quiz-q'+(q+1)).classList.remove('hidden');
+    dots[q].classList.replace('bg-gray-200','bg-emerald-500');
+  } else {
+    dots[2].classList.replace('bg-gray-200','bg-emerald-500');
+    let msg;
+    if (val === 'never' || (quizScore >= 2)) {
+      msg = "You\u2019re not alone \u2014 80% of investors say the same. That\u2019s exactly why we built FinBestie.";
+    } else if (val === 'awhile' || quizScore >= 1) {
+      msg = "Most portfolios drift silently over time. A quick check takes 30 seconds.";
+    } else {
+      msg = "Nice \u2014 you\u2019re ahead of most. FinBestie can be your second opinion.";
+    }
+    $('quiz-msg').textContent = msg;
+    $('quiz-result').classList.remove('hidden');
+    $('quiz-dots').classList.add('hidden');
+  }
 }
 
 // Check existing session on load

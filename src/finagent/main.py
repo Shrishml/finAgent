@@ -5,7 +5,7 @@ import traceback
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, File, Form, UploadFile, Cookie, Response, Request
+from fastapi import FastAPI, File, Form, UploadFile, Cookie, Response, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -52,6 +52,14 @@ def _get_user_id(request: Request) -> int | None:
     if not user:
         return None
     return get_or_create_user(user["google_id"], user["email"], user["name"], user["picture"])
+
+
+def require_auth(request: Request) -> int:
+    """FastAPI dependency — returns user_id or raises 401."""
+    user_id = _get_user_id(request)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return user_id
 
 
 @app.post("/auth/google")
@@ -101,9 +109,8 @@ async def index():
 
 
 @app.post("/upload")
-async def upload(request: Request, file: UploadFile = File(...), password: str = Form("")):
+async def upload(request: Request, user_id: int = Depends(require_auth), file: UploadFile = File(...), password: str = Form("")):
     """Upload a CAMS/KFintech PDF and parse it."""
-    user_id = _get_user_id(request)
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
         content = await file.read()
         tmp.write(content)
@@ -132,9 +139,8 @@ async def upload(request: Request, file: UploadFile = File(...), password: str =
 
 
 @app.post("/chat")
-async def chat(request: Request, query: str = Form(...)):
+async def chat(request: Request, user_id: int = Depends(require_auth), query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
-    user_id = _get_user_id(request)
     log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query, user_id=user_id)
@@ -145,9 +151,8 @@ async def chat(request: Request, query: str = Form(...)):
 
 
 @app.get("/holdings")
-async def get_holdings(request: Request):
+async def get_holdings(request: Request, user_id: int = Depends(require_auth)):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
-    user_id = _get_user_id(request)
     holdings = load_holdings(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
@@ -210,18 +215,16 @@ async def demo(request: Request):
 
 
 @app.post("/clear")
-async def clear(request: Request):
+async def clear(request: Request, user_id: int = Depends(require_auth)):
     """Clear all stored holdings."""
-    user_id = _get_user_id(request)
     clear_holdings(user_id)
     log.info("All holdings cleared")
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
 
 @app.get("/suggestions")
-async def suggestions(request: Request):
+async def suggestions(request: Request, user_id: int = Depends(require_auth)):
     """Generate personalized question suggestions based on portfolio."""
-    user_id = _get_user_id(request)
     holdings = load_holdings(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [

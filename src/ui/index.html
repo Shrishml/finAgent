@@ -5,10 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FinBestie</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   .chat-msg { white-space: pre-wrap; }
+  .chat-msg.prose { white-space: normal; }
+  .chat-msg.prose h1,.chat-msg.prose h2,.chat-msg.prose h3 { font-size: 0.85rem; font-weight: 700; margin: 0.5em 0 0.25em; }
+  .chat-msg.prose p { margin: 0.3em 0; }
+  .chat-msg.prose ul,.chat-msg.prose ol { margin: 0.3em 0; padding-left: 1.2em; }
+  .chat-msg.prose li { margin: 0.15em 0; }
+  .chat-msg.prose strong { font-weight: 700; }
+  .chat-msg.prose code { background: #e5e7eb; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.8em; }
+  .chat-msg.prose table { border-collapse: collapse; margin: 0.5em 0; width: 100%; }
+  .chat-msg.prose th,.chat-msg.prose td { border: 1px solid #d1d5db; padding: 0.25em 0.5em; text-align: left; }
+  .chat-msg.prose th { background: #f3f4f6; font-weight: 600; }
   #chat-box { scroll-behavior: smooth; }
   .chat-sidebar { transition: width 0.3s ease; overflow: hidden; }
   .chart-container { position: relative; height: 220px; }
@@ -640,8 +651,9 @@ function addMsg(text, sender) {
   const sa = $('suggestions-area'); if (sa) sa.remove();
   $('chat-box').classList.remove('justify-center');
   const div = document.createElement('div');
-  div.className = sender === 'user' ? 'chat-msg bg-blue-50 rounded-lg p-2 text-xs ml-8' : 'chat-msg bg-gray-100 rounded-lg p-2 text-xs mr-8';
-  div.textContent = text;
+  div.className = sender === 'user' ? 'chat-msg bg-blue-50 rounded-lg p-2 text-xs ml-8' : 'chat-msg bg-gray-100 rounded-lg p-2 text-xs mr-8 prose prose-xs max-w-none';
+  if (sender === 'agent' && text) div.innerHTML = marked.parse(text);
+  else div.textContent = text;
   $('chat-box').appendChild(div);
   $('chat-box').scrollTop = $('chat-box').scrollHeight;
 }
@@ -758,7 +770,7 @@ $('chat-form').addEventListener('submit', async (e) => {
         if (!full) msgEl.style.opacity = '1';
         full += d;
       }
-      if (full) msgEl.textContent = full;
+      if (full) msgEl.innerHTML = marked.parse(full);
       msgEl.scrollIntoView({block: 'end'});
     }
     if (!full) { msgEl.style.opacity = '1'; msgEl.textContent = 'No response received.'; }

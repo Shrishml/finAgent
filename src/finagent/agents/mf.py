@@ -28,6 +28,7 @@ class MFAgent(DomainAgent):
         # Use LLM only for natural language presentation
         llm = get_provider("reasoning")
         prompt = f"""You are a mutual fund analyst. Based on this portfolio data, answer the user's question.
+Do NOT use any tools, search files, or access external data. Answer ONLY from the data below.
 
 Portfolio Analysis:
 {analysis}
@@ -41,6 +42,7 @@ Respond in clear, actionable language. Show specific numbers. If suggesting chan
     async def research(self, query: str, constraints: dict | None = None) -> str:
         llm = get_provider("reasoning")
         prompt = f"""You are a mutual fund research analyst. Help the user find better investment options.
+Do NOT use any tools, search files, or access external data.
 
 User Question: {query}
 Constraints: {constraints or 'None specified'}
@@ -89,6 +91,7 @@ Provide specific fund recommendations with reasoning. Note: this is research mod
         analysis = "\n".join(lines)
         llm = get_provider("reasoning")
         prompt = f"""You are a mutual fund analyst. Using this historical analysis, answer the user's question.
+Do NOT use any tools, search files, or access external data. Answer ONLY from the data below.
 
 {analysis}
 

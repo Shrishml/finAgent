@@ -102,6 +102,7 @@ async def auth_me(request: Request):
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/demo", response_class=HTMLResponse)
 async def index():
     index_file = _UI_DIR / "index.html"
     if index_file.exists():

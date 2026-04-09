@@ -1,9 +1,13 @@
 import asyncio
 import json
+import logging
 import re
+import time
 from typing import AsyncIterator
 
 from .base import LLMProvider
+
+log = logging.getLogger("finagent")
 
 # Markers gemini-cli may emit that aren't part of the LLM response
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
@@ -27,7 +31,8 @@ class GeminiCLIProvider(LLMProvider):
 
     async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         full_prompt = self._build_prompt(prompt, system, json_mode)
-        # Using -p for headless prompt and --approval-mode=yolo to auto-approve tool calls
+        log.info(f"[gemini] calling gemini-cli (timeout={self._timeout}s, json_mode={json_mode})")
+        t0 = time.time()
         proc = await asyncio.create_subprocess_exec(
             "gemini", "-p", full_prompt, "--approval-mode=yolo",
             stdout=asyncio.subprocess.PIPE,
@@ -37,13 +42,16 @@ class GeminiCLIProvider(LLMProvider):
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
         except asyncio.TimeoutError:
             proc.kill()
+            log.error(f"[gemini] TIMEOUT after {self._timeout}s")
             raise TimeoutError(f"gemini-cli timed out after {self._timeout}s")
         
         if proc.returncode != 0:
             err_msg = stderr.decode()
+            log.error(f"[gemini] FAILED rc={proc.returncode}: {err_msg[:500]}")
             raise RuntimeError(f"gemini-cli failed with code {proc.returncode}: {err_msg}")
             
         raw = stdout.decode()
+        log.info(f"[gemini] completed in {time.time()-t0:.1f}s, response_len={len(raw)}")
         return self._extract_response(raw, json_mode)
 
     async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:

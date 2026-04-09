@@ -1,8 +1,11 @@
+import logging
 import shutil
 
 from .base import LLMProvider
 from .kiro import KiroCLIProvider
 from .gemini import GeminiCLIProvider
+
+log = logging.getLogger("finagent")
 
 _PROVIDERS: dict[str, type[LLMProvider]] = {
     "kiro": KiroCLIProvider,
@@ -55,5 +58,6 @@ def get_provider(role: str = "default") -> LLMProvider:
             available = ", ".join(_PROVIDERS.keys())
             raise ValueError(f"Unknown LLM provider '{provider_name}'. Available: {available}")
         _instances[provider_name] = cls()
+        log.info(f"[llm] initialized provider={provider_name} for role={role}")
 
     return _instances[provider_name]

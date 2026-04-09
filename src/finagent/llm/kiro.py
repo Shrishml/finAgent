@@ -1,9 +1,13 @@
 import asyncio
 import json
+import logging
 import re
+import time
 from typing import AsyncIterator
 
 from .base import LLMProvider
+
+log = logging.getLogger("finagent")
 
 # Markers kiro-cli may emit that aren't part of the LLM response
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
@@ -27,6 +31,8 @@ class KiroCLIProvider(LLMProvider):
 
     async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         full_prompt = self._build_prompt(prompt, system, json_mode)
+        log.info(f"[kiro] calling kiro-cli (timeout={self._timeout}s, json_mode={json_mode})")
+        t0 = time.time()
         proc = await asyncio.create_subprocess_exec(
             "kiro-cli", "chat", "--no-interactive", "--trust-all-tools", full_prompt,
             stdout=asyncio.subprocess.PIPE,
@@ -36,8 +42,10 @@ class KiroCLIProvider(LLMProvider):
             stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
         except asyncio.TimeoutError:
             proc.kill()
+            log.error(f"[kiro] TIMEOUT after {self._timeout}s")
             raise TimeoutError(f"kiro-cli timed out after {self._timeout}s")
         raw = stdout.decode()
+        log.info(f"[kiro] completed in {time.time()-t0:.1f}s, response_len={len(raw)}")
         return self._extract_response(raw, json_mode)
 
     async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:

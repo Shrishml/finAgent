@@ -787,7 +787,10 @@ if (new URLSearchParams(location.search).has('demo')) {
     if (d.status === 'ok') fetch('/holdings').then(safeJson).then(d => showPortfolio(d.holdings));
   }).catch(()=>{});
 } else {
-  fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); }).catch(()=>{});
+  // Only load portfolio for signed-in users (not stale demo data)
+  fetch('/auth/me').then(safeJson).then(() => {
+    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+  }).catch(()=>{});
 }
 
 // --- Google Auth ---

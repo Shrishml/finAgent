@@ -59,6 +59,7 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
 
 async def handle_query_stream(query: str, user_id: int | None = None):
     """Streaming version — yields chunks as LLM generates them."""
+    yield "[STATUS] Analyzing your question..."
     intent = await classify_intent(query)
     domain = intent.get("domain", "general")
 
@@ -67,13 +68,17 @@ async def handle_query_stream(query: str, user_id: int | None = None):
         yield "I can help with mutual funds for now. Ask me about your portfolio."
         return
 
+    yield "[STATUS] Loading your portfolio..."
     holdings = load_holdings(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
+            yield "[STATUS] Enriching fund data..."
             holdings = enrich_holdings(holdings)
             save_holdings(holdings, user_id)
         except Exception:
             pass
+
+    yield f"[STATUS] Reviewing {len(holdings)} funds..."
 
     async for chunk in agent.analyze_stream(query, holdings):
         yield chunk

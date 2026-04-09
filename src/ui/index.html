@@ -754,6 +754,7 @@ $('chat-form').addEventListener('submit', async (e) => {
         const d = line.slice(6);
         if (d === '[DONE]') break;
         if (d.startsWith('[ERROR]')) { full += '\n⚠️ ' + d; break; }
+        if (d.startsWith('[STATUS] ')) { msgEl.textContent = '⏳ ' + d.slice(9); continue; }
         if (!full) msgEl.style.opacity = '1';
         full += d;
       }

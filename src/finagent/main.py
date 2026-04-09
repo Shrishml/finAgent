@@ -168,7 +168,7 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
             log.error(f"Stream failed: {e}")
             yield f"data: [ERROR] {e}\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/holdings")

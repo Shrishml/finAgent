@@ -1,9 +1,11 @@
 import logging
+import os
 import shutil
 
 from .base import LLMProvider
 from .kiro import KiroCLIProvider
 from .gemini import GeminiCLIProvider
+from .gemini_api import GeminiAPIProvider
 
 log = logging.getLogger("finagent")
 
@@ -11,21 +13,26 @@ _PROVIDERS: dict[str, type[LLMProvider]] = {
     "kiro": KiroCLIProvider,
     "gemini": GeminiCLIProvider,
     "gemini-cli": GeminiCLIProvider,
+    "gemini-api": GeminiAPIProvider,
 }
 
-# Detection order: prefer gemini if available, then kiro
-_DETECT_ORDER = [("gemini", "gemini"), ("kiro", "kiro-cli")]
+# Detection order: prefer gemini-api if key set, then gemini-cli, then kiro
+_DETECT_ORDER = [("gemini-api", None), ("gemini", "gemini"), ("kiro", "kiro-cli")]
 
 _instances: dict[str, LLMProvider] = {}
 
 
 def _auto_detect() -> str:
-    """Find the first available LLM CLI tool on this machine."""
+    """Find the first available LLM provider."""
     for provider_name, cli_cmd in _DETECT_ORDER:
-        if shutil.which(cli_cmd):
+        if cli_cmd is None:
+            # API-based provider — check for env var
+            if provider_name == "gemini-api" and os.environ.get("GEMINI_API_KEY"):
+                return provider_name
+        elif shutil.which(cli_cmd):
             return provider_name
     raise RuntimeError(
-        "No LLM CLI found. Install gemini (Gemini CLI) or kiro-cli."
+        "No LLM found. Set GEMINI_API_KEY env var, or install gemini CLI or kiro-cli."
     )
 
 

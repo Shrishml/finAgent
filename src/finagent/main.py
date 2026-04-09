@@ -139,8 +139,9 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
 
 
 @app.post("/chat")
-async def chat(request: Request, user_id: int = Depends(require_auth), query: str = Form(...)):
+async def chat(request: Request, query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
+    user_id = _get_user_id(request)
     log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query, user_id=user_id)
@@ -169,8 +170,9 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
 
 
 @app.get("/holdings")
-async def get_holdings(request: Request, user_id: int = Depends(require_auth)):
+async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
+    user_id = _get_user_id(request)
     holdings = load_holdings(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
@@ -241,8 +243,9 @@ async def clear(request: Request, user_id: int = Depends(require_auth)):
 
 
 @app.get("/suggestions")
-async def suggestions(request: Request, user_id: int = Depends(require_auth)):
+async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""
+    user_id = _get_user_id(request)
     holdings = load_holdings(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [

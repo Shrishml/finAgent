@@ -26,18 +26,23 @@ Query: {query}"""
 
 
 async def classify_intent(query: str) -> dict:
-    """Classify user query into domain + mode. Returns dict with 'domain' and 'mode'."""
+    """Classify user query into domain + mode. Uses fast keyword matching first,
+    only falls back to LLM for ambiguous queries."""
+    result = _keyword_classify(query)
+    if result["domain"] != "general":
+        return result
+
+    # Only use LLM when keyword matching can't determine domain
     llm = get_provider("default")
     try:
         raw = await llm.complete(CLASSIFY_PROMPT.format(query=query), json_mode=True)
-        result = json.loads(raw)
-        if "domain" in result and "mode" in result:
-            return result
+        parsed = json.loads(raw)
+        if "domain" in parsed and "mode" in parsed:
+            return parsed
     except (json.JSONDecodeError, Exception):
         pass
 
-    # Fallback: keyword-based classification
-    return _keyword_classify(query)
+    return result
 
 
 def _keyword_classify(query: str) -> dict:
@@ -46,7 +51,10 @@ def _keyword_classify(query: str) -> dict:
 
     # Domain detection
     domain = "general"
-    mf_keywords = ["fund", "sip", "portfolio", "expense ratio", "nav", "xirr", "elss", "mutual", "nifty", "index"]
+    mf_keywords = ["fund", "sip", "portfolio", "expense ratio", "nav", "xirr", "elss", "mutual", "nifty",
+                    "index", "replace", "switch", "direct", "regular", "holding", "scheme", "amc",
+                    "debt", "equity", "flexi", "mid cap", "small cap", "large cap", "balanced",
+                    "overlap", "diversif", "consolidat", "redeem", "invest"]
     insurance_keywords = ["insurance", "premium", "coverage", "claim", "policy", "health plan"]
     loan_keywords = ["loan", "emi", "prepay", "interest rate", "mortgage"]
 

@@ -236,9 +236,12 @@ async def demo():
 
 
 @app.post("/clear")
-async def clear(request: Request, user_id: int = Depends(require_auth)):
+async def clear(request: Request):
     """Clear all stored holdings."""
+    user_id = _get_user_id(request)
     clear_holdings(user_id)
+    if user_id != DEMO_USER_ID:
+        clear_holdings(DEMO_USER_ID)
     log.info("All holdings cleared")
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 

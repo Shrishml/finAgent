@@ -735,12 +735,13 @@ $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   addMsg(q, 'user'); $('chat-input').value = '';
-  addMsg('', 'agent');
+  addMsg('Thinking...', 'agent');
   const msgEl = $('chat-box').lastChild;
+  msgEl.style.opacity = '0.5';
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat/stream', { method: 'POST', body: fd });
-    if (!res.ok) { msgEl.textContent = 'Server error ('+res.status+'). Please try again.'; return; }
+    if (!res.ok) { msgEl.style.opacity = '1'; msgEl.textContent = 'Server error ('+res.status+'). Please try again.'; return; }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let full = '';
@@ -753,14 +754,14 @@ $('chat-form').addEventListener('submit', async (e) => {
         const d = line.slice(6);
         if (d === '[DONE]') break;
         if (d.startsWith('[ERROR]')) { full += '\n⚠️ ' + d; break; }
+        if (!full) msgEl.style.opacity = '1';
         full += d;
       }
-      msgEl.textContent = full;
+      if (full) msgEl.textContent = full;
       msgEl.scrollIntoView({block: 'end'});
     }
-    if (!full) msgEl.textContent = 'No response received.';
-    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
-  } catch(err) { msgEl.textContent = 'Something went wrong. The server may be busy — try again.'; }
+    if (!full) { msgEl.style.opacity = '1'; msgEl.textContent = 'No response received.'; }
+  } catch(err) { msgEl.style.opacity = '1'; msgEl.textContent = 'Something went wrong. The server may be busy — try again.'; }
 });
 
 $('toggle-upload').addEventListener('click', () => {

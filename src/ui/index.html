@@ -700,7 +700,7 @@ $('upload-form').addEventListener('submit', async (e) => {
   $('upload-status').className = 'text-sm mt-3 text-blue-600';
   try {
     const res = await fetch('/upload', { method: 'POST', body: fd });
-    if (!res.ok) throw new Error('Server error ('+res.status+')');
+    if (!res.ok) throw new Error(res.status===401 ? 'Please sign in first' : 'Server error ('+res.status+')');
     const data = await res.json();
     if (data.status === 'ok') {
       $('upload-status').textContent = '✅ ' + data.holdings_count + ' schemes parsed';
@@ -722,7 +722,7 @@ async function loadDemo() {
   btns.forEach(b => { b.textContent = 'Loading demo...'; b.disabled = true; });
   try {
     const res = await fetch('/demo', { method: 'POST' });
-    if (!res.ok) throw new Error('Server error ('+res.status+')');
+    if (!res.ok) throw new Error(res.status===401 ? 'Please sign in first' : 'Server error ('+res.status+')');
     const data = await res.json();
     if (data.status === 'ok') {
       fetch('/holdings').then(safeJson).then(d=>showPortfolio(d.holdings));
@@ -741,7 +741,7 @@ $('chat-form').addEventListener('submit', async (e) => {
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat/stream', { method: 'POST', body: fd });
-    if (!res.ok) { msgEl.style.opacity = '1'; msgEl.textContent = 'Server error ('+res.status+'). Please try again.'; return; }
+    if (!res.ok) { msgEl.style.opacity = '1'; msgEl.textContent = res.status===401 ? 'Please sign in to chat with FinBestie →' : 'Server error ('+res.status+'). Please try again.'; return; }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let full = '';

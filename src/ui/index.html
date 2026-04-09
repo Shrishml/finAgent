@@ -31,6 +31,11 @@
   .tag-blue { background: #dbeafe; color: #1e40af; }
   .fund-card { transition: all 0.2s; }
   .fund-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .thinking-dots span { animation: blink 1.4s infinite; opacity: 0; }
+  .thinking-dots span:nth-child(1) { animation-delay: 0s; }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,20% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -747,13 +752,13 @@ $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   addMsg(q, 'user'); $('chat-input').value = '';
-  addMsg('Thinking...', 'agent');
+  addMsg('', 'agent');
   const msgEl = $('chat-box').lastChild;
-  msgEl.style.opacity = '0.5';
+  msgEl.innerHTML = '<span class="thinking-dots">⏳ Thinking<span>.</span><span>.</span><span>.</span></span>';
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat/stream', { method: 'POST', body: fd });
-    if (!res.ok) { msgEl.style.opacity = '1'; msgEl.textContent = res.status===401 ? 'Please sign in to chat with FinBestie →' : 'Server error ('+res.status+'). Please try again.'; return; }
+    if (!res.ok) { msgEl.innerHTML = res.status===401 ? 'Please sign in to chat with FinBestie →' : 'Server error ('+res.status+'). Please try again.'; return; }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let full = '';
@@ -766,15 +771,15 @@ $('chat-form').addEventListener('submit', async (e) => {
         const d = line.slice(6);
         if (d === '[DONE]') break;
         if (d.startsWith('[ERROR]')) { full += '\n⚠️ ' + d; break; }
-        if (d.startsWith('[STATUS] ')) { msgEl.textContent = '⏳ ' + d.slice(9); continue; }
+        if (d.startsWith('[STATUS] ')) { msgEl.innerHTML = '<span class="thinking-dots">⏳ ' + d.slice(9) + '<span>.</span><span>.</span><span>.</span></span>'; continue; }
         if (!full) msgEl.style.opacity = '1';
         full += d;
       }
       if (full) msgEl.innerHTML = marked.parse(full);
       msgEl.scrollIntoView({block: 'end'});
     }
-    if (!full) { msgEl.style.opacity = '1'; msgEl.textContent = 'No response received.'; }
-  } catch(err) { msgEl.style.opacity = '1'; msgEl.textContent = 'Something went wrong. The server may be busy — try again.'; }
+    if (!full) { msgEl.textContent = 'No response received.'; }
+  } catch(err) { msgEl.textContent = 'Something went wrong. The server may be busy — try again.'; }
 });
 
 $('toggle-upload').addEventListener('click', () => {

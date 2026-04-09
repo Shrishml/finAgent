@@ -349,6 +349,7 @@
 
 <script>
 const $ = id => document.getElementById(id);
+const safeJson = r => r.ok ? r.json() : Promise.reject(new Error(r.status));
 let charts = {};
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
 const INR = v => '₹' + Math.abs(v).toLocaleString('en-IN', {maximumFractionDigits: 0});
@@ -578,7 +579,7 @@ function showFundDetail(idx) {
   // Fetch NAV performance chart
   let navChart = null;
   function loadNavChart(code, period='1Y') {
-    fetch('/nav-history/'+code+'?period='+period).then(r=>r.json()).then(data => {
+    fetch('/nav-history/'+code+'?period='+period).then(safeJson).then(data => {
       const el=$('nav-loading'); if(el) el.remove();
       if(navChart) navChart.destroy();
       if(!data.dates||!data.dates.length) return;
@@ -605,7 +606,7 @@ function showFundDetail(idx) {
 
   // Fetch peer comparison
   if (h.amfi_code) {
-    fetch('/compare/' + h.amfi_code).then(r=>r.json()).then(data => {
+    fetch('/compare/' + h.amfi_code).then(safeJson).then(data => {
       const el = $('peer-loading');
       if (detailChart) detailChart.destroy();
       const peers = (data.peers||[]).slice(0,5);
@@ -699,11 +700,12 @@ $('upload-form').addEventListener('submit', async (e) => {
   $('upload-status').className = 'text-sm mt-3 text-blue-600';
   try {
     const res = await fetch('/upload', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error('Server error ('+res.status+')');
     const data = await res.json();
     if (data.status === 'ok') {
       $('upload-status').textContent = '✅ ' + data.holdings_count + ' schemes parsed';
       $('upload-status').className = 'text-sm mt-3 text-green-600';
-      fetch('/holdings').then(r=>r.json()).then(d=>showPortfolio(d.holdings));
+      fetch('/holdings').then(safeJson).then(d=>showPortfolio(d.holdings));
     } else {
       $('upload-status').textContent = '❌ ' + data.message;
       $('upload-status').className = 'text-sm mt-3 text-red-600';
@@ -720,9 +722,10 @@ async function loadDemo() {
   btns.forEach(b => { b.textContent = 'Loading demo...'; b.disabled = true; });
   try {
     const res = await fetch('/demo', { method: 'POST' });
+    if (!res.ok) throw new Error('Server error ('+res.status+')');
     const data = await res.json();
     if (data.status === 'ok') {
-      fetch('/holdings').then(r=>r.json()).then(d=>showPortfolio(d.holdings));
+      fetch('/holdings').then(safeJson).then(d=>showPortfolio(d.holdings));
     }
   } catch(e) { alert('Failed to load demo: ' + e.message); }
   btns.forEach(b => { b.textContent = '🎮 See it in action'; b.disabled = false; });
@@ -736,11 +739,12 @@ $('chat-form').addEventListener('submit', async (e) => {
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat', { method: 'POST', body: fd });
+    if (!res.ok) { $('chat-box').lastChild.remove(); addMsg('Server error ('+res.status+'). Please try again in a moment.', 'agent'); return; }
     const data = await res.json();
     $('chat-box').lastChild.remove();
     addMsg(data.status === 'ok' ? data.response : 'Error: ' + data.message, 'agent');
-    fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
-  } catch(err) { $('chat-box').lastChild.remove(); addMsg('Error: '+err.message, 'agent'); }
+    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+  } catch(err) { $('chat-box').lastChild.remove(); addMsg('Something went wrong. The server may be busy — try again.', 'agent'); }
 });
 
 $('toggle-upload').addEventListener('click', () => {
@@ -759,7 +763,7 @@ $('clear-btn').addEventListener('click', async () => {
   $('status').className = 'text-sm text-gray-400';
 });
 
-fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); }).catch(()=>{});
 
 // --- Google Auth ---
 const GOOGLE_CLIENT_ID = '440412565683-diu4c0a00ka37ut11qhai74907mgsl23.apps.googleusercontent.com';
@@ -776,7 +780,7 @@ async function handleGoogleCredential(response) {
     console.log('Auth response:', data);
     if (data.status === 'ok') {
       showUser(data.user);
-      fetch('/holdings').then(r=>r.json()).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+      fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
     } else {
       console.error('Auth failed:', data);
     }

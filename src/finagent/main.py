@@ -32,6 +32,7 @@ logging.basicConfig(
 log = logging.getLogger("finagent")
 
 app = FastAPI(title="FinAgent", version="0.1.0")
+DEMO_USER_ID = -1  # Reserved user_id for shared demo portfolio
 
 # Register connectors
 _registry = ConnectorRegistry()
@@ -141,7 +142,7 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
 @app.post("/chat")
 async def chat(request: Request, query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
-    user_id = _get_user_id(request)
+    user_id = _get_user_id(request) or DEMO_USER_ID
     log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query, user_id=user_id)
@@ -172,7 +173,7 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
 @app.get("/holdings")
 async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
-    user_id = _get_user_id(request)
+    user_id = _get_user_id(request) or DEMO_USER_ID
     holdings = load_holdings(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
@@ -198,9 +199,9 @@ async def get_holdings(request: Request):
 
 
 @app.post("/demo")
-async def demo(request: Request):
+async def demo():
     """Load a demo portfolio for users to explore without uploading."""
-    user_id = _get_user_id(request)
+    user_id = DEMO_USER_ID
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
     _t = lambda d, amt, units, desc="SIP": MFTransaction(date=_date.fromisoformat(d), description=desc, amount=amt, units=units, type="SIP" if amt > 0 else "REDEMPTION")
@@ -245,7 +246,7 @@ async def clear(request: Request, user_id: int = Depends(require_auth)):
 @app.get("/suggestions")
 async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""
-    user_id = _get_user_id(request)
+    user_id = _get_user_id(request) or DEMO_USER_ID
     holdings = load_holdings(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [

@@ -34,7 +34,7 @@
     </div>
   </div>
   <div class="flex items-center gap-3">
-    <span id="status" class="text-sm text-gray-400 hidden sm:inline">No data loaded</span>
+    <span id="status" class="text-sm text-gray-400 hidden">No data loaded</span>
     <button id="toggle-upload" class="text-xs text-blue-600 hover:underline hidden">↑ Upload</button>
     <button id="clear-btn" class="text-xs text-red-400 hover:text-red-600 hidden">Clear</button>
     <button id="chat-toggle" class="bg-emerald-600 text-white rounded-full w-9 h-9 flex items-center justify-center text-base hover:bg-emerald-700 shadow-lg" title="Ask your bestie">💬</button>
@@ -245,6 +245,19 @@
 
     <!-- Dashboard -->
     <div id="dashboard" class="hidden">
+      <!-- Insights Banner -->
+      <div id="insights-banner" class="hidden">
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200 px-4 sm:px-6 py-4">
+          <div class="max-w-6xl mx-auto">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-semibold text-emerald-800">🎯 Here's what FinBestie found:</h3>
+              <button onclick="$('insights-banner').classList.add('hidden')" class="text-emerald-400 hover:text-emerald-600 text-xs">✕ dismiss</button>
+            </div>
+            <div id="insights-list" class="space-y-1.5"></div>
+            <p class="text-xs text-emerald-600 mt-3">💬 Try asking: <button onclick="$('chat-input').value='Which funds should I replace?';$('chat-form').dispatchEvent(new Event('submit'));toggleChat()" class="underline hover:text-emerald-800">"Which funds should I replace?"</button></p>
+          </div>
+        </div>
+      </div>
       <!-- Summary Hero -->
       <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-5">
         <div id="summary-bar" class="max-w-6xl mx-auto"></div>
@@ -640,10 +653,39 @@ function showPortfolio(holdings) {
   $('toggle-upload').classList.remove('hidden');
   $('clear-btn').classList.remove('hidden');
   $('status').textContent = holdings.length + ' schemes';
-  $('status').className = 'text-sm text-green-600';
+  $('status').className = 'text-sm text-green-600 hidden sm:inline';
   renderSummary(holdings);
   renderCharts(holdings);
   renderFundCards(holdings);
+  generateInsights(holdings);
+}
+
+function generateInsights(holdings) {
+  const insights = [];
+  // 1. High expense ratio funds
+  const highER = holdings.filter(h => h.expense_ratio && h.expense_ratio > 0.01);
+  if (highER.length) {
+    const worst = highER.sort((a,b) => b.expense_ratio - a.expense_ratio)[0];
+    const savings = Math.round(worst.value * worst.expense_ratio * 0.4);
+    insights.push({icon:'⚠️', text:`${shortName(worst.scheme)} has a ${(worst.expense_ratio*100).toFixed(2)}% expense ratio — switching to a cheaper peer could save ~${INR(savings)}/year`});
+  }
+  // 2. Diversification check
+  const cats = new Set(holdings.map(h => classifyCap(h.category)));
+  if (cats.size >= 1) {
+    insights.push({icon:'✅', text:`Portfolio spans ${cats.size} categories across ${holdings.length} funds — ${cats.size >= 4 ? 'well diversified' : 'consider adding more variety'}`});
+  }
+  // 3. Underperformers
+  const under = holdings.filter(h => (h.return_pct||0) < 0);
+  if (under.length) {
+    insights.push({icon:'📉', text:`${under.length} fund${under.length>1?'s are':' is'} in the red — ${under.map(h=>shortName(h.scheme)).join(', ')}`});
+  } else {
+    const best = [...holdings].sort((a,b) => (b.xirr||0) - (a.xirr||0))[0];
+    if (best && best.xirr) insights.push({icon:'📈', text:`Best performer: ${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`});
+  }
+  if (insights.length) {
+    $('insights-list').innerHTML = insights.map(i => `<div class="flex items-start gap-2 text-xs text-gray-700"><span>${i.icon}</span><span>${i.text}</span></div>`).join('');
+    $('insights-banner').classList.remove('hidden');
+  }
 }
 
 $('upload-form').addEventListener('submit', async (e) => {

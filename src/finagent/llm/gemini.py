@@ -56,19 +56,32 @@ class GeminiCLIProvider(LLMProvider):
 
     async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
         full_prompt = self._build_prompt(prompt, system, False)
-        log.info(f"[gemini] streaming gemini-cli")
+        log.info(f"[gemini] streaming gemini-cli with stream-json")
         proc = await asyncio.create_subprocess_exec(
-            "gemini", "-p", full_prompt, "--approval-mode=yolo",
+            "gemini", "-p", full_prompt, "--approval-mode=yolo", "-o", "stream-json",
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
         try:
             async for line in proc.stdout:
-                yield line.decode()
+                text = self._parse_stream_chunk(line.decode())
+                if text:
+                    yield text
         finally:
             try:
                 await asyncio.wait_for(proc.wait(), timeout=5)
             except asyncio.TimeoutError:
                 proc.kill()
+
+    @staticmethod
+    def _parse_stream_chunk(raw: str) -> str:
+        raw = raw.strip()
+        if not raw:
+            return ""
+        try:
+            chunk = json.loads(raw)
+            return chunk.get("text", chunk.get("content", ""))
+        except json.JSONDecodeError:
+            return raw
 
     def _build_prompt(self, prompt: str, system: str, json_mode: bool) -> str:
         parts = []

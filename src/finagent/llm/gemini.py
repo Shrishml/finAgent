@@ -79,9 +79,10 @@ class GeminiCLIProvider(LLMProvider):
             return ""
         try:
             chunk = json.loads(raw)
-            return chunk.get("text", chunk.get("content", ""))
+            if chunk.get("type") == "message" and chunk.get("role") == "assistant":
+                return chunk.get("content", "")
+            return ""
         except json.JSONDecodeError:
-            # Non-JSON lines are CLI chrome/echoed prompt — skip them
             return ""
 
     def _build_prompt(self, prompt: str, system: str, json_mode: bool) -> str:

@@ -81,7 +81,8 @@ class GeminiCLIProvider(LLMProvider):
             chunk = json.loads(raw)
             return chunk.get("text", chunk.get("content", ""))
         except json.JSONDecodeError:
-            return raw
+            # Non-JSON lines are CLI chrome/echoed prompt — skip them
+            return ""
 
     def _build_prompt(self, prompt: str, system: str, json_mode: bool) -> str:
         parts = []

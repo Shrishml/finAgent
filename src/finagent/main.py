@@ -345,8 +345,11 @@ async def portfolio_history(request: Request, period: str = "1Y"):
         if not h.amfi_code:
             continue
         hist = engine.fetch(h.amfi_code)
-        if hist:
-            fund_data.append({"units": h.units, "history": dict(hist)})
+        if not hist:
+            continue
+        # Build units timeline from transactions
+        unit_events = sorted([(t.date, t.units or 0) for t in h.transactions], key=lambda x: x[0])
+        fund_data.append({"unit_events": unit_events, "history": dict(hist)})
 
     if not fund_data:
         return JSONResponse({"dates": [], "values": [], "invested": []})
@@ -361,9 +364,11 @@ async def portfolio_history(request: Request, period: str = "1Y"):
         cutoff = all_dates[-1] - timedelta(days=periods[period])
         all_dates = [d for d in all_dates if d >= cutoff]
 
-    # Compute portfolio value + invested for each date (forward-fill NAVs)
+    # Compute portfolio value + invested for each date
     dates_out, values_out, invested_out = [], [], []
     last_nav = {i: None for i in range(len(fund_data))}
+    cum_units = {i: 0.0 for i in range(len(fund_data))}
+    unit_idx = {i: 0 for i in range(len(fund_data))}
     running_invested = 0
     invest_dates = sorted(cum_invested.keys())
     invest_idx = 0
@@ -372,14 +377,17 @@ async def portfolio_history(request: Request, period: str = "1Y"):
         while invest_idx < len(invest_dates) and invest_dates[invest_idx] <= d:
             running_invested = cum_invested[invest_dates[invest_idx]]
             invest_idx += 1
-        # Compute portfolio value
+        # Update cumulative units per fund and compute value
         val = 0
         for i, fd in enumerate(fund_data):
+            while unit_idx[i] < len(fd["unit_events"]) and fd["unit_events"][unit_idx[i]][0] <= d:
+                cum_units[i] += fd["unit_events"][unit_idx[i]][1]
+                unit_idx[i] += 1
             nav = fd["history"].get(d)
             if nav is not None:
                 last_nav[i] = nav
-            if last_nav[i] is not None:
-                val += fd["units"] * last_nav[i]
+            if last_nav[i] is not None and cum_units[i] > 0:
+                val += cum_units[i] * last_nav[i]
         if val > 0 and running_invested > 0:
             dates_out.append(d)
             values_out.append(val)

@@ -304,8 +304,14 @@
           </div>
           <!-- Smart Insights -->
           <div id="insights-section">
-            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🎯 Insights</h3>
-            <div id="insights-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+            <div id="good-insights-row" class="mb-4 hidden">
+              <h3 class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-3">✅ What's working</h3>
+              <div id="good-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+            <div id="action-insights-row" class="hidden">
+              <h3 class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">⚠️ Worth a look</h3>
+              <div id="action-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -691,55 +697,61 @@ function showPortfolio(holdings) {
 }
 
 function generateInsights(holdings) {
-  const insights = [];
-  // High expense ratio
-  const highER = holdings.filter(h => h.expense_ratio && h.expense_ratio > 0.01);
-  if (highER.length) {
-    const worst = highER.sort((a,b) => b.expense_ratio - a.expense_ratio)[0];
-    const savings = Math.round(worst.value * worst.expense_ratio * 0.4);
-    insights.push({icon:'⚠️', title:`${highER.length} fund${highER.length>1?'s':''} with high fees`, desc:`${shortName(worst.scheme)} charges ${(worst.expense_ratio*100).toFixed(2)}%`, q:'Am I paying too much in expense ratios?'});
-  }
-  // Underperformers
-  const under = holdings.filter(h => (h.return_pct||0) < 0);
-  if (under.length) {
-    insights.push({icon:'📉', title:`${under.length} underperforming fund${under.length>1?'s':''}`, desc:under.map(h=>shortName(h.scheme)).join(', '), q:'Which funds should I replace?'});
-  }
-  // Top performer
-  const best = [...holdings].sort((a,b) => (b.xirr||0) - (a.xirr||0))[0];
-  if (best?.xirr) {
-    insights.push({icon:'📈', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:`Tell me more about ${shortName(best.scheme)}`});
-  }
-  // Asset allocation
-  const assets = {};
-  holdings.forEach(h => { const a = classifyAsset(h.category); assets[a] = (assets[a]||0) + h.value; });
+function generateInsights(holdings) {
+  const good = [], action = [];
   const total = holdings.reduce((s,h) => s + h.value, 0);
-  const topAsset = Object.entries(assets).sort((a,b) => b[1]-a[1])[0];
-  if (topAsset && total > 0) {
-    const pct = (topAsset[1]/total*100).toFixed(0);
-    insights.push({icon:'📊', title:`${pct}% in ${topAsset[0]}`, desc:`${Object.keys(assets).length} asset types across ${holdings.length} funds`, q:'Is my portfolio diversified enough?'});
-  }
-  // Regular plan check
+  const xirrs = holdings.filter(h=>h.xirr);
+  const avgXirr = xirrs.length ? xirrs.reduce((s,h)=>s+h.xirr,0)/xirrs.length : 0;
+
+  // === GOOD ===
+  const best = [...holdings].filter(h=>h.xirr).sort((a,b) => b.xirr - a.xirr)[0];
+  if (best) good.push({icon:'🏆', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:`Tell me more about ${shortName(best.scheme)}`});
+
   const regular = holdings.filter(h => h.plan === 'regular');
-  if (regular.length) {
-    insights.push({icon:'🔄', title:`${regular.length} regular plan fund${regular.length>1?'s':''}`, desc:'You may be paying extra commission', q:'Should I switch from regular to direct plans?'});
+  if (!regular.length && holdings.length > 1) good.push({icon:'✅', title:'All direct plans', desc:'No commission leakage — you\'re keeping more of your returns', q:'How much do direct plans save me?'});
+
+  const sipFunds = holdings.filter(h => h.transactions && h.transactions.length >= 3);
+  if (sipFunds.length >= 2) good.push({icon:'💪', title:'Consistent SIPs', desc:`${sipFunds.length} funds with regular investments — consistency is your biggest edge`, q:'How are my SIPs performing?'});
+
+  const assetMap = {};
+  holdings.forEach(h => { const a = classifyAsset(h.category); if(a!=='Other') assetMap[a] = (assetMap[a]||0) + h.value; });
+  if (Object.keys(assetMap).length >= 3) good.push({icon:'🎯', title:'Well diversified', desc:`Portfolio covers ${Object.keys(assetMap).join(', ')}`, q:'Is my diversification good enough?'});
+
+  if (avgXirr > 12) good.push({icon:'📈', title:'Beating the market', desc:`Portfolio avg XIRR ${avgXirr.toFixed(1)}% vs Nifty 50 long-term ~12%`, q:'How does my portfolio compare to Nifty 50?'});
+
+  // === ACTIONABLE ===
+  const under = holdings.filter(h => (h.return_pct||0) < 0 || (h.xirr && h.xirr < avgXirr - 5));
+  if (under.length) action.push({icon:'📉', title:`${under.length} underperforming fund${under.length>1?'s':''}`, desc:under.slice(0,3).map(h=>`${shortName(h.scheme)} (${h.xirr!=null?sign(h.xirr)+h.xirr.toFixed(1)+'%':'negative'})`).join(', '), q:'Which funds should I replace?'});
+
+  if (regular.length) action.push({icon:'🔄', title:`${regular.length} regular plan fund${regular.length>1?'s':''}`, desc:'You\'re paying hidden commission on these', q:'Should I switch from regular to direct plans?'});
+
+  if (holdings.length > 7) action.push({icon:'📦', title:`${holdings.length} funds — possible overlap`, desc:'Some funds may be doing the same job. Consider consolidating.', q:'Do any of my funds overlap?'});
+
+  const scVal = holdings.filter(h => (h.category||'').toLowerCase().includes('small')).reduce((s,h) => s+h.value, 0);
+  if (total > 0 && scVal/total > 0.3) action.push({icon:'⚡', title:`${(scVal/total*100).toFixed(0)}% in small caps`, desc:'High growth but high volatility — does this match your risk appetite?', q:'Do I have too much in small caps?'});
+
+  const debtVal = holdings.filter(h => classifyAsset(h.category) === 'Debt').reduce((s,h) => s+h.value, 0);
+  if (debtVal === 0 && holdings.length > 2) action.push({icon:'🛡️', title:'No debt allocation', desc:'100% equity — consider adding debt funds for stability', q:'Should I add debt funds to my portfolio?'});
+
+  // Render
+  function renderCards(cards, containerId) {
+    $(containerId).innerHTML = cards.map(i =>
+      `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer insight-card" data-q="${i.q.replace(/"/g,'&quot;')}">
+        <div class="text-lg mb-1">${i.icon}</div>
+        <p class="text-sm font-semibold text-gray-800">${i.title}</p>
+        <p class="text-xs text-gray-400 mt-1">${i.desc}</p>
+        <p class="text-xs text-emerald-600 mt-2 font-medium">Discuss →</p>
+      </div>`).join('');
   }
-  // Render insight cards on Overview tab
-  $('insights-cards').innerHTML = insights.map((i,idx) =>
-    `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer insight-card" data-q="${i.q.replace(/"/g,'&quot;')}">
-      <div class="text-lg mb-1">${i.icon}</div>
-      <p class="text-sm font-semibold text-gray-800">${i.title}</p>
-      <p class="text-xs text-gray-400 mt-1">${i.desc}</p>
-      <p class="text-xs text-emerald-600 mt-2 font-medium">Discuss →</p>
-    </div>`
-  ).join('');
+  if (good.length) { renderCards(good, 'good-cards'); $('good-insights-row').classList.remove('hidden'); }
+  if (action.length) { renderCards(action, 'action-cards'); $('action-insights-row').classList.remove('hidden'); }
   document.querySelectorAll('.insight-card').forEach(el => {
     el.addEventListener('click', () => { switchTab('chat'); sendChat(el.dataset.q); });
   });
-  // Render smart suggestions in Chat tab
-  const suggestions = insights.map(i => i.q);
-  suggestions.push('Give me a summary of my portfolio');
-  suggestions.push('How did my funds do in COVID?');
-  $('smart-suggestions').innerHTML = suggestions.slice(0,5).map(q =>
+  // Smart suggestions in Chat tab
+  const allQ = [...good, ...action].map(i => i.q);
+  allQ.push('Give me a summary of my portfolio');
+  $('smart-suggestions').innerHTML = allQ.slice(0,6).map(q =>
     `<button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors" data-q="${q.replace(/"/g,'&quot;')}">${q}</button>`
   ).join('');
   document.querySelectorAll('.suggest-btn').forEach(el => {

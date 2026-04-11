@@ -324,33 +324,56 @@ async def portfolio_history(request: Request, period: str = "1Y"):
     engine = NAVHistoryEngine()
     periods = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365, "3Y": 1095, "5Y": 1825}
 
-    # Fetch NAV history for each holding with an AMFI code
+    # Build cumulative invested timeline from transactions
+    invest_events = []  # (date, cumulative_amount)
+    for h in holdings:
+        for t in h.transactions:
+            if t.amount > 0:  # purchases/SIPs only
+                invest_events.append((t.date, t.amount))
+    invest_events.sort(key=lambda x: x[0])
+    cum_invested = {}
+    running = 0
+    for d, amt in invest_events:
+        running += amt
+        cum_invested[d] = running
+
+    # Find earliest transaction date as chart start
+    first_txn = invest_events[0][0] if invest_events else None
+
+    # Fetch NAV history for each holding
     fund_data = []
     for h in holdings:
         if not h.amfi_code:
             continue
         hist = engine.fetch(h.amfi_code)
         if hist:
-            fund_data.append({"units": h.units, "invested": h.invested_value, "history": dict(hist)})
+            fund_data.append({"units": h.units, "history": dict(hist)})
 
     if not fund_data:
         return JSONResponse({"dates": [], "values": [], "invested": []})
 
-    # Find common date range
+    # Date range: from first transaction to latest NAV
     all_dates = set()
     for fd in fund_data:
         all_dates.update(fd["history"].keys())
-    all_dates = sorted(all_dates)
+    all_dates = sorted(d for d in all_dates if (first_txn is None or d >= first_txn))
 
     if period != "MAX" and period in periods:
         cutoff = all_dates[-1] - timedelta(days=periods[period])
         all_dates = [d for d in all_dates if d >= cutoff]
 
-    # Compute portfolio value for each date (forward-fill missing NAVs)
-    dates_out, values_out = [], []
-    total_invested = sum(fd["invested"] for fd in fund_data)
+    # Compute portfolio value + invested for each date (forward-fill NAVs)
+    dates_out, values_out, invested_out = [], [], []
     last_nav = {i: None for i in range(len(fund_data))}
+    running_invested = 0
+    invest_dates = sorted(cum_invested.keys())
+    invest_idx = 0
     for d in all_dates:
+        # Update cumulative invested
+        while invest_idx < len(invest_dates) and invest_dates[invest_idx] <= d:
+            running_invested = cum_invested[invest_dates[invest_idx]]
+            invest_idx += 1
+        # Compute portfolio value
         val = 0
         for i, fd in enumerate(fund_data):
             nav = fd["history"].get(d)
@@ -358,20 +381,24 @@ async def portfolio_history(request: Request, period: str = "1Y"):
                 last_nav[i] = nav
             if last_nav[i] is not None:
                 val += fd["units"] * last_nav[i]
-        if val > 0:
+        if val > 0 and running_invested > 0:
             dates_out.append(d)
             values_out.append(val)
+            invested_out.append(running_invested)
 
     # Downsample to ~200 points
-    step = max(1, len(dates_out) // 200)
-    sampled_idx = list(range(0, len(dates_out), step))
-    if sampled_idx[-1] != len(dates_out) - 1:
-        sampled_idx.append(len(dates_out) - 1)
+    if len(dates_out) > 200:
+        step = len(dates_out) // 200
+        sampled_idx = list(range(0, len(dates_out), step))
+        if sampled_idx[-1] != len(dates_out) - 1:
+            sampled_idx.append(len(dates_out) - 1)
+    else:
+        sampled_idx = list(range(len(dates_out)))
 
     return JSONResponse({
         "dates": [dates_out[i].isoformat() for i in sampled_idx],
         "values": [round(values_out[i], 2) for i in sampled_idx],
-        "invested": total_invested,
+        "invested": [round(invested_out[i], 2) for i in sampled_idx],
     })
 
 def main():

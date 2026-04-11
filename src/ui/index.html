@@ -733,14 +733,14 @@ function loadPortfolioChart(period='5Y') {
     if(portfolioChart) portfolioChart.destroy();
     if(!data.dates||!data.dates.length) { if(el) el.textContent='Not enough history'; return; }
     const months = data.dates.map(d=>{const[y,m]=d.split('-');const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mn[+m-1]+" '"+y.slice(2);});
-    const investedLine = data.dates.map(() => data.invested);
+    const fmtY = v => v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':v>=1e5?'₹'+(v/1e5).toFixed(1)+'L':'₹'+(v/1000).toFixed(0)+'k';
     portfolioChart = new Chart($('chart-portfolio'), {
       type:'line',
       data:{labels:months, datasets:[
         {label:'Portfolio Value', data:data.values, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.08)', fill:true, pointRadius:0, borderWidth:2, tension:0.3},
-        {label:'Invested', data:investedLine, borderColor:'#94a3b8', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0, borderWidth:1.5, tension:0}
+        {label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0, borderWidth:1.5, tension:0}
       ]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10},padding:15}}, tooltip:{callbacks:{label:c=>INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:6,font:{size:9}},grid:{display:false}}, y:{ticks:{maxTicksLimit:5,font:{size:9},callback:v=>'₹'+(v/1000).toFixed(0)+'k'},grid:{color:'#f3f4f6'}}}}
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10},padding:15}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:6,font:{size:9}},grid:{display:false}}, y:{ticks:{maxTicksLimit:5,font:{size:9},callback:fmtY},grid:{color:'#f3f4f6'}}}}
     });
   }).catch(e=>{ console.error('Portfolio chart error:',e); const el=$('portfolio-chart-loading'); if(el) el.textContent='Chart unavailable'; });
 }

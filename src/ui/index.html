@@ -931,28 +931,21 @@ function renderSignIn() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleCredential,
-    use_fedcm_for_prompt: false,
   });
   $('signin-btn').classList.remove('hidden');
   $('signin-btn').onclick = () => {
-    google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fallback: render a real Google button in a popup-like overlay
-        let overlay = document.getElementById('g-signin-overlay');
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.id = 'g-signin-overlay';
-          overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:50;';
-          overlay.onclick = (e) => { if(e.target===overlay) overlay.remove(); };
-          const box = document.createElement('div');
-          box.style.cssText = 'background:white;border-radius:12px;padding:24px;min-width:300px;text-align:center;';
-          box.innerHTML = '<p style="margin-bottom:16px;font-size:14px;color:#374151;">Sign in with Google</p><div id="g-btn-real"></div>';
-          overlay.appendChild(box);
-          document.body.appendChild(overlay);
-          google.accounts.id.renderButton(document.getElementById('g-btn-real'), {type:'standard', size:'large', width:280});
-        }
-      }
-    });
+    let overlay = document.getElementById('g-signin-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.id = 'g-signin-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:50;';
+    overlay.onclick = (e) => { if(e.target===overlay) overlay.remove(); };
+    const box = document.createElement('div');
+    box.style.cssText = 'background:white;border-radius:12px;padding:24px;min-width:300px;text-align:center;';
+    box.innerHTML = '<p style="margin-bottom:16px;font-size:14px;color:#374151;">Sign in with Google</p><div id="g-btn-real"></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    google.accounts.id.renderButton(document.getElementById('g-btn-real'), {type:'standard', size:'large', width:280, theme:'outline'});
   };
 }
 

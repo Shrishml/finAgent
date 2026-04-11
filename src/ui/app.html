@@ -94,6 +94,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 w-full">
           <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Performance</h3><p class="text-xs text-gray-500 mt-1">Total value vs. investment</p></div>
           <div id="portfolio-period-btns" class="flex p-1 bg-gray-100 rounded-xl self-start overflow-x-auto max-w-full">
+            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1M">1M</button>
+            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3M">3M</button>
+            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="6M">6M</button>
             <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1Y">1Y</button>
             <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3Y">3Y</button>
             <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg bg-white text-gray-900 shadow-sm" data-p="5Y">5Y</button>
@@ -286,37 +289,75 @@ function renderSummary(holdings, portfolioXirr) {
 }
 
 let _holdings = [];
+let fundChart = null;
+function loadFundChart(amfiCode, period = '1Y') {
+  if (!amfiCode) return;
+  fetch(`/nav-history/${amfiCode}?period=${period}`).then(safeJson).then(data => {
+    if (fundChart) fundChart.destroy();
+    if (!data.dates?.length) return;
+    fundChart = new Chart($('chart-nav'), {
+      type: 'line',
+      data: {
+        labels: data.dates.map(d => {
+          const dt = new Date(d);
+          return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+        }),
+        datasets: [{ data: data.navs, borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16, 185, 129, 0.05)', pointRadius: 0, borderWidth: 3, tension: 0.4 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' NAV: ₹' + c.parsed.y.toFixed(2) } } },
+        scales: {
+          x: { ticks: { maxTicksLimit: 5, font: { size: 10, weight: '500' }, color: '#64748b' }, grid: { display: false } },
+          y: { ticks: { font: { size: 10, weight: '500' }, color: '#64748b', callback: v => '₹' + v.toFixed(2) }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+  });
+}
+
 function showFundDetail(idx) {
   const h = _holdings[idx]; if (!h) return;
   $('fund-modal').classList.remove('hidden');
   const rc = (h.return_pct||0) >= 0 ? 'text-emerald-600' : 'text-red-500';
   const xc = h.xirr != null ? (h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500') : 'text-gray-400';
   const sName = shortName(h.scheme);
-  $('fund-detail-content').innerHTML = `<div class="flex items-center gap-4 sm:gap-6 mb-8">${amcLogo(h.scheme)}<div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">${esc(sName)}</h3><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${esc(h.category)}</p></div></div><div class="grid grid-cols-2 gap-3 sm:gap-4 mb-8"><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Value</p><p class="text-lg font-extrabold text-gray-900">${INR(h.value)}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">XIRR</p><p class="text-lg font-extrabold ${xc}">${h.xirr!=null?h.xirr.toFixed(1)+'%':'—'}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Return</p><p class="text-base font-bold ${rc}">${sign(h.return_pct||0)}${(h.return_pct||0).toFixed(1)}%</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Exp. Ratio</p><p class="text-base font-bold text-gray-700">${h.expense_ratio?(h.expense_ratio*100).toFixed(2)+'%':'—'}</p></div></div><div class="space-y-6"><div style="height:200px"><canvas id="chart-nav"></canvas></div><button onclick="openAndChat('Analyze ${esc(sName)}')" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all">Ask AI to analyze this fund →</button></div>`;
-  if (h.amfi_code) {
-    fetch('/nav-history/'+h.amfi_code).then(safeJson).then(data => {
-      if(!data.dates?.length) return;
-      new Chart($('chart-nav'), {
-        type:'line',
-        data:{
-          labels: data.dates.map(d => {
-            const dt = new Date(d);
-            return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
-          }), 
-          datasets:[{data:data.navs, borderColor:'#10b981', fill:true, backgroundColor:'rgba(16, 185, 129, 0.05)', pointRadius:0, borderWidth:3, tension:0.4}]
-        },
-        options:{
-          responsive:true, 
-          maintainAspectRatio:false, 
-          plugins:{legend:{display:false}}, 
-          scales:{
-            x:{ticks:{maxTicksLimit:5, font:{size:10, weight:'500'}, color:'#64748b'}}, 
-            y:{ticks:{font:{size:10, weight:'500'}, color:'#64748b', callback:v=>'₹'+v}}
-          }
-        }
-      });
-    });
-  }
+  $('fund-detail-content').innerHTML = `
+    <div class="flex items-center gap-4 sm:gap-6 mb-8">${amcLogo(h.scheme)}
+      <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">${esc(sName)}</h3><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${esc(h.category)}</p></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
+      <div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Value</p><p class="text-lg font-extrabold text-gray-900">${INR(h.value)}</p></div>
+      <div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">XIRR</p><p class="text-lg font-extrabold ${xc}">${h.xirr!=null?h.xirr.toFixed(1)+'%':'—'}</p></div>
+      <div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Return</p><p class="text-base font-bold ${rc}">${sign(h.return_pct||0)}${(h.return_pct||0).toFixed(1)}%</p></div>
+      <div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Exp. Ratio</p><p class="text-base font-bold text-gray-700">${h.expense_ratio?(h.expense_ratio*100).toFixed(2)+'%':'—'}</p></div>
+    </div>
+    <div class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">NAV History</h4>
+        <div class="flex p-0.5 bg-gray-100 rounded-lg">
+          ${['1M', '6M', '1Y', '3Y', '5Y', 'MAX'].map(p => `
+            <button class="nav-p-btn text-[8px] font-bold px-2 py-1 rounded-md ${p === '1Y' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}" 
+                    onclick="switchFundPeriod(this, '${h.amfi_code}', '${p}')">${p}</button>
+          `).join('')}
+        </div>
+      </div>
+      <div style="height:220px"><canvas id="chart-nav"></canvas></div>
+      <button onclick="openAndChat('Analyze ${esc(sName)}')" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all">Ask AI to analyze this fund →</button>
+    </div>`;
+  loadFundChart(h.amfi_code, '1Y');
+}
+
+function switchFundPeriod(btn, amfiCode, period) {
+  const btns = btn.parentElement.querySelectorAll('.nav-p-btn');
+  btns.forEach(b => {
+    b.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+    b.classList.add('text-gray-500');
+  });
+  btn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+  btn.classList.remove('text-gray-500');
+  loadFundChart(amfiCode, period);
 }
 
 let currentSort = { col: 'value', asc: false };

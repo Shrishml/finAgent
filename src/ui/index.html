@@ -273,7 +273,7 @@
     <!-- Dashboard -->
     <div id="dashboard" class="hidden">
       <!-- Summary Hero (above tabs) -->
-      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 sm:px-6 py-5">
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 sm:px-6 py-8 sm:py-12">
         <div id="summary-bar" class="max-w-6xl mx-auto"></div>
       </div>
       <!-- Tab Navigation -->
@@ -287,40 +287,40 @@
 
       <!-- TAB: Overview -->
       <div id="tab-overview" class="tab-content">
-        <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <div class="max-w-6xl mx-auto px-4 py-6 space-y-16">
           <!-- Portfolio Growth Chart -->
-          <div class="bg-white rounded-xl border p-4 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📈 Portfolio Growth</h3>
+          <div class="bg-white rounded-xl border p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">📈 Portfolio Growth</h3>
               <div id="portfolio-period-btns" class="flex gap-1">
-                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="1Y">1Y</button>
-                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="3Y">3Y</button>
-                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white" data-p="5Y">5Y</button>
-                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="MAX">MAX</button>
+                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="1Y">1Y</button>
+                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="3Y">3Y</button>
+                <button class="pp-btn text-xs px-2 py-1 rounded bg-emerald-600 text-white" data-p="5Y">5Y</button>
+                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="MAX">MAX</button>
               </div>
             </div>
-            <div style="position:relative;height:280px"><canvas id="chart-portfolio"></canvas></div>
-            <p id="portfolio-chart-loading" class="text-[10px] text-gray-400 text-center mt-1">Loading portfolio history...</p>
+            <div style="position:relative;height:420px"><canvas id="chart-portfolio"></canvas></div>
+            <p id="portfolio-chart-loading" class="text-xs text-gray-400 text-center mt-2">Loading portfolio history...</p>
           </div>
           <!-- Allocation Charts -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white rounded-xl border p-4 shadow-sm">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Category Allocation</h3>
-              <div class="chart-container"><canvas id="chart-category"></canvas></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl border p-5 shadow-sm">
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Category Allocation</h3>
+              <div style="position:relative;height:300px"><canvas id="chart-category"></canvas></div>
             </div>
-            <div class="bg-white rounded-xl border p-4 shadow-sm">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Equity vs Debt</h3>
-              <div class="chart-container"><canvas id="chart-asset"></canvas></div>
+            <div class="bg-white rounded-xl border p-5 shadow-sm">
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Equity vs Debt</h3>
+              <div style="position:relative;height:300px"><canvas id="chart-asset"></canvas></div>
             </div>
           </div>
           <!-- Smart Insights -->
           <div id="insights-section">
-            <div id="good-insights-row" class="mb-4 hidden">
-              <h3 class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-3">✅ What's working</h3>
+            <div id="good-insights-row" class="mb-6 hidden">
+              <h3 class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-4">✅ What's working</h3>
               <div id="good-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
             <div id="action-insights-row" class="hidden">
-              <h3 class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">⚠️ Worth a look</h3>
+              <h3 class="text-sm font-semibold text-amber-600 uppercase tracking-wide mb-4">⚠️ Worth a look</h3>
               <div id="action-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
           </div>
@@ -460,26 +460,14 @@ function renderSummary(holdings) {
   const dayChg = holdings.reduce((s, h) => s + (h.day_change_pct || 0) * h.value / total, 0);
 
   $('summary-bar').innerHTML = `
-    <div class="flex flex-wrap items-end gap-4 sm:gap-8">
-      <div>
-        <div class="text-xs text-blue-200">Current Value</div>
-        <div class="text-3xl font-bold">${INR(total)}</div>
-      </div>
-      <div>
-        <div class="text-xs text-blue-200">Invested</div>
-        <div class="text-xl text-blue-100">${INR(invested)}</div>
-      </div>
-      <div>
-        <div class="text-xs text-blue-200">Total Return</div>
-        <div class="text-xl font-semibold ${ret >= 0 ? 'text-green-300' : 'text-red-300'}">${sign(ret)}${INR(ret)} (${sign(retPct)}${retPct.toFixed(1)}%)</div>
-      </div>
-      <div>
-        <div class="text-xs text-blue-200">1D Change</div>
-        <div class="text-lg ${dayChg >= 0 ? 'text-green-300' : 'text-red-300'}">${sign(dayChg)}${dayChg.toFixed(2)}%</div>
-      </div>
-      <div>
-        <div class="text-xs text-blue-200">Schemes</div>
-        <div class="text-xl text-blue-100">${holdings.length}</div>
+    <div>
+      <div class="text-sm text-blue-200 mb-1">Current Value</div>
+      <div class="text-5xl sm:text-6xl font-bold tracking-tight">${INR(total)}</div>
+      <div class="flex flex-wrap gap-6 mt-4 text-sm">
+        <div><span class="text-blue-200">Invested</span> <span class="text-blue-100 font-semibold ml-1">${INR(invested)}</span></div>
+        <div><span class="text-blue-200">Return</span> <span class="${ret >= 0 ? 'text-green-300' : 'text-red-300'} font-semibold ml-1">${sign(ret)}${INR(ret)} (${sign(retPct)}${retPct.toFixed(1)}%)</span></div>
+        <div><span class="text-blue-200">1D</span> <span class="${dayChg >= 0 ? 'text-green-300' : 'text-red-300'} font-semibold ml-1">${sign(dayChg)}${dayChg.toFixed(2)}%</span></div>
+        <div><span class="text-blue-200">Schemes</span> <span class="text-blue-100 font-semibold ml-1">${holdings.length}</span></div>
       </div>
     </div>`;
 }

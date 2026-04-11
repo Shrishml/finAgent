@@ -902,6 +902,7 @@ function renderSignIn() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleCredential,
+    use_fedcm_for_prompt: false,
   });
   // Render Google's button in a hidden container for reliable auth
   const hidden = document.createElement('div');

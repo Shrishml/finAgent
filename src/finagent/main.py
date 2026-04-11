@@ -109,13 +109,15 @@ async def auth_me(request: Request):
 
 
 @app.get("/", response_class=HTMLResponse)
+async def landing():
+    f = _UI_DIR / "index.html"
+    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
+
 @app.get("/app", response_class=HTMLResponse)
 @app.get("/demo", response_class=HTMLResponse)
-async def index():
-    index_file = _UI_DIR / "index.html"
-    if index_file.exists():
-        return index_file.read_text()
-    return "<h1>FinAgent</h1><p>UI not found. Place index.html in src/ui/</p>"
+async def dashboard():
+    f = _UI_DIR / "app.html"
+    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
 
 
 @app.post("/upload")

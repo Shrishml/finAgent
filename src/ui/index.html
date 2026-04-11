@@ -692,6 +692,8 @@ function addMsg(text, sender) {
 
 function showPortfolio(holdings) {
   if (!holdings || !holdings.length) return;
+  holdings = holdings.filter(h => h.value > 0); // exclude fully redeemed funds
+  if (!holdings.length) return;
   $('landing-section').classList.add('hidden');
   $('upload-section').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
@@ -707,7 +709,6 @@ function showPortfolio(holdings) {
 }
 
 function generateInsights(holdings) {
-  holdings = holdings.filter(h => h.value > 0); // exclude fully redeemed funds
   const good = [], action = [];
   const total = holdings.reduce((s,h) => s + h.value, 0);
   const xirrs = holdings.filter(h=>h.xirr);

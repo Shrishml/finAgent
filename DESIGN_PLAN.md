@@ -657,4 +657,75 @@ These come after we validate demand with the POC.
 
 *Created: April 4, 2026*
 *Updated: April 6, 2026 — added NAV History Engine task (Task 5 in Section 8)*
+*Updated: April 11, 2026 — added Section 9: Insight Generation Engine*
 *Status: v3 — POC deploy sprint in progress, analytics sprint queued*
+
+---
+
+## 9. Insight Generation Engine
+
+### 9.1 Rationale
+
+From our Reddit research (~120 questions across 23 threads in r/IndiaInvestments), the #1 user need is: **"Tell me what to DO, not just show data."** (User A, 28y SWE, interview).
+
+Most portfolio tools show dashboards — charts, numbers, tables. Users stare at them and don't know what action to take. The insight engine bridges this gap by automatically detecting patterns in portfolio data and surfacing them as actionable cards, each linked to a chat conversation for deeper discussion.
+
+Design principle: **Balance positive reinforcement with actionable warnings.** Users who see only problems feel attacked and bounce. Users who see only praise don't get value. The two-row layout ("What's working" + "Worth a look") validates good behavior first, then surfaces issues.
+
+### 9.2 Architecture
+
+Insights are generated **entirely in the frontend** from holdings data returned by `/holdings`. No LLM call needed — pure rule-based detection. This keeps them instant (no loading), free (no API cost), and deterministic (same portfolio = same insights).
+
+Each insight is a card with: icon, title, description, and a pre-filled chat question. Clicking a card switches to the Chat tab and sends the question to the LLM for a detailed, personalized response. This creates a **two-tier system**: fast rule-based detection (frontend) → deep LLM analysis (backend).
+
+### 9.3 Insight Definitions
+
+#### ✅ "What's working" (green row)
+
+| # | Insight | Detection Logic | Threshold | Chat Question |
+|---|---------|----------------|-----------|---------------|
+| G1 | **Top performer** | Highest XIRR fund | Any fund with XIRR data | "Tell me more about [fund name]" |
+| G2 | **All direct plans** | No fund has `plan === 'regular'` | 0 regular funds, >1 total | "How much do direct plans save me?" |
+| G3 | **Consistent SIPs** | Funds with ≥3 transactions | ≥2 funds qualify | "How are my SIPs performing?" |
+| G4 | **Well diversified** | Distinct asset classes (Equity/Debt/Hybrid) excluding 'Other' | ≥3 asset classes | "Is my diversification good enough?" |
+| G5 | **Beating the market** | Average portfolio XIRR vs Nifty 50 long-term average | Avg XIRR > 12% | "How does my portfolio compare to Nifty 50?" |
+
+#### ⚠️ "Worth a look" (amber row)
+
+| # | Insight | Detection Logic | Threshold | Chat Question |
+|---|---------|----------------|-----------|---------------|
+| A1 | **Underperformers** | Negative return OR XIRR < portfolio avg by >5% | ≥1 fund qualifies | "Which funds should I replace?" |
+| A2 | **Regular plan funds** | `plan === 'regular'` | ≥1 fund | "Should I switch from regular to direct plans?" |
+| A3 | **Over-diversification** | Total fund count | >7 funds | "Do any of my funds overlap?" |
+| A4 | **Small cap heavy** | Small cap value / total portfolio value | >30% | "Do I have too much in small caps?" |
+| A5 | **No debt allocation** | Zero value in Debt asset class | 0% debt, >2 funds total | "Should I add debt funds to my portfolio?" |
+
+### 9.4 Display Rules
+
+- Show max 5 cards per row (all that match)
+- Always show green row first (positive reinforcement)
+- Each card is clickable → switches to Chat tab → sends the question
+- Chat tab's "smart suggestions" are sourced from both rows + a generic "Give me a summary"
+- Cards use `data-q` attributes + `addEventListener` (not inline onclick) for reliable quote handling
+
+### 9.5 Reddit Research Mapping
+
+Each insight maps to a real Reddit question pattern:
+
+| Insight | Reddit Pattern (% of ~120 questions) | Example Quote |
+|---------|--------------------------------------|---------------|
+| A1 Underperformers | "Review my portfolio" (25%) | "Am I over-diversified with 7 funds? Should I consolidate?" |
+| A2 Regular plans | "Which fund?" (25%) | "Should I switch from regular to direct?" |
+| A3 Over-diversification | "Review my portfolio" (25%) | "I have 8 funds — should I consolidate to 4?" |
+| A4 Small cap heavy | "Market crash" (5%) | "Portfolio down 18% — should I stop SIPs?" |
+| A5 No debt | "FD vs alternatives" (8%) | "₹10L in FD creating tax liability — what else?" |
+| G5 Beating market | "Market crash" (5%) | Emotional decisions during volatility |
+
+### 9.6 Parked for Phase 2
+
+| Insight | Why Parked | Dependency |
+|---------|-----------|------------|
+| **High expense ratio** | mfdata.in is down (502), expense ratio data unavailable | mfdata.in recovery or alternative data source |
+| **Category benchmark comparison** | Need category-level 3Y/5Y return benchmarks | Benchmark data source (e.g., AMFI category returns) |
+| **Asset allocation vs goals** | Need user's risk profile and investment goals | User onboarding / goal-setting feature |
+| **Tax harvesting opportunity** | Need LTCG/STCG computation from transaction history | Tax engine (future domain agent) |

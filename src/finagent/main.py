@@ -411,12 +411,14 @@ BENCHMARK_CODES = {
     "nifty100": "120684",      # ICICI Prudential Nifty Next 50 Index Fund - Direct Growth
     "midcap": "148726",        # Nippon India Nifty Midcap 150 Index Fund - Direct Growth
     "smallcap": "148519",      # Nippon India Nifty Smallcap 250 Index Fund - Direct Growth
+    "gold": "140088",          # Nippon India ETF Gold BeES
 }
 BENCHMARK_LABELS = {
     "nifty50": "Nifty 50",
     "nifty100": "Next 50",
     "midcap": "Midcap 150",
     "smallcap": "Smallcap 250",
+    "gold": "Gold",
 }
 
 @app.get("/benchmarks")

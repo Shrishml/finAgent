@@ -109,6 +109,7 @@
           <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="nifty100">Next 50</button>
           <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="midcap">Midcap</button>
           <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="smallcap">Smallcap</button>
+          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="gold">Gold</button>
         </div>
         <div class="h-[300px] sm:h-[420px] relative max-w-full"><canvas id="chart-portfolio"></canvas></div>
       </div>
@@ -460,7 +461,7 @@ function renderCharts(holdings) {
 
 let portfolioChart = null;
 let activeBenchmarks = new Set();
-const BENCH_COLORS = {nifty50:'#6366f1', nifty100:'#f59e0b', midcap:'#ec4899', smallcap:'#8b5cf6'};
+const BENCH_COLORS = {nifty50:'#6366f1', nifty100:'#f59e0b', midcap:'#ec4899', smallcap:'#8b5cf6', gold:'#eab308'};
 
 function loadPortfolioChart(period='5Y') {
   const benchParam = activeBenchmarks.size ? '&benchmark=' + [...activeBenchmarks].join(',') : '';

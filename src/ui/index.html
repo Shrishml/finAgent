@@ -303,14 +303,17 @@
             <p id="portfolio-chart-loading" class="text-xs text-gray-400 text-center mt-2">Loading portfolio history...</p>
           </div>
           <!-- Allocation Charts -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl border p-5 shadow-sm">
-              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Category Allocation</h3>
-              <div style="position:relative;height:300px"><canvas id="chart-category"></canvas></div>
-            </div>
-            <div class="bg-white rounded-xl border p-5 shadow-sm">
-              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Equity vs Debt</h3>
-              <div style="position:relative;height:300px"><canvas id="chart-asset"></canvas></div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-700 mb-5">Portfolio Breakdown</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="bg-white rounded-xl border p-5 shadow-sm">
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Category Allocation</h4>
+                <div style="position:relative;height:300px"><canvas id="chart-category"></canvas></div>
+              </div>
+              <div class="bg-white rounded-xl border p-5 shadow-sm">
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Equity vs Debt</h4>
+                <div style="position:relative;height:300px"><canvas id="chart-asset"></canvas></div>
+              </div>
             </div>
           </div>
           <!-- Smart Insights -->

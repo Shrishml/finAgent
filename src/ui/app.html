@@ -118,7 +118,14 @@
     <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
       <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-10 w-full">
         <div class="px-4 sm:px-8 py-4 sm:py-6 border-b bg-gray-50/30"><h3 class="text-base sm:text-lg font-extrabold text-gray-900">Your Portfolio Holdings</h3></div>
-        <div class="overflow-x-auto w-full"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-[9px] sm:text-[10px] uppercase tracking-widest border-b"><th class="px-4 sm:px-8 py-4 font-bold">Scheme</th><th class="px-4 py-4 font-bold text-right whitespace-nowrap">XIRR %</th><th class="px-4 py-4 font-bold text-right">Value</th></tr></thead><tbody id="fund-table-body" class="divide-y divide-gray-50"></tbody></table></div>
+        <div class="overflow-x-auto w-full"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-[9px] sm:text-[10px] uppercase tracking-widest border-b">
+          <th class="px-4 sm:px-8 py-4 font-bold cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('scheme')">Scheme <span id="sort-scheme" class="text-gray-300 group-hover:text-gray-500"></span></th>
+          <th class="px-4 py-4 font-bold text-right cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('invested')">Invested <span id="sort-invested" class="text-gray-300 group-hover:text-gray-500"></span></th>
+          <th class="px-4 py-4 font-bold text-right cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('value')">Current <span id="sort-value" class="text-gray-300 group-hover:text-gray-500"></span></th>
+          <th class="px-4 py-4 font-bold text-right cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('gain')">Gain <span id="sort-gain" class="text-gray-300 group-hover:text-gray-500"></span></th>
+          <th class="px-4 py-4 font-bold text-right cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('return_pct')">Gain % <span id="sort-return_pct" class="text-gray-300 group-hover:text-gray-500"></span></th>
+          <th class="px-4 py-4 font-bold text-right whitespace-nowrap cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('xirr')">XIRR % <span id="sort-xirr" class="text-gray-300 group-hover:text-gray-500"></span></th>
+        </tr></thead><tbody id="fund-table-body" class="divide-y divide-gray-50"></tbody></table></div>
       </div>
       <div id="fund-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
         <div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-300">
@@ -290,11 +297,70 @@ function showFundDetail(idx) {
       if(!data.dates?.length) return;
       new Chart($('chart-nav'), {
         type:'line',
-        data:{labels: data.dates.map(d=>d.split('-')[1]+'/'+d.split('-')[0].slice(2)), datasets:[{data:data.navs, borderColor:'#10b981', fill:true, pointRadius:0, borderWidth:3, tension:0.4}]},
-        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{maxTicksLimit:5, font:{size:9}}}, y:{ticks:{font:{size:9}, callback:v=>'₹'+v}}}}
+        data:{
+          labels: data.dates.map(d => {
+            const dt = new Date(d);
+            return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+          }), 
+          datasets:[{data:data.navs, borderColor:'#10b981', fill:true, backgroundColor:'rgba(16, 185, 129, 0.05)', pointRadius:0, borderWidth:3, tension:0.4}]
+        },
+        options:{
+          responsive:true, 
+          maintainAspectRatio:false, 
+          plugins:{legend:{display:false}}, 
+          scales:{
+            x:{ticks:{maxTicksLimit:5, font:{size:10, weight:'500'}, color:'#64748b'}}, 
+            y:{ticks:{font:{size:10, weight:'500'}, color:'#64748b', callback:v=>'₹'+v}}
+          }
+        }
       });
     });
   }
+}
+
+let currentSort = { col: 'value', asc: false };
+
+function sortHoldings(col) {
+  if (currentSort.col === col) {
+    currentSort.asc = !currentSort.asc;
+  } else {
+    currentSort.col = col;
+    currentSort.asc = col === 'scheme'; // default text to asc, numbers to desc
+  }
+  
+  _holdings.sort((a, b) => {
+    let valA, valB;
+    if (col === 'scheme') { valA = a.scheme.toLowerCase(); valB = b.scheme.toLowerCase(); }
+    else if (col === 'gain') { valA = a.value - (a.invested || 0); valB = b.value - (b.invested || 0); }
+    else { valA = a[col] || 0; valB = b[col] || 0; }
+    
+    if (valA < valB) return currentSort.asc ? -1 : 1;
+    if (valA > valB) return currentSort.asc ? 1 : -1;
+    return 0;
+  });
+  
+  ['scheme', 'invested', 'value', 'gain', 'return_pct', 'xirr'].forEach(c => {
+    const el = $('sort-' + c);
+    if (el) el.textContent = c === currentSort.col ? (currentSort.asc ? ' ↑' : ' ↓') : '';
+  });
+  
+  renderHoldingsTable();
+}
+
+function renderHoldingsTable() {
+  $('fund-table-body').innerHTML = _holdings.map((h, i) => {
+    const retPct = h.return_pct || 0;
+    const gain = h.value - (h.invested || 0);
+    const xc = h.xirr != null ? (h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500') : 'text-gray-400';
+    return `<tr class="hover:bg-gray-50 transition-all cursor-pointer" onclick="showFundDetail(${i})">
+      <td class="px-4 sm:px-8 py-4"><div class="flex items-center gap-3 sm:gap-4">${amcLogo(h.scheme)}<div class="max-w-[120px] sm:max-w-none"><div class="font-bold text-gray-900 truncate tracking-tight text-xs sm:text-sm">${esc(shortName(h.scheme))}</div><div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">${esc(h.plan)}</div></div></div></td>
+      <td class="px-4 py-4 text-right"><div class="font-bold text-gray-500 text-xs sm:text-sm">${INR(h.invested || 0)}</div></td>
+      <td class="px-4 py-4 text-right"><div class="font-bold text-gray-900 text-xs sm:text-sm">${INR(h.value)}</div></td>
+      <td class="px-4 py-4 text-right"><div class="font-bold text-xs sm:text-sm ${gain >= 0 ? 'text-emerald-600' : 'text-red-500'}">${sign(gain)}${INR(Math.abs(gain))}</div></td>
+      <td class="px-4 py-4 text-right"><div class="font-bold text-xs sm:text-sm ${retPct >= 0 ? 'text-emerald-600' : 'text-red-500'}">${sign(retPct)}${retPct.toFixed(1)}%</div></td>
+      <td class="px-4 py-4 text-right"><div class="flex items-center justify-end gap-1.5 sm:gap-2">${performanceTag(retPct)}<span class="font-bold text-xs sm:text-sm ${xc}">${h.xirr != null ? h.xirr.toFixed(1) + '%' : '—'}</span></div></td>
+    </tr>`
+  }).join('');
 }
 
 function showPortfolio(holdings) {
@@ -303,8 +369,8 @@ function showPortfolio(holdings) {
   $('dashboard').classList.remove('hidden');
   renderSummary(holdings);
   renderCharts(holdings);
-  _holdings = holdings.sort((a,b) => b.value - a.value);
-  $('fund-table-body').innerHTML = _holdings.map((h, i) => `<tr class="hover:bg-gray-50 transition-all cursor-pointer" onclick="showFundDetail(${i})"><td class="px-4 sm:px-8 py-4"><div class="flex items-center gap-3 sm:gap-4">${amcLogo(h.scheme)}<div class="max-w-[120px] sm:max-w-none"><div class="font-bold text-gray-900 truncate tracking-tight text-xs sm:text-sm">${esc(shortName(h.scheme))}</div><div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">${esc(h.plan)}</div></div></div></td><td class="px-4 py-4 text-right"><div class="flex items-center justify-end gap-1.5 sm:gap-2">${performanceTag(h.return_pct || 0)}<span class="font-bold text-xs sm:text-sm ${h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500'}">${h.xirr != null ? h.xirr.toFixed(1) + '%' : '—'}</span></div></td><td class="px-4 py-4 text-right"><div class="font-bold text-gray-900 text-xs sm:text-sm">${INR(h.value)}</div></td></tr>`).join('');
+  _holdings = holdings;
+  sortHoldings('value'); // Initial sort by Current Value descending
   generateInsights(holdings);
   loadPortfolioChart('5Y');
 }
@@ -341,9 +407,9 @@ function sendChat(q) { $('chat-input').value = q; $('chat-form').dispatchEvent(n
 function renderCharts(holdings) {
   Object.values(charts).forEach(c => c.destroy());
   const assetMap = {}; holdings.forEach(h => { const a = classifyAsset(h.category); assetMap[a] = (assetMap[a]||0) + h.value; });
-  charts.asset = new Chart($('chart-asset'), { type:'doughnut', data:{labels:Object.keys(assetMap), datasets:[{data:Object.values(assetMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:8, font:{size:9, weight:'bold'}, usePointStyle:true}}}} });
+  charts.asset = new Chart($('chart-asset'), { type:'doughnut', data:{labels:Object.keys(assetMap), datasets:[{data:Object.values(assetMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
   const catMap = {}; holdings.forEach(h => { const c = classifyCap(h.category); catMap[c] = (catMap[c]||0) + h.value; });
-  charts.category = new Chart($('chart-category'), { type:'doughnut', data:{labels:Object.keys(catMap), datasets:[{data:Object.values(catMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:8, font:{size:9, weight:'bold'}, usePointStyle:true}}}} });
+  charts.category = new Chart($('chart-category'), { type:'doughnut', data:{labels:Object.keys(catMap), datasets:[{data:Object.values(catMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
 }
 
 let portfolioChart = null;
@@ -351,7 +417,49 @@ function loadPortfolioChart(period='5Y') {
   fetch('/portfolio-history?period='+period).then(safeJson).then(data => {
     if(portfolioChart) portfolioChart.destroy();
     if(!data.dates?.length) return;
-    portfolioChart = new Chart($('chart-portfolio'), { type:'line', data:{labels: data.dates.map(d=>d.split('-')[1]+'/'+d.split('-')[0].slice(2)), datasets:[{label:'Net Worth', data:data.values, borderColor:'#10b981', fill:true, pointRadius:0, borderWidth:3, tension:0.4},{label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0, borderWidth:2}]}, options:{responsive:true, maintainAspectRatio:false, interaction:{intersect:false, mode:'index'}, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#111827', bodyFont:{size:11, weight:'bold'}, callbacks:{label:c=>c.dataset.label+': '+INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:5, font:{size:9}, color:'#94a3b8'}, grid:{display:false}}, y:{ticks:{font:{size:9}, color:'#94a3b8', callback:v=>INR(v)}, grid:{color:'#f8fafc'}}}} });
+    portfolioChart = new Chart($('chart-portfolio'), { 
+      type:'line', 
+      data:{
+        labels: data.dates.map(d => {
+          const dt = new Date(d);
+          return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+        }), 
+        datasets:[
+          {label:'Net Worth', data:data.values, borderColor:'#10b981', fill:true, backgroundColor:'rgba(16, 185, 129, 0.05)', pointRadius:0, borderWidth:3, tension:0.4},
+          {label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0, borderWidth:2}
+        ]
+      }, 
+      options:{
+        responsive:true, 
+        maintainAspectRatio:false, 
+        interaction:{intersect:false, mode:'index'}, 
+        plugins:{
+          legend:{display:false}, 
+          tooltip:{
+            backgroundColor:'#111827', 
+            padding:12,
+            titleFont:{size:12},
+            bodyFont:{size:12, weight:'bold'}, 
+            callbacks:{label:c=>' ' + c.dataset.label+': '+INR(c.parsed.y)}
+          }
+        }, 
+        scales:{
+          x:{
+            ticks:{maxTicksLimit:6, font:{size:11, weight:'500'}, color:'#64748b', padding:8}, 
+            grid:{display:false}
+          }, 
+          y:{
+            ticks:{
+              font:{size:11, weight:'500'}, 
+              color:'#64748b', 
+              callback:v=>INR_SHORT(v),
+              padding:8
+            }, 
+            grid:{color:'#f1f5f9'}
+          }
+        }
+      } 
+    });
   });
 }
 

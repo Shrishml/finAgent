@@ -17,6 +17,16 @@ const safeJson = r => {
 
 // Formatting utilities
 const INR = v => '₹' + Math.abs(v).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+const INR_SHORT = v => {
+  const s = v < 0 ? '-' : '';
+  const abs = Math.abs(v);
+  let res = '';
+  if (abs >= 10000000) res = (abs / 10000000).toFixed(2).replace(/\.00$/, '') + ' Cr';
+  else if (abs >= 100000) res = (abs / 100000).toFixed(2).replace(/\.00$/, '') + ' L';
+  else if (abs >= 1000) res = (abs / 1000).toFixed(1).replace(/\.0$/, '') + ' K';
+  else res = abs.toFixed(0);
+  return s + '₹' + res;
+};
 const sign = v => v >= 0 ? '+' : '';
 
 // Authentication logic

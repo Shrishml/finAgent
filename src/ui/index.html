@@ -261,45 +261,58 @@
 
     <!-- Dashboard -->
     <div id="dashboard" class="hidden">
-      <!-- Insights Banner -->
-      <div id="insights-banner" class="hidden">
-        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200 px-4 sm:px-6 py-4">
-          <div class="max-w-6xl mx-auto">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-semibold text-emerald-800">🎯 Here's what FinBestie found:</h3>
-              <button onclick="$('insights-banner').classList.add('hidden')" class="text-emerald-400 hover:text-emerald-600 text-xs">✕ dismiss</button>
+      <!-- Tab Navigation -->
+      <div class="bg-white border-b sticky top-12 z-10">
+        <div class="max-w-6xl mx-auto flex">
+          <button onclick="switchTab('overview')" class="tab-btn px-5 py-3 text-sm font-medium border-b-2 border-emerald-600 text-emerald-700" data-tab="overview">Overview</button>
+          <button onclick="switchTab('funds')" class="tab-btn px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="funds">My Funds</button>
+          <button onclick="switchTab('chat')" class="tab-btn px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="chat">Chat</button>
+        </div>
+      </div>
+
+      <!-- TAB: Overview -->
+      <div id="tab-overview" class="tab-content">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 sm:px-6 py-5">
+          <div id="summary-bar" class="max-w-6xl mx-auto"></div>
+        </div>
+        <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
+          <!-- Portfolio Growth Chart -->
+          <div class="bg-white rounded-xl border p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📈 Portfolio Growth</h3>
+              <div id="portfolio-period-btns" class="flex gap-1">
+                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="1Y">1Y</button>
+                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="3Y">3Y</button>
+                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white" data-p="5Y">5Y</button>
+                <button class="pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="MAX">MAX</button>
+              </div>
             </div>
-            <div id="insights-list" class="space-y-1.5"></div>
-            <p class="text-xs text-emerald-600 mt-3">💬 Try asking: <button onclick="$('chat-input').value='Which funds should I replace?';$('chat-form').dispatchEvent(new Event('submit'));toggleChat()" class="underline hover:text-emerald-800">"Which funds should I replace?"</button></p>
+            <div style="position:relative;height:280px"><canvas id="chart-portfolio"></canvas></div>
+            <p id="portfolio-chart-loading" class="text-[10px] text-gray-400 text-center mt-1">Loading portfolio history...</p>
+          </div>
+          <!-- Allocation Charts -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-xl border p-4 shadow-sm">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Category Allocation</h3>
+              <div class="chart-container"><canvas id="chart-category"></canvas></div>
+            </div>
+            <div class="bg-white rounded-xl border p-4 shadow-sm">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Equity vs Debt</h3>
+              <div class="chart-container"><canvas id="chart-asset"></canvas></div>
+            </div>
+          </div>
+          <!-- Smart Insights -->
+          <div id="insights-section">
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🎯 Insights</h3>
+            <div id="insights-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
           </div>
         </div>
       </div>
-      <!-- Summary Hero -->
-      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-5">
-        <div id="summary-bar" class="max-w-6xl mx-auto"></div>
-      </div>
 
-      <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
-        <!-- Charts Row -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white rounded-xl border p-4 shadow-sm">
-            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Category Allocation</h3>
-            <div class="chart-container"><canvas id="chart-category"></canvas></div>
-          </div>
-          <div class="bg-white rounded-xl border p-4 shadow-sm">
-            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Equity vs Debt</h3>
-            <div class="chart-container"><canvas id="chart-asset"></canvas></div>
-          </div>
-          <div class="bg-white rounded-xl border p-4 shadow-sm">
-            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Top Holdings</h3>
-            <div class="chart-container"><canvas id="chart-top"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Fund Table + Detail Panel -->
-        <div class="flex flex-col lg:flex-row gap-4">
-          <!-- Left: Fund Table -->
-          <div class="flex-1 min-w-0 bg-white rounded-xl border shadow-sm overflow-hidden">
+      <!-- TAB: My Funds -->
+      <div id="tab-funds" class="tab-content hidden">
+        <div class="max-w-6xl mx-auto px-4 py-5 space-y-4">
+          <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-4 py-3 border-b">
               <h3 class="text-sm font-semibold text-gray-700">Your Funds</h3>
               <div class="flex gap-2 text-[10px]">
@@ -323,45 +336,35 @@
               </table>
             </div>
           </div>
-
-          <!-- Right: Fund Detail Panel -->
-          <div id="fund-detail" class="w-full lg:w-80 flex-shrink-0 hidden">
-            <div class="bg-white rounded-xl border shadow-sm p-4 sticky top-16">
+          <!-- Fund Detail (expands below table on click) -->
+          <div id="fund-detail" class="hidden">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
               <div id="fund-detail-content">
                 <p class="text-gray-400 text-xs text-center py-8">Click a fund to see details</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="pb-8"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- Chat Sidebar -->
-  <div id="chat-sidebar" class="chat-sidebar border-l bg-white flex flex-col flex-shrink-0 fixed sm:sticky right-0 top-0 h-screen z-20" style="width:0">
-    <div class="p-3 border-b flex justify-between items-center min-w-[300px]">
-      <span class="font-semibold text-gray-700 text-sm">💬 Ask your bestie</span>
-      <button id="chat-close" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
-    </div>
-    <div id="chat-box" class="flex-1 overflow-y-auto p-3 space-y-2 min-w-[300px] flex flex-col justify-center">
-      <div id="suggestions-area" class="text-center space-y-4">
-        <div class="text-3xl">🤖</div>
-        <p class="text-gray-500 text-sm font-medium">What would you like to know?</p>
-        <div class="space-y-2 px-2">
-          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">How is my portfolio doing?</button>
-          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">Am I paying too much in expense ratios?</button>
-          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">How did my funds do in COVID?</button>
-          <button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors">Should I switch from regular to direct plans?</button>
+      <!-- TAB: Chat -->
+      <div id="tab-chat" class="tab-content hidden">
+        <div class="max-w-3xl mx-auto px-4 py-5 flex flex-col" style="height:calc(100vh - 110px)">
+          <div id="chat-box" class="flex-1 overflow-y-auto space-y-2 flex flex-col justify-center">
+            <div id="suggestions-area" class="text-center space-y-4">
+              <div class="text-3xl">🤖</div>
+              <p class="text-gray-500 text-sm font-medium">What would you like to know?</p>
+              <div id="smart-suggestions" class="space-y-2 px-2"></div>
+            </div>
+          </div>
+          <form id="chat-form" class="border-t pt-3 flex gap-2">
+            <input type="text" id="chat-input" placeholder="Ask anything about your portfolio..." class="flex-1 border rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-200" autocomplete="off">
+            <button type="submit" class="bg-emerald-600 text-white rounded-lg px-6 py-3 text-sm font-medium hover:bg-emerald-700">Send</button>
+          </form>
         </div>
       </div>
     </div>
-    <form id="chat-form" class="border-t p-2 flex gap-2 min-w-[300px]">
-      <input type="text" id="chat-input" placeholder="Ask anything..." class="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-200" autocomplete="off">
-      <button type="submit" class="bg-emerald-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-emerald-700">Send</button>
-    </form>
   </div>
-</div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -473,13 +476,6 @@ function renderCharts(holdings) {
     type: 'doughnut',
     data: { labels: Object.keys(assetMap), datasets: [{ data: Object.values(assetMap), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#94a3b8'], borderWidth: 0 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: { size: 10 }, padding: 6 } } } }
-  });
-
-  const sorted = [...holdings].sort((a, b) => b.value - a.value).slice(0, 6);
-  charts.top = new Chart($('chart-top'), {
-    type: 'bar',
-    data: { labels: sorted.map(h => shortName(h.scheme).slice(0, 18)), datasets: [{ data: sorted.map(h => h.value), backgroundColor: COLORS, borderRadius: 4 }] },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => '₹'+(v/1000).toFixed(0)+'k', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { font: { size: 9 } } } } }
   });
 }
 </script>
@@ -640,17 +636,21 @@ function showFundDetail(idx) {
 }
 </script>
 <script id="app-logic">
-// --- App logic ---
-function toggleChat() {
-  const sb = $('chat-sidebar');
-  const isOpen = sb.style.width !== '0px' && sb.style.width !== '0';
-  sb.style.width = isOpen ? '0' : (window.innerWidth < 640 ? '100vw' : '360px');
+// --- Tab switching ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => {
+    el.classList.remove('border-emerald-600','text-emerald-700');
+    el.classList.add('border-transparent','text-gray-500');
+  });
+  $('tab-'+tab).classList.remove('hidden');
+  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  btn.classList.add('border-emerald-600','text-emerald-700');
+  btn.classList.remove('border-transparent','text-gray-500');
 }
-$('chat-toggle').addEventListener('click', toggleChat);
-$('chat-close').addEventListener('click', toggleChat);
-document.querySelectorAll('.suggest-btn').forEach(btn => {
-  btn.addEventListener('click', () => { $('chat-input').value = btn.textContent; $('chat-form').dispatchEvent(new Event('submit')); });
-});
+
+// Chat toggle button opens chat tab
+$('chat-toggle').addEventListener('click', () => switchTab('chat'));
 
 function addMsg(text, sender) {
   const sa = $('suggestions-area'); if (sa) sa.remove();
@@ -676,35 +676,81 @@ function showPortfolio(holdings) {
   renderCharts(holdings);
   renderFundCards(holdings);
   generateInsights(holdings);
+  loadPortfolioChart('5Y');
 }
 
 function generateInsights(holdings) {
   const insights = [];
-  // 1. High expense ratio funds
+  // High expense ratio
   const highER = holdings.filter(h => h.expense_ratio && h.expense_ratio > 0.01);
   if (highER.length) {
     const worst = highER.sort((a,b) => b.expense_ratio - a.expense_ratio)[0];
     const savings = Math.round(worst.value * worst.expense_ratio * 0.4);
-    insights.push({icon:'⚠️', text:`${shortName(worst.scheme)} has a ${(worst.expense_ratio*100).toFixed(2)}% expense ratio — switching to a cheaper peer could save ~${INR(savings)}/year`});
+    insights.push({icon:'⚠️', title:`${highER.length} fund${highER.length>1?'s':''} with high fees`, desc:`${shortName(worst.scheme)} charges ${(worst.expense_ratio*100).toFixed(2)}% — switching could save ~${INR(savings)}/yr`, q:'Am I paying too much in expense ratios?'});
   }
-  // 2. Diversification check
-  const cats = new Set(holdings.map(h => classifyCap(h.category)));
-  if (cats.size >= 1) {
-    insights.push({icon:'✅', text:`Portfolio spans ${cats.size} categories across ${holdings.length} funds — ${cats.size >= 4 ? 'well diversified' : 'consider adding more variety'}`});
+  // Concentration
+  const cats = [...new Set(holdings.map(h => classifyAsset(h.category)))];
+  if (cats.length <= 2 && holdings.length > 3) {
+    insights.push({icon:'📊', title:'Portfolio is concentrated', desc:`${holdings.length} funds but only ${cats.length} asset type${cats.length>1?'s':''} (${cats.join(', ')})`, q:'Is my portfolio diversified enough?'});
   }
-  // 3. Underperformers
+  // Underperformers
   const under = holdings.filter(h => (h.return_pct||0) < 0);
   if (under.length) {
-    insights.push({icon:'📉', text:`${under.length} fund${under.length>1?'s are':' is'} in the red — ${under.map(h=>shortName(h.scheme)).join(', ')}`});
+    insights.push({icon:'📉', title:`${under.length} underperforming fund${under.length>1?'s':''}`, desc:under.map(h=>shortName(h.scheme)).join(', '), q:'Which funds should I replace?'});
   } else {
     const best = [...holdings].sort((a,b) => (b.xirr||0) - (a.xirr||0))[0];
-    if (best && best.xirr) insights.push({icon:'📈', text:`Best performer: ${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`});
+    if (best?.xirr) insights.push({icon:'📈', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:'Should I invest more in my best fund?'});
   }
-  if (insights.length) {
-    $('insights-list').innerHTML = insights.map(i => `<div class="flex items-start gap-2 text-xs text-gray-700"><span>${i.icon}</span><span>${i.text}</span></div>`).join('');
-    $('insights-banner').classList.remove('hidden');
-  }
+  // Render insight cards on Overview tab
+  $('insights-cards').innerHTML = insights.map(i =>
+    `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="switchTab('chat');sendChat('${i.q.replace(/'/g,"\\'")}')">
+      <div class="text-lg mb-1">${i.icon}</div>
+      <p class="text-sm font-semibold text-gray-800">${i.title}</p>
+      <p class="text-xs text-gray-400 mt-1">${i.desc}</p>
+      <p class="text-xs text-emerald-600 mt-2 font-medium">Discuss →</p>
+    </div>`
+  ).join('');
+  // Render smart suggestions in Chat tab
+  const suggestions = insights.map(i => i.q);
+  suggestions.push('Give me a summary of my portfolio');
+  suggestions.push('How did my funds do in COVID?');
+  $('smart-suggestions').innerHTML = suggestions.slice(0,5).map(q =>
+    `<button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors" onclick="sendChat('${q.replace(/'/g,"\\'")}')">${q}</button>`
+  ).join('');
 }
+
+function sendChat(q) {
+  $('chat-input').value = q;
+  $('chat-form').dispatchEvent(new Event('submit'));
+}
+
+// Portfolio growth chart
+let portfolioChart = null;
+function loadPortfolioChart(period='5Y') {
+  fetch('/portfolio-history?period='+period).then(r=>r.json()).then(data => {
+    const el = $('portfolio-chart-loading'); if(el) el.remove();
+    if(portfolioChart) portfolioChart.destroy();
+    if(!data.dates||!data.dates.length) { if(el) el.textContent='Not enough history'; return; }
+    const months = data.dates.map(d=>{const[y,m]=d.split('-');const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mn[+m-1]+" '"+y.slice(2);});
+    const investedLine = data.dates.map(() => data.invested);
+    portfolioChart = new Chart($('chart-portfolio'), {
+      type:'line',
+      data:{labels:months, datasets:[
+        {label:'Portfolio Value', data:data.values, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.08)', fill:true, pointRadius:0, borderWidth:2, tension:0.3},
+        {label:'Invested', data:investedLine, borderColor:'#94a3b8', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0, borderWidth:1.5, tension:0}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10},padding:15}}, tooltip:{callbacks:{label:c=>INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:6,font:{size:9}},grid:{display:false}}, y:{ticks:{maxTicksLimit:5,font:{size:9},callback:v=>'₹'+(v/1000).toFixed(0)+'k'},grid:{color:'#f3f4f6'}}}}
+    });
+  }).catch(()=>{ const el=$('portfolio-chart-loading'); if(el) el.textContent='Chart unavailable'; });
+}
+// Period button handlers
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('pp-btn')) {
+    document.querySelectorAll('.pp-btn').forEach(b=>{b.className='pp-btn text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200';});
+    e.target.className='pp-btn text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white';
+    loadPortfolioChart(e.target.dataset.p);
+  }
+});
 
 $('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();

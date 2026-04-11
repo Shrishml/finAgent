@@ -310,6 +310,70 @@ async def nav_history(amfi_code: str, period: str = "1Y"):
         "navs": [round(n, 2) for _, n in sampled],
     })
 
+
+@app.get("/portfolio-history")
+async def portfolio_history(request: Request, period: str = "1Y"):
+    """Portfolio value over time — aggregates NAV history across all holdings."""
+    from finagent.analytics.nav_history import NAVHistoryEngine
+    from datetime import timedelta
+    user_id = _get_user_id(request) or DEMO_USER_ID
+    holdings = load_holdings(user_id)
+    if not holdings:
+        return JSONResponse({"dates": [], "values": [], "invested": []})
+
+    engine = NAVHistoryEngine()
+    periods = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365, "3Y": 1095, "5Y": 1825}
+
+    # Fetch NAV history for each holding with an AMFI code
+    fund_data = []
+    for h in holdings:
+        if not h.amfi_code:
+            continue
+        hist = engine.fetch(h.amfi_code)
+        if hist:
+            fund_data.append({"units": h.units, "invested": h.invested_value, "history": dict(hist)})
+
+    if not fund_data:
+        return JSONResponse({"dates": [], "values": [], "invested": []})
+
+    # Find common date range
+    all_dates = set()
+    for fd in fund_data:
+        all_dates.update(fd["history"].keys())
+    all_dates = sorted(all_dates)
+
+    if period != "MAX" and period in periods:
+        cutoff = all_dates[-1] - timedelta(days=periods[period])
+        all_dates = [d for d in all_dates if d >= cutoff]
+
+    # Compute portfolio value for each date
+    dates_out, values_out = [], []
+    total_invested = sum(fd["invested"] for fd in fund_data)
+    for d in all_dates:
+        val = 0
+        valid = True
+        for fd in fund_data:
+            nav = fd["history"].get(d)
+            if nav is None:
+                valid = False
+                break
+            val += fd["units"] * nav
+        if valid:
+            dates_out.append(d)
+            values_out.append(val)
+
+    # Downsample to ~200 points
+    step = max(1, len(dates_out) // 200)
+    sampled_idx = list(range(0, len(dates_out), step))
+    if sampled_idx[-1] != len(dates_out) - 1:
+        sampled_idx.append(len(dates_out) - 1)
+
+    return JSONResponse({
+        "dates": [dates_out[i].isoformat() for i in sampled_idx],
+        "values": [round(values_out[i], 2) for i in sampled_idx],
+        "invested": total_invested,
+    })
+
 def main():
     cfg = get_config()
     server = cfg.get("server", {})

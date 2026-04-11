@@ -707,7 +707,6 @@ function showPortfolio(holdings) {
 }
 
 function generateInsights(holdings) {
-function generateInsights(holdings) {
   const good = [], action = [];
   const total = holdings.reduce((s,h) => s + h.value, 0);
   const xirrs = holdings.filter(h=>h.xirr);

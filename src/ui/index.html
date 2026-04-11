@@ -87,6 +87,16 @@
   <!-- Main: Portfolio Dashboard -->
   <div id="main-area" class="flex-1 overflow-y-auto">
 
+    <!-- Loading state for signed-in users -->
+    <div id="loading-state" class="hidden flex-1 flex items-center justify-center py-32">
+      <div class="text-center">
+        <div class="text-4xl mb-4">📊</div>
+        <p class="text-lg font-semibold text-gray-700">Loading your portfolio...</p>
+        <p class="text-sm text-gray-400 mt-1">This takes just a moment</p>
+      </div>
+    </div>
+    <script>if(document.cookie.includes('session=')){document.getElementById('landing-section')?.classList.add('hidden');document.getElementById('loading-state')?.classList.remove('hidden');}</script>
+
     <!-- Landing Hero (first-time visitors) -->
     <div id="landing-section">
       <!-- Hero -->
@@ -689,6 +699,7 @@ function showPortfolio(holdings) {
   if (!holdings.length) return;
   $('landing-section').classList.add('hidden');
   $('upload-section').classList.add('hidden');
+  $('loading-state').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
   $('toggle-upload').classList.remove('hidden');
   $('clear-btn').classList.remove('hidden');
@@ -895,8 +906,8 @@ if (location.pathname === '/demo') {
 } else {
   // Only load portfolio for signed-in users (not stale demo data)
   fetch('/auth/me').then(safeJson).then(() => {
-    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
-  }).catch(()=>{});
+    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); else { $('loading-state').classList.add('hidden'); $('landing-section').classList.remove('hidden'); } });
+  }).catch(()=>{ $('loading-state').classList.add('hidden'); $('landing-section').classList.remove('hidden'); });
 }
 
 // --- Google Auth ---

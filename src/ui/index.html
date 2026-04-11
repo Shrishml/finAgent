@@ -292,11 +292,11 @@
           <div class="bg-white rounded-xl border p-5 shadow-sm">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">📈 Portfolio Growth</h3>
-              <div id="portfolio-period-btns" class="flex gap-1">
-                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="1Y">1Y</button>
-                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="3Y">3Y</button>
-                <button class="pp-btn text-xs px-2 py-1 rounded bg-emerald-600 text-white" data-p="5Y">5Y</button>
-                <button class="pp-btn text-xs px-2 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="MAX">MAX</button>
+              <div id="portfolio-period-btns" class="flex gap-1.5">
+                <button class="pp-btn text-sm px-3 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="1Y">1Y</button>
+                <button class="pp-btn text-sm px-3 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="3Y">3Y</button>
+                <button class="pp-btn text-sm px-3 py-1 rounded bg-emerald-600 text-white" data-p="5Y">5Y</button>
+                <button class="pp-btn text-sm px-3 py-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200" data-p="MAX">MAX</button>
               </div>
             </div>
             <div style="position:relative;height:420px"><canvas id="chart-portfolio"></canvas></div>
@@ -461,9 +461,9 @@ function renderSummary(holdings) {
 
   $('summary-bar').innerHTML = `
     <div>
-      <div class="text-sm text-blue-200 mb-1">Current Value</div>
-      <div class="text-5xl sm:text-6xl font-bold tracking-tight">${INR(total)}</div>
-      <div class="flex flex-wrap gap-6 mt-4 text-sm">
+      <div class="text-xs text-blue-200 mb-1">Current Value</div>
+      <div class="text-3xl sm:text-4xl font-bold tracking-tight">${INR(total)}</div>
+      <div class="flex flex-wrap gap-6 mt-3 text-sm">
         <div><span class="text-blue-200">Invested</span> <span class="text-blue-100 font-semibold ml-1">${INR(invested)}</span></div>
         <div><span class="text-blue-200">Return</span> <span class="${ret >= 0 ? 'text-green-300' : 'text-red-300'} font-semibold ml-1">${sign(ret)}${INR(ret)} (${sign(retPct)}${retPct.toFixed(1)}%)</span></div>
         <div><span class="text-blue-200">1D</span> <span class="${dayChg >= 0 ? 'text-green-300' : 'text-red-300'} font-semibold ml-1">${sign(dayChg)}${dayChg.toFixed(2)}%</span></div>
@@ -483,7 +483,7 @@ function renderCharts(holdings) {
   charts.category = new Chart($('chart-category'), {
     type: 'doughnut',
     data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: COLORS, borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: { size: 10 }, padding: 6 } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 13 }, padding: 8 } } } }
   });
 
   const assetMap = {};
@@ -491,7 +491,7 @@ function renderCharts(holdings) {
   charts.asset = new Chart($('chart-asset'), {
     type: 'doughnut',
     data: { labels: Object.keys(assetMap), datasets: [{ data: Object.values(assetMap), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#94a3b8'], borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: { size: 10 }, padding: 6 } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 13 }, padding: 8 } } } }
   });
 }
 </script>
@@ -779,7 +779,7 @@ function loadPortfolioChart(period='5Y') {
         {label:'Portfolio Value', data:data.values, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.08)', fill:true, pointRadius:0, borderWidth:2, tension:0.3},
         {label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0, borderWidth:1.5, tension:0}
       ]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10},padding:15}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:6,font:{size:9}},grid:{display:false}}, y:{ticks:{maxTicksLimit:5,font:{size:9},callback:fmtY},grid:{color:'#f3f4f6'}}}}
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:13},padding:15}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:6,font:{size:12}},grid:{display:false}}, y:{ticks:{maxTicksLimit:5,font:{size:12},callback:fmtY},grid:{color:'#f3f4f6'}}}}
     });
   }).catch(e=>{ console.error('Portfolio chart error:',e); const el=$('portfolio-chart-loading'); if(el) el.textContent='Chart unavailable'; });
 }

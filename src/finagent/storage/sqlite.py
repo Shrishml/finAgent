@@ -141,7 +141,7 @@ def load_holdings(user_id: int | None = None) -> list[MFHolding]:
             risk_label=d.get("risk_label", ""),
             transactions=txns,
         ))
-    return holdings
+    return [h for h in holdings if h.current_value > 0]
 
 
 def clear_holdings(user_id: int | None = None):

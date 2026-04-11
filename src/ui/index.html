@@ -697,20 +697,31 @@ function generateInsights(holdings) {
   if (highER.length) {
     const worst = highER.sort((a,b) => b.expense_ratio - a.expense_ratio)[0];
     const savings = Math.round(worst.value * worst.expense_ratio * 0.4);
-    insights.push({icon:'⚠️', title:`${highER.length} fund${highER.length>1?'s':''} with high fees`, desc:`${shortName(worst.scheme)} charges ${(worst.expense_ratio*100).toFixed(2)}% — switching could save ~${INR(savings)}/yr`, q:'Am I paying too much in expense ratios?'});
-  }
-  // Concentration
-  const cats = [...new Set(holdings.map(h => classifyAsset(h.category)))];
-  if (cats.length <= 2 && holdings.length > 3) {
-    insights.push({icon:'📊', title:'Portfolio is concentrated', desc:`${holdings.length} funds but only ${cats.length} asset type${cats.length>1?'s':''} (${cats.join(', ')})`, q:'Is my portfolio diversified enough?'});
+    insights.push({icon:'⚠️', title:`${highER.length} fund${highER.length>1?'s':''} with high fees`, desc:`${shortName(worst.scheme)} charges ${(worst.expense_ratio*100).toFixed(2)}%`, q:'Am I paying too much in expense ratios?'});
   }
   // Underperformers
   const under = holdings.filter(h => (h.return_pct||0) < 0);
   if (under.length) {
     insights.push({icon:'📉', title:`${under.length} underperforming fund${under.length>1?'s':''}`, desc:under.map(h=>shortName(h.scheme)).join(', '), q:'Which funds should I replace?'});
-  } else {
-    const best = [...holdings].sort((a,b) => (b.xirr||0) - (a.xirr||0))[0];
-    if (best?.xirr) insights.push({icon:'📈', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:'Should I invest more in my best fund?'});
+  }
+  // Top performer
+  const best = [...holdings].sort((a,b) => (b.xirr||0) - (a.xirr||0))[0];
+  if (best?.xirr) {
+    insights.push({icon:'📈', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:`Tell me more about ${shortName(best.scheme)}`});
+  }
+  // Asset allocation
+  const assets = {};
+  holdings.forEach(h => { const a = classifyAsset(h.category); assets[a] = (assets[a]||0) + h.value; });
+  const total = holdings.reduce((s,h) => s + h.value, 0);
+  const topAsset = Object.entries(assets).sort((a,b) => b[1]-a[1])[0];
+  if (topAsset && total > 0) {
+    const pct = (topAsset[1]/total*100).toFixed(0);
+    insights.push({icon:'📊', title:`${pct}% in ${topAsset[0]}`, desc:`${Object.keys(assets).length} asset types across ${holdings.length} funds`, q:'Is my portfolio diversified enough?'});
+  }
+  // Regular plan check
+  const regular = holdings.filter(h => h.plan === 'regular');
+  if (regular.length) {
+    insights.push({icon:'🔄', title:`${regular.length} regular plan fund${regular.length>1?'s':''}`, desc:'You may be paying extra commission', q:'Should I switch from regular to direct plans?'});
   }
   // Render insight cards on Overview tab
   $('insights-cards').innerHTML = insights.map((i,idx) =>

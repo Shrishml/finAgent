@@ -11,18 +11,22 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/common.js"></script>
 <style>
-  #chat-widget { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s; }
+  #chat-widget { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s, width 0.3s ease; }
   .chat-closed { transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; }
   
+  @media (min-width: 768px) {
+    .chat-closed { transform: none; opacity: 1; pointer-events: auto; width: 0 !important; border-left-width: 0 !important; }
+  }
+
   @media (max-width: 640px) {
     #chat-widget { width: 100% !important; height: 100% !important; max-height: 100% !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; }
     .chat-closed { transform: translateY(100%) !important; }
   }
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col overflow-x-hidden w-full">
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden w-full">
 
-<header class="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30 shrink-0 w-full">
+<header class="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between z-30 shrink-0 w-full">
   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
     <span class="text-xl sm:text-2xl">💰</span>
     <div onclick="location.href='/'" class="cursor-pointer">
@@ -51,7 +55,8 @@
         <div class="g_id_signin" data-type="standard" data-size="small" data-theme="outline" data-text="signin" data-shape="pill"></div>
       </div>
       <button id="user-btn" class="hidden items-center gap-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-50 rounded-full pr-1 sm:pr-3 py-1 border border-gray-100 transition-all shrink-0" onclick="$('user-dropdown').classList.toggle('hidden')">
-        <img id="user-avatar" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-emerald-400 shadow-sm" src="" alt="">
+        <img id="user-avatar" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-emerald-400 shadow-sm" src="" alt="User">
+        <span id="user-name" class="hidden md:block font-bold"></span>
         <svg class="hidden sm:block w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
       <div id="user-dropdown" class="hidden absolute right-4 top-14 bg-white border border-gray-100 rounded-2xl shadow-2xl py-1 z-40 w-48 overflow-hidden">
@@ -62,21 +67,22 @@
   </div>
 </header>
 
-<main class="flex-1 relative w-full overflow-x-hidden">
-  <div id="loading-state" class="fixed inset-0 top-[60px] flex items-center justify-center bg-gray-50 z-20 w-full">
-    <div class="text-center px-6">
-      <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">📊</div>
-      <p id="loading-text" class="text-lg font-bold text-gray-800">Reviewing your portfolio...</p>
-      <p class="text-sm text-gray-400 mt-1 italic">"Your money, your rules."</p>
+<div id="app-container" class="flex-1 flex overflow-hidden w-full relative">
+  <main class="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar">
+    <div id="loading-state" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-20 w-full">
+      <div class="text-center px-6">
+        <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">📊</div>
+        <p id="loading-text" class="text-lg font-bold text-gray-800">Reviewing your portfolio...</p>
+        <p class="text-sm text-gray-400 mt-1 italic">"Your money, your rules."</p>
+      </div>
     </div>
-  </div>
 
   <div id="dashboard" class="hidden w-full">
     <div class="bg-gray-900 text-white px-4 sm:px-6 py-8 sm:py-14 w-full overflow-hidden">
       <div id="summary-bar" class="max-w-6xl mx-auto"></div>
     </div>
 
-    <div class="bg-white border-b sticky top-[52px] sm:top-[60px] z-20 px-4 sm:px-6 w-full">
+    <div class="bg-white border-b sticky top-0 z-20 px-4 sm:px-6 w-full">
       <div class="max-w-6xl mx-auto flex gap-6 sm:gap-10">
         <button onclick="switchTab('overview')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-emerald-600 text-emerald-600" data-tab="overview">Overview</button>
         <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Holdings</button>
@@ -121,42 +127,98 @@
         </div>
       </div>
     </div>
-    <div class="h-24 sm:h-32"></div>
-  </div>
-</main>
+  </main>
 
-<div class="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 z-50 flex flex-col items-end gap-5">
-  <div id="chat-widget" class="chat-closed w-full sm:w-[420px] h-full sm:h-[650px] max-h-screen sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden origin-bottom-right">
-    <div class="bg-gray-900 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-3 sm:gap-4"><div class="w-10 h-10 sm:w-12 h-12 rounded-xl sm:rounded-2xl bg-emerald-500 flex items-center justify-center text-xl sm:text-2xl">🤖</div><div><h4 class="font-extrabold text-sm sm:text-base tracking-tight">FinBestie AI</h4><p class="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Active</p></div></div>
-      <button onclick="toggleChat()" class="p-2 hover:bg-white/10 rounded-xl transition-all"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></button>
+  <!-- Sidebar Resizer -->
+  <div id="chat-resizer" class="hidden md:flex w-1 hover:w-1.5 bg-gray-100 hover:bg-emerald-400 cursor-col-resize transition-all z-40 shrink-0"></div>
+
+  <div id="chat-sidebar-wrapper" class="fixed md:relative right-0 z-40 flex flex-col items-end md:items-stretch h-auto md:h-full shrink-0">
+    <div id="chat-widget" class="chat-closed w-full sm:w-[420px] md:w-[450px] h-full sm:h-[650px] md:h-full max-h-screen md:max-h-full bg-white sm:rounded-[2.5rem] md:rounded-none shadow-2xl md:shadow-none border border-gray-100 md:border-0 md:border-l flex flex-col overflow-hidden origin-bottom-right md:origin-right">
+      <div class="bg-gray-900 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3 sm:gap-4"><div class="w-10 h-10 sm:w-12 h-12 rounded-xl sm:rounded-2xl bg-emerald-500 flex items-center justify-center text-xl sm:text-2xl">🤖</div><div><h4 class="font-extrabold text-sm sm:text-base tracking-tight">FinBestie AI</h4><p class="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Active</p></div></div>
+        <button onclick="toggleChat()" class="p-2 hover:bg-white/10 rounded-xl transition-all" title="Close Chat"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div id="chat-box" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar bg-gray-50/30"><div id="suggestions-area" class="py-6 space-y-8"><div class="text-center px-4"><p class="text-base font-extrabold text-gray-800 mb-2">👋 I've audited your portfolio.</p><p class="text-xs text-gray-500">Ask me anything about your funds.</p></div><div id="smart-suggestions" class="grid grid-cols-1 gap-2"></div></div></div>
+      <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><input type="text" id="chat-input" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
     </div>
-    <div id="chat-box" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar bg-gray-50/30"><div id="suggestions-area" class="py-6 space-y-8"><div class="text-center px-4"><p class="text-base font-extrabold text-gray-800 mb-2">👋 I've audited your portfolio.</p><p class="text-xs text-gray-500">Ask me anything about your funds.</p></div><div id="smart-suggestions" class="grid grid-cols-1 gap-2"></div></div></div>
-    <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><input type="text" id="chat-input" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
   </div>
-  <button id="chat-toggle-btn" onclick="toggleChat()" class="w-14 h-14 sm:w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl transition-all relative ring-4 ring-white"><svg id="chat-icon-open" class="w-6 h-6 sm:w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg><svg id="chat-icon-close" class="w-6 h-6 sm:w-7 h-7 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+</div>
+
+<div class="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 z-50 transition-all duration-300" id="chat-toggle-wrapper">
+  <button id="chat-toggle-btn" onclick="toggleChat()" class="w-14 h-14 sm:w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl transition-all relative ring-4 ring-white"><svg id="chat-icon-open" class="w-6 h-6 sm:w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg></button>
 </div>
 
 <script>
 let charts = {};
 const COLORS = ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
 
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function toggleChat() {
   const widget = $('chat-widget');
+  const resizer = $('chat-resizer');
+  const wrapper = $('chat-sidebar-wrapper');
+  const toggleWrapper = $('chat-toggle-wrapper');
   const isClosed = widget.classList.contains('chat-closed');
+  
   if (isClosed) {
     widget.classList.remove('chat-closed');
-    $('chat-icon-open').classList.add('hidden');
-    $('chat-icon-close').classList.remove('hidden');
+    if (window.innerWidth >= 768) {
+      resizer.classList.remove('hidden');
+      const savedWidth = localStorage.getItem('chatSidebarWidth') || '450px';
+      widget.style.width = savedWidth;
+      wrapper.style.width = 'auto';
+    }
+    toggleWrapper.classList.add('opacity-0', 'pointer-events-none', 'scale-75');
     document.body.style.overflow = window.innerWidth < 640 ? 'hidden' : 'auto';
     setTimeout(() => $('chat-input').focus(), 300);
   } else {
     widget.classList.add('chat-closed');
-    $('chat-icon-open').classList.remove('hidden');
-    $('chat-icon-close').classList.add('hidden');
+    if (window.innerWidth >= 768) {
+      resizer.classList.add('hidden');
+      widget.style.width = '0px';
+      wrapper.style.width = '0px';
+    }
+    toggleWrapper.classList.remove('opacity-0', 'pointer-events-none', 'scale-75');
     document.body.style.overflow = 'auto';
   }
 }
+
+// Resizer Logic
+(function initResizer() {
+  const resizer = $('chat-resizer');
+  const widget = $('chat-widget');
+  let isResizing = false;
+
+  resizer.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const offset = window.innerWidth - e.clientX;
+    // Limit width between 20% and 60% of viewport
+    const min = window.innerWidth * 0.2;
+    const max = window.innerWidth * 0.6;
+    if (offset > min && offset < max) {
+      const width = offset + 'px';
+      widget.style.width = width;
+      localStorage.setItem('chatSidebarWidth', width);
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isResizing) return;
+    isResizing = false;
+    document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
+  });
+})();
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -221,7 +283,8 @@ function showFundDetail(idx) {
   $('fund-modal').classList.remove('hidden');
   const rc = (h.return_pct||0) >= 0 ? 'text-emerald-600' : 'text-red-500';
   const xc = h.xirr != null ? (h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500') : 'text-gray-400';
-  $('fund-detail-content').innerHTML = `<div class="flex items-center gap-4 sm:gap-6 mb-8">${amcLogo(h.scheme)}<div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">${shortName(h.scheme)}</h3><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${h.category}</p></div></div><div class="grid grid-cols-2 gap-3 sm:gap-4 mb-8"><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Value</p><p class="text-lg font-extrabold text-gray-900">${INR(h.value)}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">XIRR</p><p class="text-lg font-extrabold ${xc}">${h.xirr!=null?h.xirr.toFixed(1)+'%':'—'}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Return</p><p class="text-base font-bold ${rc}">${sign(h.return_pct||0)}${(h.return_pct||0).toFixed(1)}%</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Exp. Ratio</p><p class="text-base font-bold text-gray-700">${h.expense_ratio?(h.expense_ratio*100).toFixed(2)+'%':'—'}</p></div></div><div class="space-y-6"><div style="height:200px"><canvas id="chart-nav"></canvas></div><button onclick="openAndChat('Analyze ${shortName(h.scheme).replace(/'/g,"\\\\'")}')" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all">Ask AI to analyze this fund →</button></div>`;
+  const sName = shortName(h.scheme);
+  $('fund-detail-content').innerHTML = `<div class="flex items-center gap-4 sm:gap-6 mb-8">${amcLogo(h.scheme)}<div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">${esc(sName)}</h3><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${esc(h.category)}</p></div></div><div class="grid grid-cols-2 gap-3 sm:gap-4 mb-8"><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Value</p><p class="text-lg font-extrabold text-gray-900">${INR(h.value)}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">XIRR</p><p class="text-lg font-extrabold ${xc}">${h.xirr!=null?h.xirr.toFixed(1)+'%':'—'}</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Return</p><p class="text-base font-bold ${rc}">${sign(h.return_pct||0)}${(h.return_pct||0).toFixed(1)}%</p></div><div class="bg-gray-50 rounded-xl p-4 border"><p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Exp. Ratio</p><p class="text-base font-bold text-gray-700">${h.expense_ratio?(h.expense_ratio*100).toFixed(2)+'%':'—'}</p></div></div><div class="space-y-6"><div style="height:200px"><canvas id="chart-nav"></canvas></div><button onclick="openAndChat('Analyze ${esc(sName)}')" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all">Ask AI to analyze this fund →</button></div>`;
   if (h.amfi_code) {
     fetch('/nav-history/'+h.amfi_code).then(safeJson).then(data => {
       if(!data.dates?.length) return;
@@ -241,7 +304,7 @@ function showPortfolio(holdings) {
   renderSummary(holdings);
   renderCharts(holdings);
   _holdings = holdings.sort((a,b) => b.value - a.value);
-  $('fund-table-body').innerHTML = _holdings.map((h, i) => `<tr class="hover:bg-gray-50 transition-all cursor-pointer" onclick="showFundDetail(${i})"><td class="px-4 sm:px-8 py-4"><div class="flex items-center gap-3 sm:gap-4">${amcLogo(h.scheme)}<div class="max-w-[120px] sm:max-w-none"><div class="font-bold text-gray-900 truncate tracking-tight text-xs sm:text-sm">${shortName(h.scheme)}</div><div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">${h.plan}</div></div></div></td><td class="px-4 py-4 text-right"><div class="flex items-center justify-end gap-1.5 sm:gap-2">${performanceTag(h.return_pct || 0)}<span class="font-bold text-xs sm:text-sm ${h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500'}">${h.xirr != null ? h.xirr.toFixed(1) + '%' : '—'}</span></div></td><td class="px-4 py-4 text-right"><div class="font-bold text-gray-900 text-xs sm:text-sm">${INR(h.value)}</div></td></tr>`).join('');
+  $('fund-table-body').innerHTML = _holdings.map((h, i) => `<tr class="hover:bg-gray-50 transition-all cursor-pointer" onclick="showFundDetail(${i})"><td class="px-4 sm:px-8 py-4"><div class="flex items-center gap-3 sm:gap-4">${amcLogo(h.scheme)}<div class="max-w-[120px] sm:max-w-none"><div class="font-bold text-gray-900 truncate tracking-tight text-xs sm:text-sm">${esc(shortName(h.scheme))}</div><div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">${esc(h.plan)}</div></div></div></td><td class="px-4 py-4 text-right"><div class="flex items-center justify-end gap-1.5 sm:gap-2">${performanceTag(h.return_pct || 0)}<span class="font-bold text-xs sm:text-sm ${h.xirr >= 0 ? 'text-emerald-600' : 'text-red-500'}">${h.xirr != null ? h.xirr.toFixed(1) + '%' : '—'}</span></div></td><td class="px-4 py-4 text-right"><div class="font-bold text-gray-900 text-xs sm:text-sm">${INR(h.value)}</div></td></tr>`).join('');
   generateInsights(holdings);
   loadPortfolioChart('5Y');
 }
@@ -257,9 +320,9 @@ function generateInsights(holdings) {
     if (!cards.length) return;
     $(id).classList.remove('hidden');
     $(id === 'good-insights-row' ? 'good-cards' : 'action-cards').innerHTML = cards.map(c => `
-      <div onclick="openAndChat('${c.q.replace(/'/g,"\\'")}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
-        <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${c.title}</h5>
-        <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${c.desc}</p>
+      <div onclick="openAndChat('${esc(c.q)}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
+        <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${esc(c.title)}</h5>
+        <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${esc(c.desc)}</p>
         <div class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
           Discuss with AI
           <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7-7 7"/></svg>
@@ -269,7 +332,7 @@ function generateInsights(holdings) {
   };
   render(good, 'good-insights-row');
   render(action, 'action-insights-row');
-  $('smart-suggestions').innerHTML = [...good, ...action].slice(0,4).map(i => `<button onclick="sendChat('${i.q.replace(/'/g,"\\'")}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${i.q}</button>`).join('');
+  $('smart-suggestions').innerHTML = [...good, ...action].slice(0,4).map(i => `<button onclick="sendChat('${esc(i.q)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(i.q)}</button>`).join('');
 }
 
 function openAndChat(q) { if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }
@@ -285,7 +348,7 @@ function renderCharts(holdings) {
 
 let portfolioChart = null;
 function loadPortfolioChart(period='5Y') {
-  fetch('/portfolio-history?period='+period).then(r=>r.json()).then(data => {
+  fetch('/portfolio-history?period='+period).then(safeJson).then(data => {
     if(portfolioChart) portfolioChart.destroy();
     if(!data.dates?.length) return;
     portfolioChart = new Chart($('chart-portfolio'), { type:'line', data:{labels: data.dates.map(d=>d.split('-')[1]+'/'+d.split('-')[0].slice(2)), datasets:[{label:'Net Worth', data:data.values, borderColor:'#10b981', fill:true, pointRadius:0, borderWidth:3, tension:0.4},{label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0, borderWidth:2}]}, options:{responsive:true, maintainAspectRatio:false, interaction:{intersect:false, mode:'index'}, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#111827', bodyFont:{size:11, weight:'bold'}, callbacks:{label:c=>c.dataset.label+': '+INR(c.parsed.y)}}}, scales:{x:{ticks:{maxTicksLimit:5, font:{size:9}, color:'#94a3b8'}, grid:{display:false}}, y:{ticks:{font:{size:9}, color:'#94a3b8', callback:v=>INR(v)}, grid:{color:'#f8fafc'}}}} });
@@ -296,8 +359,12 @@ function addMsg(text, sender) {
   const sa = $('suggestions-area'); if (sa) sa.remove();
   const box = $('chat-box'); const div = document.createElement('div');
   div.className = sender === 'user' ? 'flex justify-end mb-4' : 'flex justify-start mb-4';
-  const content = sender === 'user' ? `<div class="bg-gray-900 text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm shadow-md max-w-[85%] chat-msg font-medium">${text}</div>` : `<div class="bg-white border rounded-2xl rounded-tl-none px-4 py-3 text-sm shadow-sm max-w-[85%] chat-msg prose prose-sm prose-emerald">${marked.parse(text || '')}</div>`;
-  div.innerHTML = content; box.appendChild(div); box.scrollTop = box.scrollHeight; return div.querySelector('.chat-msg');
+  const content = sender === 'user' ? `<div class="bg-gray-900 text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm shadow-md max-w-[85%] chat-msg font-medium"></div>` : `<div class="bg-white border rounded-2xl rounded-tl-none px-4 py-3 text-sm shadow-sm max-w-[85%] chat-msg prose prose-sm prose-emerald"></div>`;
+  div.innerHTML = content; 
+  const msgEl = div.querySelector('.chat-msg');
+  if (sender === 'user') msgEl.textContent = text;
+  else msgEl.innerHTML = marked.parse(text || '');
+  box.appendChild(div); box.scrollTop = box.scrollHeight; return msgEl;
 }
 
 $('chat-form').addEventListener('submit', async (e) => {
@@ -314,9 +381,10 @@ $('chat-form').addEventListener('submit', async (e) => {
       const {done, value} = await reader.read(); if (done) break;
       const text = decoder.decode(value);
       for (const line of text.split('\n')) {
+        if (!line.trim()) continue;
         if (!line.startsWith('data: ')) continue;
         const d = line.slice(6); if (d === '[DONE]') break;
-        if (d.startsWith('[STATUS] ')) { msgEl.innerHTML = `<span class="thinking-dots font-bold text-emerald-600">⏳ ${d.slice(9)}<span>.</span><span>.</span><span>.</span></span>`; continue; }
+        if (d.startsWith('[STATUS] ')) { msgEl.innerHTML = `<span class="thinking-dots font-bold text-emerald-600">⏳ ${esc(d.slice(9))}<span>.</span><span>.</span><span>.</span></span>`; continue; }
         full += d; msgEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }

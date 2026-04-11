@@ -707,6 +707,7 @@ function showPortfolio(holdings) {
 }
 
 function generateInsights(holdings) {
+  holdings = holdings.filter(h => h.value > 0); // exclude fully redeemed funds
   const good = [], action = [];
   const total = holdings.reduce((s,h) => s + h.value, 0);
   const xirrs = holdings.filter(h=>h.xirr);

@@ -34,6 +34,13 @@ log = logging.getLogger("finagent")
 app = FastAPI(title="FinAgent", version="0.1.0")
 DEMO_USER_ID = -1  # Reserved user_id for shared demo portfolio
 
+
+@app.middleware("http")
+async def add_coop_header(request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    return response
+
 # Register connectors
 _registry = ConnectorRegistry()
 _registry.register(CAMSConnector())

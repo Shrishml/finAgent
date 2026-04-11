@@ -276,12 +276,13 @@ function amcLogo(scheme) {
   return `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 flex items-center justify-center font-bold text-[10px] text-gray-400">${scheme.slice(0,2).toUpperCase()}</div>`;
 }
 
-function renderSummary(holdings) {
+function renderSummary(holdings, portfolioXirr) {
   const total = holdings.reduce((s, h) => s + h.value, 0);
   const invested = holdings.reduce((s, h) => s + (h.invested || 0), 0);
   const ret = total - invested;
   const retPct = invested > 0 ? (ret / invested * 100) : 0;
-  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Portfolio Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Principal</p><p class="text-xl sm:text-2xl font-extrabold">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><div class="flex items-baseline gap-2"><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div></div></div></div>`;
+  const xirrHtml = portfolioXirr != null ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">XIRR</p><p class="text-xl sm:text-2xl font-extrabold ${portfolioXirr >= 0 ? 'text-emerald-400' : 'text-red-400'}">${portfolioXirr.toFixed(1)}%</p></div>` : '';
+  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Portfolio Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Principal</p><p class="text-xl sm:text-2xl font-extrabold">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><div class="flex items-baseline gap-2"><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div></div>${xirrHtml}</div></div>`;
 }
 
 let _holdings = [];
@@ -363,11 +364,11 @@ function renderHoldingsTable() {
   }).join('');
 }
 
-function showPortfolio(holdings) {
+function showPortfolio(holdings, portfolioXirr) {
   if (!holdings || !holdings.length) return;
   $('loading-state').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
-  renderSummary(holdings);
+  renderSummary(holdings, portfolioXirr);
   renderCharts(holdings);
   _holdings = holdings;
   sortHoldings('value'); // Initial sort by Current Value descending
@@ -510,7 +511,7 @@ async function initApp() {
       const d = await fetch('/demo', { method: 'POST' }).then(safeJson);
       if (d.status === 'ok') {
         const h = await fetch('/holdings').then(safeJson);
-        if (h.count > 0) showPortfolio(h.holdings);
+        if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
         else { $('loading-text').textContent = 'Holdings not found.'; }
       }
     } catch(e) { console.error('Demo init fail', e); location.href='/'; }
@@ -519,7 +520,7 @@ async function initApp() {
       const user = await checkSession();
       if (user) {
         const h = await fetch('/holdings').then(safeJson);
-        if (h.count > 0) showPortfolio(h.holdings);
+        if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
         else location.href='/';
       } else {
         location.href = '/';

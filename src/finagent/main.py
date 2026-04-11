@@ -16,7 +16,7 @@ from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
 from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user
-from finagent.utils.returns import compute_holding_returns
+from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
 # Logging setup
 _LOG_DIR = Path(__file__).parent.parent / "data"
@@ -195,6 +195,7 @@ async def get_holdings(request: Request):
             log.debug(f"Lazy enrichment failed: {e}")
     return JSONResponse({
         "count": len(holdings),
+        "portfolio_xirr": compute_portfolio_xirr(holdings),
         "holdings": [
             {
                 "scheme": h.scheme_name, "folio": h.folio, "value": h.current_value,

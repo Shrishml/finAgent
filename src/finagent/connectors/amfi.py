@@ -71,6 +71,10 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
         except Exception as e:
             log.warning(f"mfdata.in fetch failed for {h.amfi_code}: {e}")
 
+        # Fallback: always try mfapi.in for category if still missing
+        if not h.category:
+            h.category = _fetch_category_from_mfapi(h.amfi_code)
+
     return holdings
 
 

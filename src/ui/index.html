@@ -380,21 +380,31 @@ const sign = v => v >= 0 ? '+' : '';
 function classifyAsset(cat) {
   if (!cat) return 'Other';
   const c = cat.toLowerCase().replace(/-/g, ' ');
-  if (c.includes('equity') || c.includes('elss') || c.includes('large cap') || c.includes('mid cap') || c.includes('small cap') || c.includes('flexi cap') || c.includes('multi cap')) return 'Equity';
+  if (c.includes('equity') || c.includes('elss') || c.includes('large cap') || c.includes('mid cap') || c.includes('small cap') || c.includes('flexi cap') || c.includes('multi cap') || c.includes('value') || c.includes('contra') || c.includes('focused') || c.includes('dividend yield') || c.includes('sectoral') || c.includes('thematic')) return 'Equity';
   if (c.includes('debt') || c.includes('liquid') || c.includes('money market') || c.includes('gilt') || c.includes('overnight') || c.includes('bond') || c.includes('credit') || c.includes('banking') || c.includes('floater') || c.includes('duration') || c.includes('income')) return 'Debt';
-  if (c.includes('hybrid') || c.includes('allocation') || c.includes('balanced') || c.includes('arbitrage') || c.includes('equity savings')) return 'Hybrid';
+  if (c.includes('hybrid') || c.includes('allocation') || c.includes('balanced') || c.includes('arbitrage') || c.includes('equity savings') || c.includes('aggressive') || c.includes('conservative') || c.includes('multi asset')) return 'Hybrid';
+  if (c.includes('index') || c.includes('etf') || c.includes('fund of fund') || c.includes('fof')) return 'Index/ETF';
+  if (c.includes('retirement') || c.includes('children')) return 'Solution';
   return 'Other';
 }
 function classifyCap(cat) {
   if (!cat) return 'Other';
   const c = cat.toLowerCase().replace(/-/g, ' ');
-  if (c.includes('large cap') || c.includes('large & mid')) return 'Large Cap';
+  if (c.includes('large & mid') || c.includes('large and mid')) return 'Large & Mid Cap';
+  if (c.includes('large cap')) return 'Large Cap';
   if (c.includes('mid cap')) return 'Mid Cap';
   if (c.includes('small cap')) return 'Small Cap';
-  if (c.includes('flexi') || c.includes('multi')) return 'Flexi/Multi';
+  if (c.includes('flexi') || c.includes('multi cap')) return 'Flexi/Multi Cap';
   if (c.includes('elss')) return 'ELSS';
   if (c.includes('index') || c.includes('etf')) return 'Index/ETF';
-  return classifyAsset(cat);
+  if (c.includes('value') || c.includes('contra')) return 'Value/Contra';
+  if (c.includes('focused')) return 'Focused';
+  if (c.includes('sectoral') || c.includes('thematic')) return 'Sectoral/Thematic';
+  if (c.includes('dividend yield')) return 'Dividend Yield';
+  // Return the raw category if it's a known type, otherwise fall back to asset class
+  const asset = classifyAsset(cat);
+  if (asset !== 'Other') return asset;
+  return cat || 'Other';
 }
 function stars(n) {
   return '★'.repeat(n) + '<span class="star-empty">' + '★'.repeat(5 - n) + '</span>';

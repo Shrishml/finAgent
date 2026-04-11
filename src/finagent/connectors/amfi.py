@@ -10,6 +10,24 @@ from finagent.storage.sqlite import save_nav_cache, get_cached_nav
 log = logging.getLogger("finagent.enrichment.amfi")
 
 MFDATA_API = "https://mfdata.in/api/v1/schemes"
+MFAPI_URL = "https://api.mfapi.in/mf"
+
+
+def _fetch_category_from_mfapi(amfi_code: str) -> str:
+    """Fallback: get category from mfapi.in's scheme_category field."""
+    url = f"{MFAPI_URL}/{amfi_code}/latest"
+    req = urllib.request.Request(url, headers={"User-Agent": "FinBestie/0.1"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+            raw = data.get("meta", {}).get("scheme_category", "")
+            # "Equity Scheme - Flexi Cap Fund" → "Flexi Cap"
+            if " - " in raw:
+                return raw.split(" - ", 1)[1].replace(" Fund", "").replace(" Scheme", "").strip()
+            return raw
+    except Exception as e:
+        log.debug(f"mfapi.in category fetch failed for {amfi_code}: {e}")
+    return ""
 
 
 def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
@@ -21,10 +39,14 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
 
         # Check cache first (24h TTL) — returns {nav, expense_ratio} or None
         cached = get_cached_nav(h.amfi_code)
-        if cached and h.category:
-            log.debug(f"Cache hit for {h.amfi_code}: NAV={cached['nav']}, ER={cached['expense_ratio']}")
+        if cached:
             _apply_data(h, cached["nav"], cached["expense_ratio"])
-            continue
+            if h.category:
+                continue
+            # Category missing — fetch from mfapi.in
+            h.category = _fetch_category_from_mfapi(h.amfi_code)
+            if h.category:
+                continue
 
         # Fetch from mfdata.in
         try:
@@ -36,6 +58,8 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
                 save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
                 _apply_data(h, nav, expense)
                 h.category = data.get("category", "")
+                if not h.category:
+                    h.category = _fetch_category_from_mfapi(h.amfi_code)
                 h.nav_date = data.get("nav_date", "")
                 h.day_change = float(data.get("day_change", 0))
                 h.day_change_pct = float(data.get("day_change_pct", 0))

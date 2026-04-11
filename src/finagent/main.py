@@ -325,11 +325,10 @@ async def portfolio_history(request: Request, period: str = "1Y"):
     periods = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365, "3Y": 1095, "5Y": 1825}
 
     # Build cumulative invested timeline from transactions
-    invest_events = []  # (date, cumulative_amount)
+    invest_events = []  # (date, amount)
     for h in holdings:
         for t in h.transactions:
-            if t.amount > 0:  # purchases/SIPs only
-                invest_events.append((t.date, t.amount))
+            invest_events.append((t.date, t.amount))  # positive=purchase, negative=redemption
     invest_events.sort(key=lambda x: x[0])
     cum_invested = {}
     running = 0

@@ -405,8 +405,26 @@ async def nav_history(amfi_code: str, period: str = "1Y"):
     })
 
 
+# AMFI codes for popular index funds (used as benchmark proxies)
+BENCHMARK_CODES = {
+    "nifty50": "120716",       # UTI Nifty 50 Index Fund - Direct Growth
+    "nifty100": "120684",      # ICICI Prudential Nifty Next 50 Index Fund - Direct Growth
+    "midcap": "148726",        # Nippon India Nifty Midcap 150 Index Fund - Direct Growth
+    "smallcap": "148519",      # Nippon India Nifty Smallcap 250 Index Fund - Direct Growth
+}
+BENCHMARK_LABELS = {
+    "nifty50": "Nifty 50",
+    "nifty100": "Next 50",
+    "midcap": "Midcap 150",
+    "smallcap": "Smallcap 250",
+}
+
+@app.get("/benchmarks")
+async def list_benchmarks():
+    return JSONResponse([{"key": k, "label": v} for k, v in BENCHMARK_LABELS.items()])
+
 @app.get("/portfolio-history")
-async def portfolio_history(request: Request, period: str = "1Y"):
+async def portfolio_history(request: Request, period: str = "1Y", benchmark: str = ""):
     """Portfolio value over time — aggregates NAV history across all holdings."""
     from finagent.analytics.nav_history import NAVHistoryEngine
     from datetime import timedelta
@@ -496,10 +514,51 @@ async def portfolio_history(request: Request, period: str = "1Y"):
     else:
         sampled_idx = list(range(len(dates_out)))
 
+    # --- Benchmark: money-weighted comparison ---
+    benchmarks = {}
+    bench_keys = [b.strip().lower() for b in benchmark.split(",") if b.strip().lower() in BENCHMARK_CODES]
+    if bench_keys and invest_events:
+        for bk in bench_keys:
+            bcode = BENCHMARK_CODES[bk]
+            bhist = engine.fetch(bcode)
+            if not bhist:
+                continue
+            bnav = dict(bhist)
+            # Simulate: for each real transaction, buy equivalent ₹ of benchmark
+            bench_units_events = []  # (date, units)
+            for d, amt in invest_events:
+                # Find nearest NAV on or after transaction date
+                nav = None
+                for offset in range(0, 7):
+                    candidate = d + timedelta(days=offset)
+                    if candidate in bnav:
+                        nav = bnav[candidate]
+                        break
+                if nav and nav > 0:
+                    bench_units_events.append((d, amt / nav))  # same ₹, buy benchmark units
+            # Walk same dates, compute benchmark portfolio value
+            bench_vals = []
+            bcum = 0.0
+            buidx = 0
+            blast_nav = None
+            for d in (dates_out[i] for i in sampled_idx):
+                while buidx < len(bench_units_events) and bench_units_events[buidx][0] <= d:
+                    bcum += bench_units_events[buidx][1]
+                    buidx += 1
+                nav = bnav.get(d)
+                if nav is not None:
+                    blast_nav = nav
+                if blast_nav and bcum > 0:
+                    bench_vals.append(round(bcum * blast_nav, 2))
+                else:
+                    bench_vals.append(None)
+            benchmarks[bk] = {"label": BENCHMARK_LABELS[bk], "values": bench_vals}
+
     return JSONResponse({
         "dates": [dates_out[i].isoformat() for i in sampled_idx],
         "values": [round(values_out[i], 2) for i in sampled_idx],
         "invested": [round(invested_out[i], 2) for i in sampled_idx],
+        "benchmarks": benchmarks,
     })
 
 def main():

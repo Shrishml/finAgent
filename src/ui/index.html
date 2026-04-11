@@ -315,13 +315,14 @@
           </div>
           <!-- Smart Insights -->
           <div id="insights-section">
+            <h3 class="text-lg font-bold text-gray-700 mb-5">Portfolio Insights</h3>
             <div id="good-insights-row" class="mb-6 hidden">
-              <h3 class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-4">✅ What's working</h3>
-              <div id="good-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+              <h4 class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-4">What's working</h4>
+              <div id="good-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
             <div id="action-insights-row" class="hidden">
-              <h3 class="text-sm font-semibold text-amber-600 uppercase tracking-wide mb-4">⚠️ Worth a look</h3>
-              <div id="action-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+              <h4 class="text-sm font-semibold text-amber-600 uppercase tracking-wide mb-4">Worth a look</h4>
+              <div id="action-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
           </div>
         </div>
@@ -705,42 +706,41 @@ function generateInsights(holdings) {
 
   // === GOOD ===
   const best = [...holdings].filter(h=>h.xirr).sort((a,b) => b.xirr - a.xirr)[0];
-  if (best) good.push({icon:'🏆', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:`Tell me more about ${shortName(best.scheme)}`});
+  if (best) good.push({icon:'', title:'Top performer in your portfolio', desc:`${shortName(best.scheme)} is returning ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR — the highest across all your funds.`, q:`Tell me more about ${shortName(best.scheme)}`});
 
   const regular = holdings.filter(h => h.plan === 'regular');
-  if (!regular.length && holdings.length > 1) good.push({icon:'✅', title:'All direct plans', desc:'No commission leakage — you\'re keeping more of your returns', q:'How much do direct plans save me?'});
+  if (!regular.length && holdings.length > 1) good.push({icon:'', title:'All your funds are direct plans', desc:'You\'re not paying any distributor commission — this means more of your returns stay with you.', q:'How much do direct plans save me?'});
 
   const sipFunds = holdings.filter(h => h.transactions && h.transactions.length >= 3);
-  if (sipFunds.length >= 2) good.push({icon:'💪', title:'Consistent SIPs', desc:`${sipFunds.length} funds with regular investments — consistency is your biggest edge`, q:'How are my SIPs performing?'});
+  if (sipFunds.length >= 2) good.push({icon:'', title:'Consistent SIP discipline', desc:`${sipFunds.length} of your funds have regular monthly investments. Consistency in SIPs is the single biggest edge for long-term wealth building.`, q:'How are my SIPs performing?'});
 
   const assetMap = {};
   holdings.forEach(h => { const a = classifyAsset(h.category); if(a!=='Other') assetMap[a] = (assetMap[a]||0) + h.value; });
-  if (Object.keys(assetMap).length >= 3) good.push({icon:'🎯', title:'Well diversified', desc:`Portfolio covers ${Object.keys(assetMap).join(', ')}`, q:'Is my diversification good enough?'});
+  if (Object.keys(assetMap).length >= 3) good.push({icon:'', title:'Well diversified across asset classes', desc:`Your portfolio covers ${Object.keys(assetMap).join(', ')} — reducing risk from any single market segment.`, q:'Is my diversification good enough?'});
 
-  if (avgXirr > 12) good.push({icon:'📈', title:'Beating the market', desc:`Portfolio avg XIRR ${avgXirr.toFixed(1)}% vs Nifty 50 long-term ~12%`, q:'How does my portfolio compare to Nifty 50?'});
+  if (avgXirr > 12) good.push({icon:'', title:'Beating the market benchmark', desc:`Your portfolio average XIRR is ${avgXirr.toFixed(1)}%, which is above the Nifty 50 long-term average of ~12%.`, q:'How does my portfolio compare to Nifty 50?'});
 
   // === ACTIONABLE ===
   const under = holdings.filter(h => (h.return_pct||0) < 0 || (h.xirr && h.xirr < avgXirr - 5));
-  if (under.length) action.push({icon:'📉', title:`${under.length} underperforming fund${under.length>1?'s':''}`, desc:under.slice(0,3).map(h=>`${shortName(h.scheme)} (${h.xirr!=null?sign(h.xirr)+h.xirr.toFixed(1)+'%':'negative'})`).join(', '), q:'Which funds should I replace?'});
+  if (under.length) action.push({icon:'', title:`${under.length} fund${under.length>1?'s':''} underperforming your portfolio average`, desc:under.slice(0,3).map(h=>`${shortName(h.scheme)} at ${h.xirr!=null?sign(h.xirr)+h.xirr.toFixed(1)+'% XIRR':'negative returns'}`).join(', ') + '. These are dragging down your overall returns.', q:'Which funds should I replace?'});
 
-  if (regular.length) action.push({icon:'🔄', title:`${regular.length} regular plan fund${regular.length>1?'s':''}`, desc:'You\'re paying hidden commission on these', q:'Should I switch from regular to direct plans?'});
+  if (regular.length) action.push({icon:'', title:`${regular.length} fund${regular.length>1?'s are':' is'} on regular plans`, desc:'Regular plans charge distributor commission (0.5–1.5% annually) that compounds against you. Switching to direct plans keeps more money working for you.', q:'Should I switch from regular to direct plans?'});
 
-  if (holdings.length > 7) action.push({icon:'📦', title:`${holdings.length} funds — possible overlap`, desc:'Some funds may be doing the same job. Consider consolidating.', q:'Do any of my funds overlap?'});
+  if (holdings.length > 7) action.push({icon:'', title:`${holdings.length} funds — possible portfolio overlap`, desc:'With this many funds, some are likely investing in the same stocks. Consolidating could simplify your portfolio without reducing diversification.', q:'Do any of my funds overlap?'});
 
   const scVal = holdings.filter(h => (h.category||'').toLowerCase().includes('small')).reduce((s,h) => s+h.value, 0);
-  if (total > 0 && scVal/total > 0.3) action.push({icon:'⚡', title:`${(scVal/total*100).toFixed(0)}% in small caps`, desc:'High growth but high volatility — does this match your risk appetite?', q:'Do I have too much in small caps?'});
+  if (total > 0 && scVal/total > 0.3) action.push({icon:'', title:`${(scVal/total*100).toFixed(0)}% of your portfolio is in small caps`, desc:'Small cap funds offer high growth potential but come with higher volatility. Make sure this allocation matches your risk appetite and investment horizon.', q:'Do I have too much in small caps?'});
 
   const debtVal = holdings.filter(h => classifyAsset(h.category) === 'Debt').reduce((s,h) => s+h.value, 0);
-  if (debtVal === 0 && holdings.length > 2) action.push({icon:'🛡️', title:'No debt allocation', desc:'100% equity — consider adding debt funds for stability', q:'Should I add debt funds to my portfolio?'});
+  if (debtVal === 0 && holdings.length > 2) action.push({icon:'', title:'Your portfolio has no debt allocation', desc:'You\'re 100% in equity. Adding debt funds can provide stability during market downturns and reduce overall portfolio volatility.', q:'Should I add debt funds to my portfolio?'});
 
   // Render
   function renderCards(cards, containerId) {
     $(containerId).innerHTML = cards.map(i =>
-      `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer insight-card" data-q="${i.q.replace(/"/g,'&quot;')}">
-        <div class="text-lg mb-1">${i.icon}</div>
-        <p class="text-sm font-semibold text-gray-800">${i.title}</p>
-        <p class="text-xs text-gray-400 mt-1">${i.desc}</p>
-        <p class="text-xs text-emerald-600 mt-2 font-medium">Discuss →</p>
+      `<div class="bg-white rounded-xl border p-5 hover:shadow-md transition-shadow cursor-pointer insight-card" data-q="${i.q.replace(/"/g,'&quot;')}">
+        <p class="text-base font-semibold text-gray-800">${i.title}</p>
+        <p class="text-sm text-gray-500 mt-2">${i.desc}</p>
+        <p class="text-sm text-emerald-600 mt-3 font-medium">Discuss →</p>
       </div>`).join('');
   }
   if (good.length) { renderCards(good, 'good-cards'); $('good-insights-row').classList.remove('hidden'); }

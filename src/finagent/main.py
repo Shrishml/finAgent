@@ -346,19 +346,19 @@ async def portfolio_history(request: Request, period: str = "1Y"):
         cutoff = all_dates[-1] - timedelta(days=periods[period])
         all_dates = [d for d in all_dates if d >= cutoff]
 
-    # Compute portfolio value for each date
+    # Compute portfolio value for each date (forward-fill missing NAVs)
     dates_out, values_out = [], []
     total_invested = sum(fd["invested"] for fd in fund_data)
+    last_nav = {i: None for i in range(len(fund_data))}
     for d in all_dates:
         val = 0
-        valid = True
-        for fd in fund_data:
+        for i, fd in enumerate(fund_data):
             nav = fd["history"].get(d)
-            if nav is None:
-                valid = False
-                break
-            val += fd["units"] * nav
-        if valid:
+            if nav is not None:
+                last_nav[i] = nav
+            if last_nav[i] is not None:
+                val += fd["units"] * last_nav[i]
+        if val > 0:
             dates_out.append(d)
             values_out.append(val)
 

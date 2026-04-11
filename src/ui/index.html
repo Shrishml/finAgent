@@ -713,21 +713,27 @@ function generateInsights(holdings) {
     if (best?.xirr) insights.push({icon:'📈', title:'Top performer', desc:`${shortName(best.scheme)} at ${sign(best.xirr)}${best.xirr.toFixed(1)}% XIRR`, q:'Should I invest more in my best fund?'});
   }
   // Render insight cards on Overview tab
-  $('insights-cards').innerHTML = insights.map(i =>
-    `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="switchTab('chat');sendChat('${i.q.replace(/'/g,"\\'")}')">
+  $('insights-cards').innerHTML = insights.map((i,idx) =>
+    `<div class="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer insight-card" data-q="${i.q.replace(/"/g,'&quot;')}">
       <div class="text-lg mb-1">${i.icon}</div>
       <p class="text-sm font-semibold text-gray-800">${i.title}</p>
       <p class="text-xs text-gray-400 mt-1">${i.desc}</p>
       <p class="text-xs text-emerald-600 mt-2 font-medium">Discuss →</p>
     </div>`
   ).join('');
+  document.querySelectorAll('.insight-card').forEach(el => {
+    el.addEventListener('click', () => { switchTab('chat'); sendChat(el.dataset.q); });
+  });
   // Render smart suggestions in Chat tab
   const suggestions = insights.map(i => i.q);
   suggestions.push('Give me a summary of my portfolio');
   suggestions.push('How did my funds do in COVID?');
   $('smart-suggestions').innerHTML = suggestions.slice(0,5).map(q =>
-    `<button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors" onclick="sendChat('${q.replace(/'/g,"\\'")}')">${q}</button>`
+    `<button class="suggest-btn w-full text-left bg-gray-50 hover:bg-emerald-50 border rounded-lg px-3 py-2 text-xs text-gray-600 hover:text-emerald-700 transition-colors" data-q="${q.replace(/"/g,'&quot;')}">${q}</button>`
   ).join('');
+  document.querySelectorAll('.suggest-btn').forEach(el => {
+    el.addEventListener('click', () => sendChat(el.dataset.q));
+  });
 }
 
 function sendChat(q) {

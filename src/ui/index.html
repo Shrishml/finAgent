@@ -87,7 +87,7 @@
   <!-- Main: Portfolio Dashboard -->
   <div id="main-area" class="flex-1 overflow-y-auto">
 
-    <!-- Loading state for signed-in users -->
+    <!-- Loading state for /app route -->
     <div id="loading-state" class="hidden flex-1 flex items-center justify-center py-32">
       <div class="text-center">
         <div class="text-4xl mb-4">📊</div>
@@ -95,7 +95,12 @@
         <p class="text-sm text-gray-400 mt-1">This takes just a moment</p>
       </div>
     </div>
-    <script>if(document.cookie.includes('session=')){document.getElementById('landing-section')?.classList.add('hidden');document.getElementById('loading-state')?.classList.remove('hidden');}</script>
+    <script>
+      if(location.pathname==='/app'){
+        document.getElementById('landing-section').style.display='none';
+        document.getElementById('loading-state').classList.remove('hidden');
+      }
+    </script>
 
     <!-- Landing Hero (first-time visitors) -->
     <div id="landing-section">
@@ -822,7 +827,7 @@ $('upload-form').addEventListener('submit', async (e) => {
     if (data.status === 'ok') {
       $('upload-status').textContent = '✅ ' + data.holdings_count + ' schemes parsed';
       $('upload-status').className = 'text-sm mt-3 text-green-600';
-      fetch('/holdings').then(safeJson).then(d=>showPortfolio(d.holdings));
+      setTimeout(()=>{ location.href='/app'; }, 500);
     } else {
       $('upload-status').textContent = '❌ ' + data.message;
       $('upload-status').className = 'text-sm mt-3 text-red-600';
@@ -889,11 +894,7 @@ $('toggle-upload').addEventListener('click', () => {
 });
 $('clear-btn').addEventListener('click', async () => {
   await fetch('/clear', { method: 'POST' });
-  $('dashboard').classList.add('hidden');
-  $('upload-section').classList.add('hidden');
-  $('landing-section').classList.remove('hidden');
-  $('toggle-upload').classList.add('hidden');
-  $('clear-btn').classList.add('hidden');
+  location.href = '/';
   $('status').textContent = 'No data loaded';
   $('status').className = 'text-sm text-gray-400';
 });
@@ -903,11 +904,16 @@ if (location.pathname === '/demo') {
   fetch('/demo', { method: 'POST' }).then(safeJson).then(d => {
     if (d.status === 'ok') fetch('/holdings').then(safeJson).then(d => showPortfolio(d.holdings));
   }).catch(()=>{});
-} else {
-  // Only load portfolio for signed-in users (not stale demo data)
+} else if (location.pathname === '/app') {
+  // /app route: must be signed in, redirect to / if not
   fetch('/auth/me').then(safeJson).then(() => {
-    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); else { $('loading-state').classList.add('hidden'); $('landing-section').classList.remove('hidden'); } });
-  }).catch(()=>{ $('loading-state').classList.add('hidden'); $('landing-section').classList.remove('hidden'); });
+    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); else { location.href='/'; } });
+  }).catch(()=>{ location.href='/'; });
+} else {
+  // Landing page (/): check if signed in and has data, redirect to /app
+  fetch('/auth/me').then(safeJson).then(() => {
+    fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) location.href='/app'; });
+  }).catch(()=>{});
 }
 
 // --- Google Auth ---
@@ -924,7 +930,7 @@ async function handleGoogleCredential(response) {
     console.log('Auth response:', data);
     if (data.status === 'ok') {
       showUser(data.user);
-      fetch('/holdings').then(safeJson).then(d=>{ if(d.count>0) showPortfolio(d.holdings); });
+      location.href = '/app';
     } else {
       console.error('Auth failed:', data);
     }

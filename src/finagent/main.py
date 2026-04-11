@@ -291,6 +291,89 @@ async def suggestions(request: Request):
     return JSONResponse({"suggestions": questions[:6]})
 
 
+def _classify_asset(cat: str) -> str:
+    c = (cat or "").lower().replace("-", " ")
+    if any(k in c for k in ("equity", "elss", "large cap", "mid cap", "small cap", "flexi cap", "multi cap")):
+        return "Equity"
+    if any(k in c for k in ("debt", "liquid", "money market", "gilt", "overnight")):
+        return "Debt"
+    if any(k in c for k in ("hybrid", "allocation", "balanced", "arbitrage")):
+        return "Hybrid"
+    return "Other"
+
+
+def _short_name(s: str) -> str:
+    import re
+    return re.sub(r" - Direct.*| - Regular.*| Plan.*| Growth.*", "", s)[:50]
+
+
+def _generate_insights(holdings: list) -> dict:
+    """Generate 10 portfolio insights (5 green + 5 amber) from holdings."""
+    good, action = [], []
+    total = sum(h.current_value for h in holdings)
+    xirrs = [h for h in holdings if h.xirr]
+    avg_xirr = (sum(h.xirr for h in xirrs) / len(xirrs)) if xirrs else 0
+
+    # === GOOD (What's working) ===
+    best = max((h for h in holdings if h.xirr), key=lambda h: h.xirr, default=None)
+    if best:
+        good.append({"title": "Top performer", "desc": f"{_short_name(best.scheme_name)} at {best.xirr:+.1f}% XIRR", "q": f"Tell me more about {_short_name(best.scheme_name)}"})
+
+    regular = [h for h in holdings if h.plan == "regular"]
+    if not regular and len(holdings) > 1:
+        good.append({"title": "All direct plans", "desc": "No commission leakage — you're keeping more of your returns", "q": "How much do direct plans save me?"})
+
+    sip_funds = [h for h in holdings if len(h.transactions) >= 3]
+    if len(sip_funds) >= 2:
+        good.append({"title": "Consistent SIPs", "desc": f"{len(sip_funds)} funds with regular investments — consistency is your biggest edge", "q": "How are my SIPs performing?"})
+
+    asset_map = {}
+    for h in holdings:
+        a = _classify_asset(h.category)
+        if a != "Other":
+            asset_map[a] = asset_map.get(a, 0) + h.current_value
+    if len(asset_map) >= 3:
+        good.append({"title": "Well diversified", "desc": f"Portfolio covers {', '.join(asset_map.keys())}", "q": "Is my diversification good enough?"})
+
+    if avg_xirr > 12:
+        good.append({"title": "Beating the market", "desc": f"Portfolio avg XIRR {avg_xirr:.1f}% vs Nifty 50 long-term ~12%", "q": "How does my portfolio compare to Nifty 50?"})
+
+    # === ACTIONABLE (Worth a look) ===
+    returns = {h.scheme_name: compute_holding_returns(h) for h in holdings}
+    under = [h for h in holdings if (returns[h.scheme_name].get("return_pct", 0) < 0) or (h.xirr and h.xirr < avg_xirr - 5)]
+    if under:
+        descs = [f"{_short_name(h.scheme_name)} ({h.xirr:+.1f}%)" if h.xirr else _short_name(h.scheme_name) for h in under[:3]]
+        action.append({"title": f"{len(under)} underperforming fund{'s' if len(under) > 1 else ''}", "desc": ", ".join(descs), "q": "Which funds should I replace?"})
+
+    if regular:
+        action.append({"title": f"{len(regular)} regular plan fund{'s' if len(regular) > 1 else ''}", "desc": "You're paying hidden commission on these", "q": "Should I switch from regular to direct plans?"})
+
+    if len(holdings) > 7:
+        action.append({"title": f"{len(holdings)} funds — possible overlap", "desc": "Some funds may be doing the same job. Consider consolidating.", "q": "Do any of my funds overlap?"})
+
+    sc_val = sum(h.current_value for h in holdings if "small" in (h.category or "").lower())
+    if total > 0 and sc_val / total > 0.3:
+        action.append({"title": f"{sc_val / total * 100:.0f}% in small caps", "desc": "High growth but high volatility — does this match your risk appetite?", "q": "Do I have too much in small caps?"})
+
+    debt_val = sum(h.current_value for h in holdings if _classify_asset(h.category) == "Debt")
+    if debt_val == 0 and len(holdings) > 2:
+        action.append({"title": "No debt allocation", "desc": "100% equity — consider adding debt funds for stability", "q": "Should I add debt funds to my portfolio?"})
+
+    return {"good": good, "action": action}
+
+
+@app.get("/insights")
+async def insights(request: Request):
+    """Generate portfolio insights — 10 rule-based cards (5 green + 5 amber)."""
+    user_id = _get_user_id(request) or DEMO_USER_ID
+    holdings = load_holdings(user_id)
+    if not holdings:
+        return JSONResponse({"good": [], "action": []})
+    # Filter zero-value funds
+    holdings = [h for h in holdings if h.current_value > 0]
+    return JSONResponse(_generate_insights(holdings))
+
+
 @app.get("/compare/{amfi_code}")
 async def compare(amfi_code: str):
     """Get category peer comparison for a fund."""

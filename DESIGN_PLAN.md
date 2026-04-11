@@ -674,7 +674,7 @@ Design principle: **Balance positive reinforcement with actionable warnings.** U
 
 ### 9.2 Architecture
 
-Insights are generated **entirely in the frontend** from holdings data returned by `/holdings`. No LLM call needed — pure rule-based detection. This keeps them instant (no loading), free (no API cost), and deterministic (same portfolio = same insights).
+Insights are generated **on the backend** via the `GET /insights` endpoint. The endpoint loads the user's holdings, filters zero-value funds, and runs all 10 rule-based detections server-side. Returns `{good: [...], action: [...]}` JSON. The frontend simply fetches and renders cards — no computation. This keeps logic centralized, testable, and consistent across clients.
 
 Each insight is a card with: icon, title, description, and a pre-filled chat question. Clicking a card switches to the Chat tab and sends the question to the LLM for a detailed, personalized response. This creates a **two-tier system**: fast rule-based detection (frontend) → deep LLM analysis (backend).
 

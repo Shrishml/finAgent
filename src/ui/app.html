@@ -112,9 +112,9 @@
       </div>
 
       <div id="insights-section" class="w-full">
-        <div class="flex items-center gap-3 mb-8 sm:mb-10"><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Smart Insights</h3></div>
-        <div id="good-insights-row" class="mb-10 hidden"><h4 class="text-[9px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">Positive Signals</h4><div id="good-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
-        <div id="action-insights-row" class="hidden"><h4 class="text-[9px] font-bold text-amber-600 uppercase tracking-[0.2em] mb-4">Action Required</h4><div id="action-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
+        <div class="flex items-center gap-3 mb-8 sm:mb-10"><h3 class="text-lg font-bold text-gray-900 tracking-tight">Portfolio Insights</h3></div>
+        <div id="good-insights-row" class="mb-10 hidden"><h4 class="text-[13px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">What's working</h4><div id="good-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
+        <div id="action-insights-row" class="hidden"><h4 class="text-[13px] font-bold text-amber-600 uppercase tracking-[0.2em] mb-4">Worth a look</h4><div id="action-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
       </div>
     </div>
 
@@ -413,34 +413,31 @@ function showPortfolio(holdings, portfolioXirr) {
   renderCharts(holdings);
   _holdings = holdings;
   sortHoldings('value'); // Initial sort by Current Value descending
-  generateInsights(holdings);
+  loadInsights();
   loadPortfolioChart('5Y');
 }
 
-function generateInsights(holdings) {
-  const good = [], action = [];
-  const best = [...holdings].filter(h=>h.xirr).sort((a,b) => b.xirr - a.xirr)[0];
-  if (best) good.push({title:'Outperformer', desc:`${shortName(best.scheme)} is beating expectations.`, q:`Explain performance of ${shortName(best.scheme)}`});
-  const regular = holdings.filter(h => h.plan?.toLowerCase().includes('regular'));
-  if (regular.length) action.push({title:'Fee Leakage', desc:`You have ${regular.length} regular plans. Switching to Direct saves lakhs.`, q:'How much can I save by switching to Direct?'});
-  
-  const render = (cards, id) => {
-    if (!cards.length) return;
-    $(id).classList.remove('hidden');
-    $(id === 'good-insights-row' ? 'good-cards' : 'action-cards').innerHTML = cards.map(c => `
-      <div onclick="openAndChat('${esc(c.q)}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
-        <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${esc(c.title)}</h5>
-        <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${esc(c.desc)}</p>
-        <div class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-          Discuss with AI
-          <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7-7 7"/></svg>
+function loadInsights() {
+  fetch('/insights').then(safeJson).then(data => {
+    const render = (cards, id) => {
+      if (!cards.length) return;
+      $(id).classList.remove('hidden');
+      $(id === 'good-insights-row' ? 'good-cards' : 'action-cards').innerHTML = cards.map(c => `
+        <div onclick="openAndChat('${esc(c.q)}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
+          <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${esc(c.title)}</h5>
+          <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${esc(c.desc)}</p>
+          <div class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+            Discuss with AI
+            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7-7 7"/></svg>
+          </div>
         </div>
-      </div>
-    `).join('');
-  };
-  render(good, 'good-insights-row');
-  render(action, 'action-insights-row');
-  $('smart-suggestions').innerHTML = [...good, ...action].slice(0,4).map(i => `<button onclick="sendChat('${esc(i.q)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(i.q)}</button>`).join('');
+      `).join('');
+    };
+    render(data.good || [], 'good-insights-row');
+    render(data.action || [], 'action-insights-row');
+    const all = [...(data.good||[]), ...(data.action||[])];
+    $('smart-suggestions').innerHTML = all.slice(0,4).map(i => `<button onclick="sendChat('${esc(i.q)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(i.q)}</button>`).join('');
+  });
 }
 
 function openAndChat(q) { if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }

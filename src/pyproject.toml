@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finagent"
+version = "0.1.0"
+description = "Your money, your agent, your rules."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+    "casparser[fast]>=0.8",
+    "toml>=0.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "httpx"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+markers = ["e2e: end-to-end benchmark tests (require kiro-cli)"]
+addopts = "-m 'not e2e'"
+asyncio_mode = "auto"

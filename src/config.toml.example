@@ -1,0 +1,14 @@
+# FinAgent Configuration
+
+[llm]
+default = "auto"            # "auto", "gemini", "kiro", or "api" — auto picks whatever CLI is installed
+# parsing = "kiro"        # override for PDF extraction tasks
+# reasoning = "kiro"      # override for financial analysis tasks
+
+[llm.api]
+# gemini_key = ""         # only needed if default = "api"
+# claude_key = ""
+
+[server]
+host = "0.0.0.0"
+port = 8000

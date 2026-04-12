@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — FinBestie</title>
+<link rel="stylesheet" href="/static/theme.css">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b px-3 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+  <a href="/" class="flex items-center gap-3 no-underline">
+    <span class="text-2xl">💰</span>
+    <div>
+      <h1 class="text-lg font-bold text-gray-800">FinBestie</h1>
+      <p class="text-[10px] text-gray-400 -mt-0.5">Your money, your bestie, your rules.</p>
+    </div>
+  </a>
+  <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
+    <a href="/" class="hover:text-gray-900">Home</a>
+    <a href="/about" class="text-gray-900">About</a>
+    <a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-gray-900">GitHub</a>
+  </nav>
+</header>
+
+<main class="flex-1">
+
+  <!-- Section 1: The Builders -->
+  <section class="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+    <h2 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">Built by investors who got tired of <span class="text-emerald-600">bad financial advice.</span></h2>
+    <p class="text-xl text-gray-500 mb-16 max-w-2xl mx-auto">A human founder + AI agents, building the financial advisor we wished we had.</p>
+    <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-left">
+        <div class="text-4xl mb-4">👤</div>
+        <h3 class="text-xl font-bold text-gray-900 mb-1">Suraj Jha</h3>
+        <p class="text-sm text-emerald-600 font-medium mb-3">Founder & Investor</p>
+        <p class="text-gray-600 leading-relaxed">"I built the advisor I wished I had when I started investing. No commissions, no hidden agendas — just honest analysis of your portfolio."</p>
+        <div class="flex gap-3 mt-4">
+          <a href="https://github.com/Suraj1074" target="_blank" class="text-sm text-gray-400 hover:text-gray-700">GitHub</a>
+          <a href="https://linkedin.com/in/suraj-jha" target="_blank" class="text-sm text-gray-400 hover:text-gray-700">LinkedIn</a>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-left">
+        <div class="text-4xl mb-4">🧠</div>
+        <h3 class="text-xl font-bold text-gray-900 mb-1">AI CTO</h3>
+        <p class="text-sm text-emerald-600 font-medium mb-3">Architect, Coder & Reviewer</p>
+        <p class="text-gray-600 leading-relaxed">An AI agent that designs architecture, writes production code, runs persona reviews at 2am, and ships fixes before breakfast. This page was built by one.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: The Vision -->
+  <section class="bg-white py-24">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-gray-900 text-center mb-4">One AI advisor for your entire financial life.</h2>
+      <p class="text-center text-gray-500 mb-16 max-w-xl mx-auto">Every financial domain gets its own AI agent. They collaborate through a shared knowledge graph of your data.</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-4">
+          <span class="text-emerald-600 font-bold text-sm">✅ Live</span>
+          <span class="font-medium text-gray-900">Mutual Funds</span>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+          <span class="text-gray-400 font-bold text-sm">🔜</span>
+          <span class="font-medium text-gray-500">Insurance</span>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+          <span class="text-gray-400 font-bold text-sm">🔜</span>
+          <span class="font-medium text-gray-500">Tax Planning</span>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+          <span class="text-gray-400 font-bold text-sm">🔜</span>
+          <span class="font-medium text-gray-500">Loans</span>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+          <span class="text-gray-400 font-bold text-sm">🔜</span>
+          <span class="font-medium text-gray-500">Stocks</span>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+          <span class="text-gray-400 font-bold text-sm">🔜</span>
+          <span class="font-medium text-gray-500">Retirement</span>
+        </div>
+      </div>
+      <div class="mt-12 bg-gray-900 rounded-2xl p-8 text-center max-w-2xl mx-auto">
+        <pre class="text-emerald-400 text-sm leading-relaxed text-left inline-block"><code>User Query
+  → Orchestrator (intent classification)
+    → MF Agent      ✅ (analyse / research / compare)
+    → Insurance Agent  🔜
+    → Tax Agent        🔜
+    → Loan Agent       🔜
+  → Knowledge Graph (your financial data)
+  → Response</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: AI-Native Development -->
+  <section class="py-24">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-gray-900 text-center mb-4">Built by AI agents, guided by humans.</h2>
+      <p class="text-center text-gray-500 mb-16 max-w-2xl mx-auto">This isn't a side project with AI sprinkled on top. Every feature goes through an AI-native development pipeline.</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div class="text-2xl mb-3">📣</div>
+          <h3 class="font-bold text-gray-900 mb-2">AI CMO — Research</h3>
+          <p class="text-sm text-gray-600">Scans Reddit threads, analyses 120+ investor questions, identifies real pain points before a single line of code is written.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div class="text-2xl mb-3">🧠</div>
+          <h3 class="font-bold text-gray-900 mb-2">AI CTO — Design & Code</h3>
+          <p class="text-sm text-gray-600">Writes architecture docs, implements features, builds tests. Shipped the entire product from spec to working code in one day.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div class="text-2xl mb-3">🎭</div>
+          <h3 class="font-bold text-gray-900 mb-2">AI Personas — Review</h3>
+          <p class="text-sm text-gray-600">3 AI personas (a dev, a PM, a senior exec) test every change before it ships. They catch branding bugs, UX issues, and trust gaps.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div class="text-2xl mb-3">👤</div>
+          <h3 class="font-bold text-gray-900 mb-2">Founder — Steer & Ship</h3>
+          <p class="text-sm text-gray-600">Makes product decisions, tests with real users, deploys to production. The human in the loop who says "yes, ship it."</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:col-span-2 lg:col-span-2">
+          <div class="text-2xl mb-3">🚀</div>
+          <h3 class="font-bold text-gray-900 mb-2">The Result</h3>
+          <p class="text-sm text-gray-600">149 commits in 11 days. A full financial product — PDF parsing, portfolio analytics, benchmark comparison, insight engine, live deployment — built by a team of one human and several AI agents.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Build Log -->
+  <section class="bg-white py-24">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-gray-900 text-center mb-4">What we shipped</h2>
+      <p class="text-center text-gray-500 mb-12">Auto-generated from our git history. Every line is a real feature, every agent attribution is real.</p>
+      <div class="space-y-0" id="build-log">
+        <div class="text-center text-gray-400 py-8">Loading build log...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: CTA Footer -->
+  <section class="py-24">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Ready to see what your portfolio is hiding?</h2>
+      <p class="text-gray-500 mb-10">Upload your mutual fund statement. Get insights in 30 seconds.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/demo" class="bg-gray-900 text-white rounded-xl px-10 py-4 text-lg font-bold hover:bg-black transition-all shadow-xl">Try Demo</a>
+        <a href="https://github.com/Suraj1074/finagent" target="_blank" class="bg-white border-2 border-gray-200 text-gray-700 rounded-xl px-10 py-4 text-lg font-bold hover:border-gray-400 transition-all flex items-center justify-center gap-2">
+          <img src="https://img.shields.io/github/stars/Suraj1074/finagent?style=social" alt="GitHub stars" class="h-5">
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="text-center py-8 text-sm text-gray-400">
+  Made with 🧠 + 👤 in India · <a href="https://github.com/Suraj1074/finagent" class="underline hover:text-gray-600">Open Source</a>
+</footer>
+
+<script>
+fetch('/changelog').then(r=>r.json()).then(entries=>{
+  const el=document.getElementById('build-log');
+  if(!entries.length){el.innerHTML='<p class="text-gray-400 text-center">No entries yet.</p>';return}
+  const total=entries.reduce((s,e)=>s+e.commits,0);
+  el.innerHTML=entries.map((e,i)=>{
+    const d=new Date(e.date+'T00:00:00');
+    const day=d.toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+    return `<div class="flex gap-6 ${i<entries.length-1?'pb-8':''}">
+      <div class="flex flex-col items-center">
+        <div class="w-3 h-3 rounded-full ${i===0?'bg-emerald-500':'bg-gray-300'} flex-shrink-0 mt-1.5"></div>
+        ${i<entries.length-1?'<div class="w-px flex-1 bg-gray-200 mt-1"></div>':''}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-3 mb-1 flex-wrap">
+          <span class="text-sm font-bold text-gray-900">${day}</span>
+          <span class="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">${e.commits} commit${e.commits>1?'s':''}</span>
+          <span class="text-xs">${e.agent}</span>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">${e.summary}</p>
+      </div>
+    </div>`}).join('')+
+    `<div class="mt-8 pt-8 border-t border-gray-100 text-center text-sm text-gray-400">${total} commits across ${entries.length} days</div>`;
+})
+</script>
+
+</body>
+</html>

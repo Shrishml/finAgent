@@ -83,14 +83,39 @@ def get_or_create_user(google_id: str, email: str = "", name: str = "", picture:
     return uid
 
 
-def save_holdings(holdings: list[MFHolding], user_id: int | None = None):
-    """Upsert holdings — replaces existing entries for same folio+scheme."""
+def _merge_transactions(existing: list[dict], incoming: list[dict]) -> list[dict]:
+    """Merge transaction lists, dedup by (date, amount, units)."""
+    seen = {(t.get("date"), t.get("amount"), t.get("units")) for t in existing}
+    merged = list(existing)
+    for t in incoming:
+        key = (t.get("date"), t.get("amount"), t.get("units"))
+        if key not in seen:
+            seen.add(key)
+            merged.append(t)
+    merged.sort(key=lambda t: t.get("date", ""))
+    return merged
+
+
+def save_holdings(holdings: list[MFHolding], user_id: int | None = None, merge: bool = False):
+    """Upsert holdings. If merge=True, merge transactions with existing data."""
     conn = _get_conn()
     for h in holdings:
         data = asdict(h)
         for t in data.get("transactions", []):
             if hasattr(t.get("date"), "isoformat"):
                 t["date"] = t["date"].isoformat()
+
+        if merge:
+            row = conn.execute(
+                "SELECT data FROM holdings WHERE user_id = ? AND folio = ? AND scheme_name = ?",
+                (user_id, h.folio, h.scheme_name),
+            ).fetchone()
+            if row:
+                old = json.loads(row[0])
+                data["transactions"] = _merge_transactions(
+                    old.get("transactions", []), data.get("transactions", [])
+                )
+
         conn.execute(
             "INSERT OR REPLACE INTO holdings (user_id, folio, scheme_name, data) VALUES (?, ?, ?, ?)",
             (user_id, h.folio, h.scheme_name, json.dumps(data)),

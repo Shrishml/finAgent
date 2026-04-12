@@ -566,7 +566,6 @@ async function initApp() {
 }
 initApp();
 
-$('toggle-upload').addEventListener('click', () => location.href='/');
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
 
 let currentPeriod = '5Y';
@@ -583,6 +582,58 @@ document.addEventListener('click', e => {
     else { activeBenchmarks.add(b); e.target.classList.add('bg-indigo-50','border-indigo-300','text-indigo-700'); e.target.classList.remove('border-gray-200','text-gray-500'); }
     loadPortfolioChart(currentPeriod);
   }
+});
+</script>
+
+<!-- Upload Modal -->
+<div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-gray-800">Update Portfolio</h2>
+      <button onclick="$('upload-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+    </div>
+    <p class="text-sm text-gray-500 mb-4">Upload a newer CAMS/KFintech statement. New transactions will be merged with your existing data.</p>
+    <form id="modal-upload-form" class="flex flex-col gap-3">
+      <input type="file" id="modal-file" accept=".pdf" class="text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-600 file:font-medium hover:file:bg-emerald-100" required>
+      <input type="password" id="modal-password" placeholder="PDF password (if any)" class="border rounded-lg px-3 py-2 text-sm">
+      <button type="submit" id="modal-upload-btn" class="bg-emerald-600 text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-emerald-700 transition-colors">Upload & Merge</button>
+    </form>
+    <div id="modal-status" class="text-sm mt-3 hidden"></div>
+  </div>
+</div>
+
+<script>
+$('toggle-upload').addEventListener('click', () => $('upload-modal').classList.remove('hidden'));
+$('upload-modal').addEventListener('click', e => { if(e.target === $('upload-modal')) $('upload-modal').classList.add('hidden'); });
+$('modal-upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = $('modal-file').files[0]; if(!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('password', $('modal-password').value);
+  fd.append('merge', 'true');
+  $('modal-upload-btn').textContent = 'Analysing...';
+  $('modal-upload-btn').disabled = true;
+  $('modal-status').classList.remove('hidden');
+  $('modal-status').textContent = 'Uploading and parsing...';
+  $('modal-status').className = 'text-sm mt-3 text-blue-600';
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: fd });
+    const data = await safeJson(res);
+    if(data.status === 'ok') {
+      $('modal-status').textContent = '✅ ' + data.holdings_count + ' schemes merged';
+      $('modal-status').className = 'text-sm mt-3 text-green-600';
+      setTimeout(() => { $('upload-modal').classList.add('hidden'); location.reload(); }, 1500);
+    } else {
+      $('modal-status').textContent = '❌ ' + data.message;
+      $('modal-status').className = 'text-sm mt-3 text-red-600';
+    }
+  } catch(err) {
+    $('modal-status').textContent = '❌ ' + err.message;
+    $('modal-status').className = 'text-sm mt-3 text-red-600';
+  }
+  $('modal-upload-btn').textContent = 'Upload & Merge';
+  $('modal-upload-btn').disabled = false;
 });
 </script>
 </body>

@@ -1,0 +1,13 @@
+[
+  {"date":"2026-04-12","summary":"AI CTO ran 3 parallel persona reviews on live site, identified 8 fixes, shipped branding fix + social proof section","agent":"🧠 AI CTO","commits":2},
+  {"date":"2026-04-11","summary":"AI CTO designed and coded Phase 2: portfolio XIRR, gold benchmark, 10-insight engine, unified design system. Founder reviewed and steered UX decisions","agent":"🧠 AI CTO + 👤 Founder","commits":41},
+  {"date":"2026-04-10","summary":"AI CTO debugged Gemini CLI streaming — fixed non-JSON chunk handling","agent":"🧠 AI CTO","commits":3},
+  {"date":"2026-04-09","summary":"AI CTO built benchmark comparison engine (Nifty 50, Next 50, Midcap, Smallcap) + NAV History Engine with 8 analytics metrics. Founder chose money-weighted over base-100 approach","agent":"🧠 AI CTO + 👤 Founder","commits":30},
+  {"date":"2026-04-08","summary":"AI CTO hardened deployment: robust update script, nginx SSE config, LLM timeout tuning","agent":"🧠 AI CTO","commits":8},
+  {"date":"2026-04-06","summary":"AI CTO implemented Google OAuth + multi-user isolation. Founder tested with real users, found sign-in bugs, AI CTO fixed 4 auth issues same session","agent":"🧠 AI CTO + 👤 Founder","commits":15},
+  {"date":"2026-04-05","summary":"Founder deployed to production. AI CTO built Gemini API provider, nginx reverse proxy, HTTPS setup, split layout","agent":"👤 Founder + 🧠 AI CTO","commits":10},
+  {"date":"2026-04-04","summary":"AI CTO built entire product from architecture doc: PDF parser, MF agent, intent router, fund comparison, chat UI, 65 tests. Zero to working product in one day","agent":"🧠 AI CTO","commits":28},
+  {"date":"2026-03-29","summary":"AI CTO spawned 3 AI personas (Arjun/Priya/Ramesh) to review landing page. Score improved 5.7 → 7.55. AI CTO implemented all fixes","agent":"🧠 AI CTO + 🎭 AI Personas","commits":3},
+  {"date":"2026-03-28","summary":"AI CMO analysed 23 Reddit threads (120+ questions), distilled into 4 scenario pages with real pain points","agent":"📣 AI CMO","commits":3},
+  {"date":"2026-03-22","summary":"AI CMO designed landing page from user research. AI CTO coded hero, value prop, interactive quiz, privacy section","agent":"📣 AI CMO + 🧠 AI CTO","commits":6}
+]

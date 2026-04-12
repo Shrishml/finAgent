@@ -120,9 +120,21 @@ async def dashboard():
     return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
 
 
+@app.get("/about", response_class=HTMLResponse)
+async def about():
+    f = _UI_DIR / "about.html"
+    return f.read_text() if f.exists() else "<h1>About FinBestie</h1>"
+
+@app.get("/changelog")
+async def changelog():
+    import json
+    f = Path(__file__).parent.parent / "ui" / "changelog.json"
+    return json.loads(f.read_text()) if f.exists() else []
+
 @app.post("/upload")
-async def upload(request: Request, user_id: int = Depends(require_auth), file: UploadFile = File(...), password: str = Form("")):
+async def upload(request: Request, user_id: int = Depends(require_auth), file: UploadFile = File(...), password: str = Form(""), merge: str = Form("false")):
     """Upload a CAMS/KFintech PDF and parse it."""
+    do_merge = merge.lower() == "true"
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
         content = await file.read()
         tmp.write(content)
@@ -136,12 +148,13 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
             log.info("AMFI enrichment complete")
         except Exception as e:
             log.warning(f"AMFI enrichment failed (continuing without): {e}")
-        save_holdings(holdings, user_id)
+        save_holdings(holdings, user_id, merge=do_merge)
         return JSONResponse({
             "status": "ok",
             "domain": domain,
             "holdings_count": len(holdings),
             "schemes": [h.scheme_name for h in holdings],
+            "merged": do_merge,
         })
     except Exception as e:
         log.error(f"Upload failed: {e}\n{traceback.format_exc()}")

@@ -331,7 +331,17 @@
         <p class="text-sm text-gray-500 mt-1">Upload your mutual fund statement (CAS) to get instant insights</p>
       </div>
       <div class="bg-white rounded-xl border shadow-sm p-6">
-        <p class="text-xs text-gray-400 mb-3">Get your CAS (Consolidated Account Statement) from <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-blue-500 underline">camsonline.com</a> → Detailed statement, password = your PAN number</p>
+        <details class="mb-3 text-xs text-gray-500">
+          <summary class="cursor-pointer text-blue-600 font-medium hover:text-blue-800">📋 How to get your CAS statement (free, 2 min)</summary>
+          <ol class="mt-2 ml-4 space-y-1 list-decimal text-gray-500">
+            <li>Go to <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-blue-500 underline">camsonline.com → CAS</a></li>
+            <li>Select <strong>Detailed</strong> statement type (not Summary)</li>
+            <li>Enter your <strong>email</strong> (registered with your AMC) and <strong>PAN</strong></li>
+            <li>Set a <strong>password</strong> — you'll need it to open the PDF</li>
+            <li>Click Submit — PDF arrives in your email within 10 minutes</li>
+          </ol>
+          <p class="mt-2"><a href="/help/cas" class="text-blue-500 underline">See full guide with screenshots →</a></p>
+        </details>
         <form id="upload-form" class="flex flex-col gap-3">
           <input type="file" id="file-input" accept=".pdf" class="text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:font-medium hover:file:bg-blue-100" required>
           <input type="password" id="password-input" placeholder="PDF Password (your PAN)" class="border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none">

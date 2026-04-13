@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Get Your CAS Statement — FinBestie</title>
+<link rel="stylesheet" href="/static/theme.css">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<header class="bg-white border-b px-3 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+  <a href="/" class="flex items-center gap-3 no-underline">
+    <span class="text-2xl">💰</span>
+    <div>
+      <h1 class="text-lg font-bold text-gray-800">FinBestie</h1>
+      <p class="text-[10px] text-gray-400 -mt-0.5">Your money, your bestie, your rules.</p>
+    </div>
+  </a>
+  <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
+    <a href="/" class="hover:text-gray-900">Home</a>
+    <a href="/about" class="hover:text-gray-900">About</a>
+  </nav>
+</header>
+
+<main class="flex-1 max-w-2xl mx-auto px-4 py-10">
+
+  <h2 class="text-2xl font-bold text-gray-800 mb-2">How to Get Your CAS Statement</h2>
+  <p class="text-gray-500 mb-8">A Consolidated Account Statement (CAS) is the official record of all your mutual fund holdings. It's free, takes 2 minutes to request, and arrives in your email.</p>
+
+  <!-- Step 1 -->
+  <div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 1 — Go to CAMS Online</h3>
+    <p class="text-sm text-gray-600 mb-3">Visit <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-blue-600 underline font-medium">camsonline.com → Consolidated Account Statement</a>. Select <strong>CAS - CAMS+KFintech</strong> from the left panel (this covers all mutual fund houses).</p>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 2 — Fill in the form</h3>
+    <p class="text-sm text-gray-600 mb-3">Use these exact settings:</p>
+    <div class="bg-white border rounded-xl p-4 text-sm space-y-3 mb-4">
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">Statement Type</span>
+        <span class="text-gray-600"><strong class="text-emerald-700">Detailed</strong> — includes transaction history (needed for returns calculation)</span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">Period</span>
+        <span class="text-gray-600"><strong>Specific Period</strong></span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">From Date</span>
+        <span class="text-gray-600">When you started investing (e.g. <strong>01-Jan-2018</strong>). If unsure, pick <strong>01-Jan-2010</strong> — it won't hurt.</span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">To Date</span>
+        <span class="text-gray-600"><strong>Today's date</strong></span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">Folio Listing</span>
+        <span class="text-gray-600"><strong>Transacted Folios and Folios with Balance</strong></span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">Email</span>
+        <span class="text-gray-600">The email <strong>registered with your mutual fund</strong> (the one your AMC sends statements to)</span>
+      </div>
+      <div class="flex gap-3">
+        <span class="font-semibold text-gray-700 w-32 shrink-0">Password</span>
+        <span class="text-gray-600">Set any password — <strong>you'll need this to open the PDF</strong></span>
+      </div>
+    </div>
+    <img src="/static/assets/help/cams-form.png" alt="CAMS CAS form with recommended settings" class="rounded-xl border shadow-sm w-full">
+  </div>
+
+  <!-- Step 3 -->
+  <div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 3 — Check your email</h3>
+    <p class="text-sm text-gray-600">Within <strong>10 minutes</strong>, you'll receive an email from CAMS with a PDF attachment. Download it and come back to FinBestie to upload.</p>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="mb-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Step 4 — Upload to FinBestie</h3>
+    <p class="text-sm text-gray-600">Click <strong>Upload your CAS</strong> on the home page, select the PDF, enter the password you set in Step 2, and hit Upload. Your portfolio will be ready in seconds.</p>
+  </div>
+
+  <!-- FAQ -->
+  <div class="border-t pt-8 mt-8">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Common Questions</h3>
+    <div class="space-y-4 text-sm">
+      <details class="group">
+        <summary class="cursor-pointer font-medium text-gray-700 group-open:text-emerald-700">I have an NSDL or CDSL statement. Will that work?</summary>
+        <p class="mt-1 text-gray-500 pl-1">Not yet — we currently support CAMS and KFintech CAS only. These cover all mutual fund houses. NSDL/CDSL support is on our roadmap.</p>
+      </details>
+      <details class="group">
+        <summary class="cursor-pointer font-medium text-gray-700 group-open:text-emerald-700">Which email should I use?</summary>
+        <p class="mt-1 text-gray-500 pl-1">The email registered with your mutual fund AMC. If you invested via Groww, Coin, or Kuvera, it's usually the email you signed up with on that platform.</p>
+      </details>
+      <details class="group">
+        <summary class="cursor-pointer font-medium text-gray-700 group-open:text-emerald-700">Why "Detailed" and not "Summary"?</summary>
+        <p class="mt-1 text-gray-500 pl-1">The Detailed statement includes your full transaction history (every SIP, redemption, dividend). This lets us calculate your true XIRR returns and show the invested vs current value chart.</p>
+      </details>
+      <details class="group">
+        <summary class="cursor-pointer font-medium text-gray-700 group-open:text-emerald-700">Can I also use KFintech instead of CAMS?</summary>
+        <p class="mt-1 text-gray-500 pl-1">Yes! Visit <a href="https://mfs.kfintech.com/investor/General/ConsolidatedAccountStatement" target="_blank" class="text-blue-600 underline">KFintech CAS page</a> and follow the same steps. Both work identically.</p>
+      </details>
+      <details class="group">
+        <summary class="cursor-pointer font-medium text-gray-700 group-open:text-emerald-700">Is my data safe?</summary>
+        <p class="mt-1 text-gray-500 pl-1">Your PDF is parsed on the server and the data is stored locally. We don't share it with anyone. You can delete your account and all data at any time.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="text-center mt-10">
+    <a href="/" class="inline-block bg-emerald-600 text-white rounded-xl px-8 py-3 font-bold hover:bg-emerald-700 transition-colors">← Upload My CAS</a>
+  </div>
+
+</main>
+
+</body>
+</html>

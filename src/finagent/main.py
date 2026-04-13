@@ -125,6 +125,11 @@ async def about():
     f = _UI_DIR / "about.html"
     return f.read_text() if f.exists() else "<h1>About FinBestie</h1>"
 
+@app.get("/help/cas", response_class=HTMLResponse)
+async def help_cas():
+    f = _UI_DIR / "help-cas.html"
+    return f.read_text() if f.exists() else "<h1>CAS Help</h1>"
+
 @app.get("/changelog")
 async def changelog():
     import json

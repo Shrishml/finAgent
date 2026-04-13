@@ -593,6 +593,17 @@ document.addEventListener('click', e => {
       <button onclick="$('upload-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
     </div>
     <p class="text-sm text-gray-500 mb-4">Upload a newer CAMS/KFintech statement. New transactions will be merged with your existing data.</p>
+    <details class="mb-4 text-xs text-gray-500">
+      <summary class="cursor-pointer text-emerald-600 font-medium hover:text-emerald-800">📋 How to get your CAS statement</summary>
+      <ol class="mt-2 ml-4 space-y-1 list-decimal text-gray-500">
+        <li>Go to <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-emerald-600 underline">camsonline.com → CAS</a></li>
+        <li>Select <strong>Detailed</strong> statement type</li>
+        <li>Enter your <strong>email</strong> and <strong>PAN</strong></li>
+        <li>Set a <strong>password</strong>, click Submit</li>
+        <li>PDF arrives in your email within 10 min</li>
+      </ol>
+      <p class="mt-1"><a href="/help/cas" target="_blank" class="text-emerald-600 underline">Full guide with screenshots →</a></p>
+    </details>
     <form id="modal-upload-form" class="flex flex-col gap-3">
       <input type="file" id="modal-file" accept=".pdf" class="text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-600 file:font-medium hover:file:bg-emerald-100" required>
       <input type="password" id="modal-password" placeholder="PDF password (if any)" class="border rounded-lg px-3 py-2 text-sm">

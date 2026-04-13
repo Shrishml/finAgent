@@ -14,7 +14,7 @@ fi
 
 echo "=== 2. Set up beta venv ==="
 cd finAgent-beta/src
-python3 -m venv .venv
+python3.11 -m venv .venv
 .venv/bin/pip install -e ".[dev]" --quiet
 
 echo "=== 3. Create beta data directory ==="

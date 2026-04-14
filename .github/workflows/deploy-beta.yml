@@ -11,7 +11,7 @@ jobs:
       - name: Deploy to beta.captwist.in
         uses: appleboy/ssh-action@v1
         with:
-          host: 20.98.218.146
-          username: azureuser
+          host: ${{ secrets.BETA_HOST }}
+          username: ${{ secrets.BETA_USER }}
           key: ${{ secrets.BETA_SSH_KEY }}
           script: bash /home/azureuser/finAgent-beta/scripts/update-beta.sh

@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/common.js"></script>
+<script src="/static/analytics.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
@@ -372,6 +373,7 @@ $('upload-form').addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(res.status===401 ? 'Please sign in first' : 'Server error');
     const data = await res.json();
     if (data.status === 'ok') {
+      trackEvent('pdf_upload', { holdings_count: data.holdings_count });
       $('upload-status').textContent = '✅ ' + data.holdings_count + ' schemes parsed';
       $('upload-status').className = 'text-sm mt-3 text-green-600';
       setTimeout(() => { location.href = '/app'; }, 500);

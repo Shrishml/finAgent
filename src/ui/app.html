@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/common.js"></script>
+<script src="/static/analytics.js"></script>
 <style>
   #chat-widget { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s, width 0.3s ease; }
   .chat-closed { transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; }
@@ -239,6 +240,7 @@ function toggleChat() {
 })();
 
 function switchTab(tab) {
+  trackEvent('tab_switch', { tab_name: tab });
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.tab-btn').forEach(el => {
     el.classList.remove('border-emerald-600','text-emerald-600');
@@ -448,7 +450,7 @@ function loadInsights() {
   });
 }
 
-function openAndChat(q) { if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }
+function openAndChat(q) { trackEvent('insight_click', { question: q.slice(0, 50) }); if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }
 function sendChat(q) { $('chat-input').value = q; $('chat-form').dispatchEvent(new Event('submit')); }
 
 function renderCharts(holdings) {
@@ -517,6 +519,7 @@ $('chat-form').addEventListener('submit', async (e) => {
   const q = $('chat-input').value.trim(); if (!q) return;
   if (isDemo) { addMsg(q, 'user'); addMsg('Please **Sign In** to chat with AI about your own portfolio. Demo mode is view-only.', 'agent'); $('chat-input').value = ''; return; }
   $('chat-input').value = ''; addMsg(q, 'user');
+  trackEvent('chat_message', { query_length: q.length });
   const msgEl = addMsg('', 'agent'); msgEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Consulting Brain<span>.</span><span>.</span><span>.</span></span>';
   try {
     const fd = new FormData(); fd.append('query', q);

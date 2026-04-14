@@ -39,6 +39,7 @@ async function handleGoogleCredential(response) {
     });
     const data = await res.json();
     if (data.status === 'ok') {
+      if (typeof trackEvent === 'function') trackEvent('sign_in', { method: 'google' });
       window.location.href = '/app';
     } else {
       console.error('Login failed:', data.error);

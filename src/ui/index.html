@@ -349,8 +349,8 @@
           <button type="submit" id="upload-btn" class="bg-blue-600 text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors">Upload & Analyse</button>
         </form>
         <div id="upload-status" class="text-sm mt-3 hidden"></div>
-        <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">or</span></div></div>
-        <button onclick="location.href='/demo'" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
+        <div id="demo-divider" class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">or</span></div></div>
+        <button id="demo-btn" onclick="location.href='/demo'" class="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-blue-50 transition-colors">🎮 Try with a demo portfolio</button>
       </div>
       <button onclick="$('upload-section').classList.add('hidden');$('landing-section').classList.remove('hidden')" class="block mx-auto mt-4 text-xs text-gray-400 hover:text-gray-600">← Back to home</button>
     </div>
@@ -362,6 +362,8 @@
 // If signed in with data, redirect to /app
 checkSession().then(user => {
   if (user) {
+    $('demo-divider').classList.add('hidden');
+    $('demo-btn').classList.add('hidden');
     fetch('/holdings').then(r => r.ok ? r.json() : Promise.reject()).then(d => {
       if (d.count > 0) location.href = '/app';
     });

@@ -14,9 +14,4 @@ jobs:
           host: 20.98.218.146
           username: azureuser
           key: ${{ secrets.BETA_SSH_KEY }}
-          script: |
-            cd /home/azureuser/finAgent-beta
-            git pull origin dev
-            cd src && .venv/bin/pip install -e . --quiet
-            sudo systemctl restart finbestie-beta
-            echo "Beta deployed ✅"
+          script: bash /home/azureuser/finAgent-beta/scripts/update-beta.sh

@@ -28,9 +28,11 @@ class TestGoalModel:
         assert g.growth_rate == 0.15
 
     def test_all_templates_have_defaults(self):
+        assert len(GOAL_TEMPLATES) == 8
         for key, tmpl in GOAL_TEMPLATES.items():
             assert "label" in tmpl
             assert 0 < tmpl["default_growth"] <= 0.20
+            assert "suggested_amount" in tmpl
 
 
 class TestGoalStorage:

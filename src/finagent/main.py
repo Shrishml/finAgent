@@ -1,5 +1,6 @@
 """FinAgent — FastAPI application."""
 import logging
+import os
 import tempfile
 import traceback
 from pathlib import Path
@@ -34,6 +35,17 @@ log = logging.getLogger("finagent")
 app = FastAPI(title="FinAgent", version="0.1.0")
 DEMO_USER_ID = -1  # Reserved user_id for shared demo portfolio
 
+# DEV_MODE: bypass OAuth, auto-create dev user. Set DEV_MODE=1 in beta environment.
+_DEV_MODE = os.environ.get("DEV_MODE", "").lower() in ("1", "true")
+_DEV_USER_ID: int | None = None
+
+def _get_dev_user_id() -> int:
+    global _DEV_USER_ID
+    if _DEV_USER_ID is None:
+        _DEV_USER_ID = get_or_create_user("dev-user", "dev@finbestie.local", "Dev User", "")
+        log.info(f"DEV_MODE: created dev user with id={_DEV_USER_ID}")
+    return _DEV_USER_ID
+
 
 @app.middleware("http")
 async def add_coop_header(request, call_next):
@@ -53,6 +65,8 @@ if _UI_DIR.exists():
 
 def _get_user_id(request: Request) -> int | None:
     """Extract user_id from session cookie. Returns None if not logged in."""
+    if _DEV_MODE:
+        return _get_dev_user_id()
     token = request.cookies.get("session")
     if not token:
         return None
@@ -64,6 +78,8 @@ def _get_user_id(request: Request) -> int | None:
 
 def require_auth(request: Request) -> int:
     """FastAPI dependency — returns user_id or raises 401."""
+    if _DEV_MODE:
+        return _get_dev_user_id()
     user_id = _get_user_id(request)
     if user_id is None:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -587,6 +603,8 @@ def main():
     host = server.get("host", "0.0.0.0")
     port = server.get("port", 8000)
     print(f"🚀 FinAgent starting at http://{host}:{port}")
+    if _DEV_MODE:
+        print("⚠️  DEV_MODE enabled — authentication bypassed")
     uvicorn.run(app, host=host, port=port)
 
 

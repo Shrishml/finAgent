@@ -32,6 +32,7 @@ WorkingDirectory=/home/azureuser/finAgent-beta/src
 ExecStart=/home/azureuser/finAgent-beta/src/.venv/bin/uvicorn finagent.main:app --host 127.0.0.1 --port 8001
 Restart=always
 Environment=FINBESTIE_DATA=/home/azureuser/finAgent-beta/data
+Environment=DEV_MODE=1
 
 [Install]
 WantedBy=multi-user.target

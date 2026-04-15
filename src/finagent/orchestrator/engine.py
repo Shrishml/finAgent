@@ -77,6 +77,17 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
 
 async def handle_query_stream(query: str, user_id: int | None = None):
     """Streaming version — yields chunks as LLM generates them."""
+    # Check if user needs onboarding (skip for demo user -1)
+    if user_id and user_id > 0:
+        profile = load_profile(user_id)
+        if not profile or not profile.onboarding_complete:
+            q_lower = query.lower()
+            if not any(kw in q_lower for kw in _BYPASS_KEYWORDS):
+                user_name = get_user_name(user_id)
+                result = await handle_onboarding(query, user_id, user_name)
+                yield result["response"]
+                return
+
     yield "[STATUS] Analyzing your question..."
     intent = await classify_intent(query)
     domain = intent.get("domain", "general")

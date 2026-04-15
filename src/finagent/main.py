@@ -294,6 +294,35 @@ async def clear(request: Request):
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
 
+@app.post("/dev/seed")
+async def dev_seed():
+    """Seed dev user with demo holdings. Only available in DEV_MODE."""
+    if not _DEV_MODE:
+        raise HTTPException(status_code=404)
+    # Load demo holdings, save under dev user
+    demo_holdings = load_holdings(DEMO_USER_ID)
+    if not demo_holdings:
+        # Trigger demo creation first
+        await demo()
+        demo_holdings = load_holdings(DEMO_USER_ID)
+    dev_uid = _get_dev_user_id()
+    clear_holdings(dev_uid)
+    save_holdings(demo_holdings, dev_uid)
+    log.info(f"DEV_MODE: seeded {len(demo_holdings)} holdings for dev user {dev_uid}")
+    return JSONResponse({"status": "ok", "holdings_count": len(demo_holdings)})
+
+
+@app.post("/dev/reset")
+async def dev_reset():
+    """Clear dev user data. Only available in DEV_MODE."""
+    if not _DEV_MODE:
+        raise HTTPException(status_code=404)
+    dev_uid = _get_dev_user_id()
+    clear_holdings(dev_uid)
+    log.info(f"DEV_MODE: cleared dev user {dev_uid}")
+    return JSONResponse({"status": "ok"})
+
+
 @app.get("/suggestions")
 async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""

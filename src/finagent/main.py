@@ -257,26 +257,66 @@ async def demo():
     user_id = DEMO_USER_ID
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
-    _t = lambda d, amt, units, desc="SIP": MFTransaction(date=_date.fromisoformat(d), description=desc, amount=amt, units=units, type="SIP" if amt > 0 else "REDEMPTION")
+    _t = lambda d, amt, units: MFTransaction(date=_date.fromisoformat(d), description="SIP", amount=amt, units=units, type="SIP")
+
+    # Monthly SIPs from Jan 2024 — realistic NAV progression per fund
+    # Parag Parikh Flexi Cap: ₹5K/mo SIP, NAV ~72→82 over 18 months
+    pp_txns = [_t(f"2024-{m:02d}-15", 5000, round(5000/nav, 2)) for m, nav in
+               [(1,72),(2,73),(3,71),(4,74),(5,73),(6,75),(7,76),(8,74),(9,77),(10,78),(11,76),(12,79)]]
+    pp_txns += [_t(f"2025-{m:02d}-15", 5000, round(5000/nav, 2)) for m, nav in
+                [(1,80),(2,78),(3,81),(4,82),(5,80),(6,83)]]
+    pp_units = sum(t.units for t in pp_txns)  # ~1140
+
+    # HDFC Mid-Cap: ₹5K/mo SIP, NAV ~160→185
+    hdfc_txns = [_t(f"2024-{m:02d}-10", 5000, round(5000/nav, 2)) for m, nav in
+                 [(1,160),(2,162),(3,158),(4,165),(5,163),(6,168),(7,170),(8,166),(9,172),(10,175),(11,173),(12,178)]]
+    hdfc_txns += [_t(f"2025-{m:02d}-10", 5000, round(5000/nav, 2)) for m, nav in
+                  [(1,180),(2,176),(3,183),(4,185),(5,182),(6,188)]]
+    hdfc_units = sum(t.units for t in hdfc_txns)
+
+    # SBI Small Cap: ₹3K/mo SIP, NAV ~140→158
+    sbi_txns = [_t(f"2024-{m:02d}-01", 3000, round(3000/nav, 2)) for m, nav in
+                [(4,140),(5,142),(6,138),(7,145),(8,143),(9,148),(10,150),(11,147),(12,152)]]
+    sbi_txns += [_t(f"2025-{m:02d}-01", 3000, round(3000/nav, 2)) for m, nav in
+                 [(1,154),(2,150),(3,156),(4,158),(5,155),(6,160)]]
+    sbi_units = sum(t.units for t in sbi_txns)
+
+    # ICICI Balanced Advantage: ₹10K/mo SIP, NAV ~58→66
+    icici_txns = [_t(f"2024-{m:02d}-15", 10000, round(10000/nav, 2)) for m, nav in
+                  [(1,58),(2,59),(3,57),(4,60),(5,59),(6,61),(7,62),(8,60),(9,63),(10,64),(11,62),(12,65)]]
+    icici_txns += [_t(f"2025-{m:02d}-15", 10000, round(10000/nav, 2)) for m, nav in
+                   [(1,66),(2,64),(3,67),(4,68),(5,66),(6,69)]]
+    icici_units = sum(t.units for t in icici_txns)
+
+    # Axis ELSS: ₹12.5K lump 2x/year (tax saving)
+    elss_txns = [_t("2024-02-01", 12500, round(12500/78, 2)), _t("2024-09-01", 12500, round(12500/82, 2)),
+                 _t("2025-02-01", 12500, round(12500/85, 2))]
+    elss_units = sum(t.units for t in elss_txns)
+
+    # HDFC Corporate Bond: ₹25K lump 2x (debt allocation)
+    bond_txns = [_t("2024-01-01", 25000, round(25000/28.5, 2)), _t("2024-07-01", 25000, round(25000/29.0, 2)),
+                 _t("2025-01-01", 25000, round(25000/29.5, 2))]
+    bond_units = sum(t.units for t in bond_txns)
+
     holdings = [
         MFHolding(scheme_name="Parag Parikh Flexi Cap Fund - Direct Plan - Growth", folio="DEMO-001", amc="PPFAS", amfi_code="122639", plan="direct",
-                  units=1200.5, nav=72.5, current_value=87036.25, invested_value=72000.0,
-                  transactions=[_t("2024-01-15", 5000, 83.3), _t("2024-06-15", 5000, 76.9), _t("2025-01-15", 5000, 71.4), _t("2025-06-15", 5000, 68.5)]),
+                  units=pp_units, nav=83, current_value=pp_units*83, invested_value=len(pp_txns)*5000,
+                  transactions=pp_txns),
         MFHolding(scheme_name="HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", folio="DEMO-002", amc="HDFC", amfi_code="118989", plan="direct",
-                  units=450.2, nav=165.3, current_value=74418.06, invested_value=60000.0,
-                  transactions=[_t("2024-03-10", 10000, 75.0), _t("2024-09-10", 10000, 66.7), _t("2025-03-10", 10000, 62.5)]),
+                  units=hdfc_units, nav=188, current_value=hdfc_units*188, invested_value=len(hdfc_txns)*5000,
+                  transactions=hdfc_txns),
         MFHolding(scheme_name="SBI Small Cap Fund - Direct Plan - Growth", folio="DEMO-003", amc="SBI", amfi_code="125497", plan="direct",
-                  units=310.8, nav=148.2, current_value=46060.56, invested_value=40000.0,
-                  transactions=[_t("2024-04-01", 10000, 80.0), _t("2025-01-01", 10000, 72.5), _t("2025-07-01", 10000, 68.0)]),
+                  units=sbi_units, nav=160, current_value=sbi_units*160, invested_value=len(sbi_txns)*3000,
+                  transactions=sbi_txns),
         MFHolding(scheme_name="ICICI Prudential Balanced Advantage Fund - Direct Plan - Growth", folio="DEMO-004", amc="ICICI", amfi_code="120377", plan="direct",
-                  units=2100.0, nav=62.8, current_value=131880.0, invested_value=120000.0,
-                  transactions=[_t("2023-06-15", 10000, 178.6), _t("2024-01-15", 10000, 166.7), _t("2024-06-15", 10000, 156.3)]),
+                  units=icici_units, nav=69, current_value=icici_units*69, invested_value=len(icici_txns)*10000,
+                  transactions=icici_txns),
         MFHolding(scheme_name="Axis ELSS Tax Saver Fund - Direct Plan - Growth", folio="DEMO-005", amc="Axis", amfi_code="120503", plan="direct",
-                  units=520.0, nav=82.4, current_value=42848.0, invested_value=45000.0, tax_section="80C",
-                  transactions=[_t("2024-02-01", 12500, 166.7), _t("2025-02-01", 12500, 156.3)]),
+                  units=elss_units, nav=88, current_value=elss_units*88, invested_value=37500, tax_section="80C",
+                  transactions=elss_txns),
         MFHolding(scheme_name="HDFC Corporate Bond Fund - Direct Plan - Growth", folio="DEMO-006", amc="HDFC", amfi_code="118987", plan="direct",
-                  units=3500.0, nav=29.5, current_value=103250.0, invested_value=100000.0,
-                  transactions=[_t("2024-01-01", 50000, 1785.7), _t("2025-01-01", 50000, 1724.1)]),
+                  units=bond_units, nav=30, current_value=bond_units*30, invested_value=75000,
+                  transactions=bond_txns),
     ]
     clear_holdings(user_id)
     try:

@@ -59,14 +59,14 @@ async function logout() {
   }
 }
 
-function showUser(user) {
+function showUser(user, devMode) {
   const signinBtn = $('signin-btn');
   const userBtn = $('user-btn');
   const userAvatar = $('user-avatar');
   const userName = $('user-name');
   const userEmail = $('user-email');
 
-  if (signinBtn) signinBtn.classList.add('hidden');
+  if (signinBtn) { if (devMode) signinBtn.classList.remove('hidden'); else signinBtn.classList.add('hidden'); }
   if (userBtn) {
     userBtn.classList.remove('hidden');
     userBtn.classList.add('flex');
@@ -88,7 +88,7 @@ async function checkSession() {
   try {
     const data = await fetch('/auth/me').then(safeJson);
     if (data.status === 'ok') {
-      showUser(data.user);
+      showUser(data.user, data.dev_mode);
       return data.user;
     } else {
       renderSignIn();

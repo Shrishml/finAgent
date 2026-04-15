@@ -126,7 +126,7 @@ async def auth_me(request: Request):
         if user:
             return JSONResponse({"status": "ok", "user": {"name": user["name"], "email": user["email"], "picture": user["picture"]}})
     if _DEV_MODE:
-        return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@finbestie.local", "picture": ""}})
+        return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@finbestie.local", "picture": ""}, "dev_mode": True})
     return JSONResponse({"status": "unauthenticated"}, status_code=401)
 
 

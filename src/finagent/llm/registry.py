@@ -31,6 +31,9 @@ def _auto_detect() -> str:
                 return provider_name
         elif shutil.which(cli_cmd):
             return provider_name
+        else:
+            log.debug(f"[llm] auto-detect: {cli_cmd} not found on PATH={os.environ.get('PATH', 'unset')}")
+    log.error(f"[llm] No LLM found. PATH={os.environ.get('PATH', 'unset')}")
     raise RuntimeError(
         "No LLM found. Set GEMINI_API_KEY env var, or install gemini CLI or kiro-cli."
     )

@@ -70,7 +70,7 @@ finagent/
 | Environment | URL | Branch | Auth |
 |-------------|-----|--------|------|
 | **Prod** | https://captwist.in | `main` | Google OAuth required |
-| **Beta** | https://beta.captwist.in | `dev` | `DEV_MODE=1` — no login needed |
+| **Beta** | https://beta.captwist.in | `dev` | `DEV_MODE=1` — magic cookie for test user, Google OAuth for real users |
 
 ### Build → Test → Deploy Workflow
 
@@ -91,27 +91,29 @@ git -c commit.gpgsign=false commit -m "feat: description"
 git push origin dev
 
 # 5. Seed test data on beta (one-time, persists across deploys)
-curl -X POST https://beta.captwist.in/dev/seed
+curl -b "session=finbestie-dev" -X POST https://beta.captwist.in/dev/seed
 
 # 6. Verify
-curl https://beta.captwist.in/auth/me          # → Dev User
-curl https://beta.captwist.in/holdings          # → 6 sample holdings
-curl https://beta.captwist.in/insights          # → portfolio insights
-curl https://beta.captwist.in/suggestions       # → chat suggestions
+curl -b "session=finbestie-dev" https://beta.captwist.in/auth/me          # → Dev User
+curl -b "session=finbestie-dev" https://beta.captwist.in/holdings          # → 6 sample holdings
+curl -b "session=finbestie-dev" https://beta.captwist.in/insights          # → portfolio insights
+curl -b "session=finbestie-dev" https://beta.captwist.in/goals             # → user goals
 
 # 7. Reset dev data if needed
-curl -X POST https://beta.captwist.in/dev/reset
+curl -b "session=finbestie-dev" -X POST https://beta.captwist.in/dev/reset
 ```
 
 ### DEV_MODE Details
 
 Set via `DEV_MODE=1` environment variable in the beta systemd service.
 
-- `/auth/me` returns `{"status": "ok", "user": {"name": "Dev User"}}` — frontend skips OAuth
-- `require_auth` and `_get_user_id` return a persistent dev user (stored in SQLite)
+- **Auth uses a magic cookie:** `session=finbestie-dev` → authenticates as Dev User
+- Without the cookie, normal Google OAuth flow applies (real users can sign in on beta)
+- `require_auth` and `_get_user_id` check cookie: `finbestie-dev` → dev user, real token → real user, none → 401
 - `POST /dev/seed` — copies demo portfolio (6 MF holdings) to dev user
-- `POST /dev/reset` — clears dev user data
+- `POST /dev/reset` — clears dev user data (holdings + goals)
 - Both `/dev/*` endpoints return 404 when `DEV_MODE` is off (safe for prod)
+- **All agent curl commands must include:** `-b "session=finbestie-dev"`
 
 ### CI/CD
 

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from finagent.models.mf import MFHolding, MFTransaction
 from finagent.models.goal import Goal
+from finagent.models.profile import UserProfile
 
 _DB_DIR = Path(__file__).parent.parent.parent / "data"
 _DB_PATH = _DB_DIR / "finagent.db"
@@ -77,6 +78,24 @@ def _get_conn() -> sqlite3.Connection:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            user_id INTEGER PRIMARY KEY,
+            data JSON NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            metadata JSON DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_user ON conversations(user_id, created_at)")
     conn.commit()
     return conn
 
@@ -265,5 +284,131 @@ def clear_goals(user_id: int):
     """Clear all goals for a user."""
     conn = _get_conn()
     conn.execute("DELETE FROM goals WHERE user_id=?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+# --- User Profile ---
+
+def save_profile(profile: UserProfile):
+    """Upsert user profile as JSON blob."""
+    conn = _get_conn()
+    data = {
+        "monthly_income": profile.monthly_income,
+        "annual_bonus": profile.annual_bonus,
+        "spouse_income": profile.spouse_income,
+        "other_income": profile.other_income,
+        "monthly_expenses": profile.monthly_expenses,
+        "rent": profile.rent,
+        "emis": profile.emis,
+        "loans": profile.loans,
+        "term_cover": profile.term_cover,
+        "health_cover": profile.health_cover,
+        "health_employer_only": profile.health_employer_only,
+        "age": profile.age,
+        "dependents": profile.dependents,
+        "occupation": profile.occupation,
+        "employer": profile.employer,
+        "risk_tolerance": profile.risk_tolerance,
+        "tax_regime": profile.tax_regime,
+        "section_80c_used": profile.section_80c_used,
+        "pillars_completed": profile.pillars_completed,
+        "pillars_skipped": profile.pillars_skipped,
+        "onboarding_complete": profile.onboarding_complete,
+    }
+    conn.execute(
+        "INSERT OR REPLACE INTO user_profiles (user_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+        (profile.user_id, json.dumps(data)),
+    )
+    conn.commit()
+    conn.close()
+
+
+def load_profile(user_id: int) -> UserProfile | None:
+    """Load user profile. Returns None if no profile exists."""
+    conn = _get_conn()
+    row = conn.execute("SELECT data FROM user_profiles WHERE user_id = ?", (user_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    d = json.loads(row[0])
+    return UserProfile(
+        user_id=user_id,
+        monthly_income=d.get("monthly_income", 0),
+        annual_bonus=d.get("annual_bonus", 0),
+        spouse_income=d.get("spouse_income", 0),
+        other_income=d.get("other_income", 0),
+        monthly_expenses=d.get("monthly_expenses", 0),
+        rent=d.get("rent", 0),
+        emis=d.get("emis", 0),
+        loans=d.get("loans", []),
+        term_cover=d.get("term_cover", 0),
+        health_cover=d.get("health_cover", 0),
+        health_employer_only=d.get("health_employer_only", True),
+        age=d.get("age", 0),
+        dependents=d.get("dependents", 0),
+        occupation=d.get("occupation", ""),
+        employer=d.get("employer", ""),
+        risk_tolerance=d.get("risk_tolerance", ""),
+        tax_regime=d.get("tax_regime", ""),
+        section_80c_used=d.get("section_80c_used", 0),
+        pillars_completed=d.get("pillars_completed", []),
+        pillars_skipped=d.get("pillars_skipped", []),
+        onboarding_complete=d.get("onboarding_complete", False),
+    )
+
+
+def update_profile(user_id: int, updates: dict) -> UserProfile | None:
+    """Partial update — merge updates into existing profile."""
+    profile = load_profile(user_id)
+    if not profile:
+        profile = UserProfile(user_id=user_id)
+    for key, value in updates.items():
+        if hasattr(profile, key):
+            setattr(profile, key, value)
+    save_profile(profile)
+    return profile
+
+
+# --- Conversations ---
+
+_MAX_MESSAGES_PER_USER = 50
+
+
+def save_message(user_id: int, role: str, content: str, metadata: dict | None = None):
+    """Save a conversation message. Auto-prunes to keep last N messages."""
+    conn = _get_conn()
+    conn.execute(
+        "INSERT INTO conversations (user_id, role, content, metadata) VALUES (?, ?, ?, ?)",
+        (user_id, role, content, json.dumps(metadata or {})),
+    )
+    # Prune old messages
+    conn.execute("""
+        DELETE FROM conversations WHERE user_id = ? AND id NOT IN (
+            SELECT id FROM conversations WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
+        )
+    """, (user_id, user_id, _MAX_MESSAGES_PER_USER))
+    conn.commit()
+    conn.close()
+
+
+def load_conversation(user_id: int, limit: int = 20) -> list[dict]:
+    """Load recent conversation messages, oldest first."""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT role, content, metadata, created_at FROM conversations WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+        (user_id, limit),
+    ).fetchall()
+    conn.close()
+    return [
+        {"role": r[0], "content": r[1], "metadata": json.loads(r[2]) if r[2] else {}, "created_at": r[3]}
+        for r in reversed(rows)  # reverse to get oldest-first
+    ]
+
+
+def clear_conversation(user_id: int):
+    """Clear all conversation history for a user."""
+    conn = _get_conn()
+    conn.execute("DELETE FROM conversations WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()

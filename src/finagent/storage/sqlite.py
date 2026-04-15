@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from finagent.models.mf import MFHolding, MFTransaction
+from finagent.models.goal import Goal
 
 _DB_DIR = Path(__file__).parent.parent.parent / "data"
 _DB_PATH = _DB_DIR / "finagent.db"
@@ -61,6 +62,19 @@ def _get_conn() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS nav_history_meta (
             amfi_code TEXT PRIMARY KEY,
             last_fetched TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS goals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            template TEXT NOT NULL,
+            target_amount REAL NOT NULL,
+            target_date TEXT NOT NULL,
+            linked_folios JSON DEFAULT '[]',
+            growth_rate REAL DEFAULT 0.10,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()
@@ -199,3 +213,57 @@ def get_cached_nav(amfi_code: str) -> dict | None:
     ).fetchone()
     conn.close()
     return {"nav": row[0], "expense_ratio": row[1]} if row else None
+
+
+# --- Goals ---
+
+def save_goal(goal: Goal) -> int:
+    """Insert or update a goal. Returns goal id."""
+    conn = _get_conn()
+    folios_json = json.dumps(goal.linked_folios)
+    if goal.id:
+        conn.execute(
+            "UPDATE goals SET name=?, template=?, target_amount=?, target_date=?, linked_folios=?, growth_rate=? WHERE id=? AND user_id=?",
+            (goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.id, goal.user_id),
+        )
+        conn.commit()
+        conn.close()
+        return goal.id
+    cur = conn.execute(
+        "INSERT INTO goals (user_id, name, template, target_amount, target_date, linked_folios, growth_rate) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (goal.user_id, goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate),
+    )
+    conn.commit()
+    gid = cur.lastrowid
+    conn.close()
+    return gid
+
+
+def load_goals(user_id: int) -> list[Goal]:
+    """Load all goals for a user."""
+    conn = _get_conn()
+    rows = conn.execute("SELECT id, user_id, name, template, target_amount, target_date, linked_folios, growth_rate, created_at FROM goals WHERE user_id=?", (user_id,)).fetchall()
+    conn.close()
+    return [
+        Goal(id=r[0], user_id=r[1], name=r[2], template=r[3], target_amount=r[4], target_date=r[5],
+             linked_folios=json.loads(r[6]) if r[6] else [], growth_rate=r[7], created_at=r[8] or "")
+        for r in rows
+    ]
+
+
+def delete_goal(goal_id: int, user_id: int) -> bool:
+    """Delete a goal. Returns True if deleted."""
+    conn = _get_conn()
+    cur = conn.execute("DELETE FROM goals WHERE id=? AND user_id=?", (goal_id, user_id))
+    conn.commit()
+    deleted = cur.rowcount > 0
+    conn.close()
+    return deleted
+
+
+def clear_goals(user_id: int):
+    """Clear all goals for a user."""
+    conn = _get_conn()
+    conn.execute("DELETE FROM goals WHERE user_id=?", (user_id,))
+    conn.commit()
+    conn.close()

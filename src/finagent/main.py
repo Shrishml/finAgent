@@ -117,6 +117,8 @@ async def auth_logout(request: Request):
 @app.get("/auth/me")
 async def auth_me(request: Request):
     """Check current session — returns user info or 401."""
+    if _DEV_MODE:
+        return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@finbestie.local", "picture": ""}})
     token = request.cookies.get("session")
     user = get_session_user(token)
     if not user:

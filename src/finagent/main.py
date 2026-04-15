@@ -404,9 +404,9 @@ async def goal_templates():
 
 
 @app.get("/goals/allocations")
-async def goal_allocations(request: Request, user_id: int = Depends(require_auth)):
+async def goal_allocations(request: Request):
     """Return total allocated % per fund across all goals. Excludes a specific goal if ?exclude=ID."""
-    from starlette.datastructures import QueryParams
+    user_id = _get_user_id(request) or DEMO_USER_ID
     exclude_id = request.query_params.get("exclude")
     exclude_id = int(exclude_id) if exclude_id else None
     goals = load_goals(user_id)
@@ -424,8 +424,9 @@ async def goal_allocations(request: Request, user_id: int = Depends(require_auth
 
 
 @app.get("/goals")
-async def get_goals(request: Request, user_id: int = Depends(require_auth)):
+async def get_goals(request: Request):
     """List user's goals with progress projections."""
+    user_id = _get_user_id(request) or DEMO_USER_ID
     goals = load_goals(user_id)
     holdings = load_holdings(user_id)
     return JSONResponse({

@@ -284,8 +284,26 @@ async def demo():
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
     save_holdings(holdings, user_id)
+    # Seed demo goals
+    clear_goals(user_id)
+    from finagent.models.goal import Goal as GoalModel
+    demo_goals = [
+        GoalModel(user_id=user_id, name="Retirement at 50", template="retirement",
+                  target_amount=5_000_000, target_date="2048-01-01",
+                  linked_folios=[{"folio": "DEMO-001/Parag Parikh Flexi Cap Fund - Direct Plan - Growth", "pct": 40},
+                                 {"folio": "DEMO-004/ICICI Prudential Balanced Advantage Fund - Direct Plan - Growth", "pct": 60}]),
+        GoalModel(user_id=user_id, name="Dream Home", template="house",
+                  target_amount=3_000_000, target_date="2030-06-01",
+                  linked_folios=[{"folio": "DEMO-002/HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", "pct": 50},
+                                 {"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 50}]),
+        GoalModel(user_id=user_id, name="Emergency Fund", template="emergency",
+                  target_amount=300_000, target_date="2027-01-01",
+                  linked_folios=[{"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 100}]),
+    ]
+    for g in demo_goals:
+        save_goal(g)
     log.info("Demo portfolio loaded")
-    return JSONResponse({"status": "ok", "holdings_count": len(holdings)})
+    return JSONResponse({"status": "ok", "holdings_count": len(holdings), "goals_count": len(demo_goals)})
 
 
 @app.post("/clear")
@@ -519,8 +537,27 @@ async def dev_seed():
     dev_uid = _get_dev_user_id()
     clear_holdings(dev_uid)
     save_holdings(demo_holdings, dev_uid)
-    log.info(f"DEV_MODE: seeded {len(demo_holdings)} holdings for dev user {dev_uid}")
-    return JSONResponse({"status": "ok", "holdings_count": len(demo_holdings)})
+    # Seed sample goals
+    clear_goals(dev_uid)
+    from finagent.models.goal import Goal as GoalModel
+    sample_goals = [
+        GoalModel(user_id=dev_uid, name="Retirement at 50", template="retirement",
+                  target_amount=5_000_000, target_date="2048-01-01",
+                  linked_folios=[{"folio": "DEMO-001/Parag Parikh Flexi Cap Fund - Direct Plan - Growth", "pct": 40},
+                                 {"folio": "DEMO-004/ICICI Prudential Balanced Advantage Fund - Direct Plan - Growth", "pct": 60}]),
+        GoalModel(user_id=dev_uid, name="Dream Home", template="house",
+                  target_amount=3_000_000, target_date="2030-06-01",
+                  linked_folios=[{"folio": "DEMO-002/HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", "pct": 50},
+                                 {"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 50}]),
+        GoalModel(user_id=dev_uid, name="Emergency Fund", template="emergency",
+                  target_amount=300_000, target_date="2027-01-01",
+                  linked_folios=[{"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 100}]),
+    ]
+    for g in sample_goals:
+        save_goal(g)
+    goal_count = len(sample_goals)
+    log.info(f"DEV_MODE: seeded {len(demo_holdings)} holdings + {goal_count} goals for dev user {dev_uid}")
+    return JSONResponse({"status": "ok", "holdings_count": len(demo_holdings), "goals_count": goal_count})
 
 
 @app.post("/dev/reset")

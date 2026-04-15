@@ -65,25 +65,26 @@ if _UI_DIR.exists():
 
 
 def _get_user_id(request: Request) -> int | None:
-    """Extract user_id from session cookie. Returns None if not logged in."""
+    """Extract user_id from session cookie. Returns None if not logged in.
+    In DEV_MODE: real session takes priority, falls back to dev user."""
+    token = request.cookies.get("session")
+    if token:
+        user = get_session_user(token)
+        if user:
+            return get_or_create_user(user["google_id"], user["email"], user["name"], user["picture"])
     if _DEV_MODE:
         return _get_dev_user_id()
-    token = request.cookies.get("session")
-    if not token:
-        return None
-    user = get_session_user(token)
-    if not user:
-        return None
-    return get_or_create_user(user["google_id"], user["email"], user["name"], user["picture"])
+    return None
 
 
 def require_auth(request: Request) -> int:
     """FastAPI dependency — returns user_id or raises 401."""
+    user_id = _get_user_id(request)
+    if user_id is not None:
+        return user_id
     if _DEV_MODE:
         return _get_dev_user_id()
-    user_id = _get_user_id(request)
-    if user_id is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    raise HTTPException(status_code=401, detail="Authentication required")
     return user_id
 
 
@@ -117,14 +118,16 @@ async def auth_logout(request: Request):
 
 @app.get("/auth/me")
 async def auth_me(request: Request):
-    """Check current session — returns user info or 401."""
+    """Check current session — returns user info or 401.
+    In DEV_MODE: real session takes priority, falls back to dev user."""
+    token = request.cookies.get("session")
+    if token:
+        user = get_session_user(token)
+        if user:
+            return JSONResponse({"status": "ok", "user": {"name": user["name"], "email": user["email"], "picture": user["picture"]}})
     if _DEV_MODE:
         return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@finbestie.local", "picture": ""}})
-    token = request.cookies.get("session")
-    user = get_session_user(token)
-    if not user:
-        return JSONResponse({"status": "unauthenticated"}, status_code=401)
-    return JSONResponse({"status": "ok", "user": {"name": user["name"], "email": user["email"], "picture": user["picture"]}})
+    return JSONResponse({"status": "unauthenticated"}, status_code=401)
 
 
 @app.get("/", response_class=HTMLResponse)

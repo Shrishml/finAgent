@@ -116,6 +116,14 @@ def get_or_create_user(google_id: str, email: str = "", name: str = "", picture:
     return uid
 
 
+def get_user_name(user_id: int) -> str:
+    """Get user's display name by user_id."""
+    conn = _get_conn()
+    row = conn.execute("SELECT name FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return row[0] if row and row[0] else ""
+
+
 def _merge_transactions(existing: list[dict], incoming: list[dict]) -> list[dict]:
     """Merge transaction lists, dedup by (date, amount, units)."""
     seen = {(t.get("date"), t.get("amount"), t.get("units")) for t in existing}

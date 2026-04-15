@@ -634,12 +634,13 @@ function startOnboarding(user) {
 }
 
 function sendOnboardingStart() {
-  // Send initial message to trigger welcome
-  const input = $('chat-input');
-  if (input && !input.value) {
-    input.value = 'Hi';
-    $('chat-form').dispatchEvent(new Event('submit'));
-  }
+  // Show welcome message immediately, then trigger backend to initialize
+  const box = $('chat-box');
+  const suggestions = $('suggestions-area');
+  if (suggestions) suggestions.remove();
+  addMsg("Hey! I'm FinBestie, your personal financial advisor 👋\n\nLet's build your financial picture together — takes about 5 minutes. I'll ask about your income, expenses, investments, loans, insurance, and goals.\n\nYou can skip any section or come back later.\n\n**Let's start — what do you do for work, and what's your monthly in-hand salary?**", 'agent');
+  // Silently trigger backend to initialize profile
+  fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
 }
 initApp();
 

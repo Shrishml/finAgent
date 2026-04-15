@@ -362,6 +362,11 @@
 // If signed in, redirect to /app (onboarding handles no-holdings case)
 checkSession().then(user => {
   if (user) {
+    // Hide demo elements immediately to prevent flash
+    const heroDemo = $('hero-demo-btn');
+    const divider = $('demo-divider');
+    if (heroDemo) heroDemo.style.display = 'none';
+    if (divider) divider.style.display = 'none';
     location.href = '/app';
   }
 });

@@ -87,6 +87,7 @@
       <div class="max-w-6xl mx-auto flex gap-6 sm:gap-10">
         <button onclick="switchTab('overview')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-emerald-600 text-emerald-600" data-tab="overview">Overview</button>
         <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Holdings</button>
+        <button onclick="switchTab('goals')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="goals">Goals</button>
       </div>
     </div>
 
@@ -145,6 +146,45 @@
           <div id="fund-detail-content" class="p-6 sm:p-10 pt-12 sm:pt-10"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Goals Tab -->
+    <div id="tab-goals" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
+      <div class="flex items-center justify-between mb-8">
+        <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Financial Goals</h3><p class="text-xs text-gray-500 mt-1">Track progress toward your life goals</p></div>
+        <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-lg">+ New Goal</button>
+      </div>
+
+      <!-- Goal Creation Form (hidden by default) -->
+      <div id="goal-form-section" class="hidden mb-10">
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+          <h4 class="text-sm font-bold text-gray-900 mb-4">Choose a template</h4>
+          <div id="goal-template-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"></div>
+          <div class="space-y-4">
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal Name</label><input id="goal-name" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="e.g. Dream House"></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount (₹)</label><input id="goal-amount" type="number" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="5000000"></div>
+              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Date</label><input id="goal-date" type="date" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></div>
+            </div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Link Holdings</label>
+              <div id="goal-holdings-list" class="mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button onclick="submitGoal()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create Goal</button>
+              <button onclick="hideGoalForm()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goal Cards -->
+      <div id="goals-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">🎯</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No goals yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Set a financial goal and track your progress</p>
+        <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create your first goal</button>
+      </div>
+      <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </div>
   </main>
 
@@ -568,6 +608,121 @@ async function initApp() {
   }
 }
 initApp();
+
+// --- Goals ---
+let _goalTemplates = {};
+let _selectedTemplate = 'custom';
+
+async function loadGoalTemplates() {
+  try {
+    const data = await fetch('/goals/templates').then(safeJson);
+    _goalTemplates = data.templates;
+  } catch(e) { console.error('Failed to load goal templates', e); }
+}
+
+function showGoalForm() {
+  $('goal-form-section').classList.remove('hidden');
+  renderTemplateGrid();
+  renderHoldingsCheckboxes();
+}
+function hideGoalForm() { $('goal-form-section').classList.add('hidden'); }
+
+function renderTemplateGrid() {
+  $('goal-template-grid').innerHTML = Object.entries(_goalTemplates).map(([k, t]) =>
+    `<button onclick="selectTemplate('${k}')" id="tmpl-${k}" class="tmpl-btn p-4 rounded-xl border-2 text-center transition-all hover:shadow-md ${k === _selectedTemplate ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 bg-white'}">
+      <div class="text-2xl mb-1">${t.label.split(' ')[0]}</div>
+      <div class="text-xs font-bold text-gray-700">${t.label.split(' ').slice(1).join(' ')}</div>
+      ${t.suggested_amount ? `<div class="text-[9px] text-gray-400 mt-1">${INR_SHORT(t.suggested_amount)}</div>` : ''}
+    </button>`
+  ).join('');
+}
+
+function selectTemplate(key) {
+  _selectedTemplate = key;
+  const t = _goalTemplates[key];
+  $('goal-name').value = t.label.split(' ').slice(1).join(' ');
+  if (t.suggested_amount) $('goal-amount').placeholder = t.suggested_amount.toLocaleString('en-IN');
+  document.querySelectorAll('.tmpl-btn').forEach(b => { b.classList.remove('border-emerald-500', 'bg-emerald-50'); b.classList.add('border-gray-100', 'bg-white'); });
+  $('tmpl-' + key).classList.add('border-emerald-500', 'bg-emerald-50');
+  $('tmpl-' + key).classList.remove('border-gray-100', 'bg-white');
+}
+
+function renderHoldingsCheckboxes() {
+  $('goal-holdings-list').innerHTML = _holdings.map(h =>
+    `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+      <input type="checkbox" value="${esc(h.folio + '/' + h.scheme)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded">
+      <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}</div></div>
+    </label>`
+  ).join('') || '<p class="text-xs text-gray-400">No holdings to link. Upload a CAS statement first.</p>';
+}
+
+async function submitGoal() {
+  const name = $('goal-name').value.trim();
+  const amount = parseFloat($('goal-amount').value);
+  const date = $('goal-date').value;
+  if (!name || !amount || !date) { alert('Please fill in all fields'); return; }
+  const folios = [...document.querySelectorAll('.goal-holding-cb:checked')].map(cb => cb.value);
+  try {
+    const res = await fetch('/goals', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: folios })
+    });
+    const data = await safeJson(res);
+    if (data.status === 'ok') { hideGoalForm(); loadGoals(); trackEvent('goal_created', { template: _selectedTemplate }); }
+  } catch(e) { alert('Failed to create goal: ' + e.message); }
+}
+
+async function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  try { await fetch('/goals/' + id, { method: 'DELETE' }); loadGoals(); } catch(e) { alert('Failed to delete goal'); }
+}
+
+async function loadGoals() {
+  try {
+    const data = await fetch('/goals').then(safeJson);
+    const goals = data.goals || [];
+    if (!goals.length) { $('goals-empty').classList.remove('hidden'); $('goals-grid').innerHTML = ''; return; }
+    $('goals-empty').classList.add('hidden');
+    $('goals-grid').innerHTML = goals.map(g => {
+      const statusColor = g.on_track ? 'emerald' : 'amber';
+      const statusText = g.on_track ? 'On Track' : 'Behind';
+      const statusIcon = g.on_track ? '✅' : '⚠️';
+      const tmpl = _goalTemplates[g.template] || {};
+      const emoji = (tmpl.label || '🎯').split(' ')[0];
+      const progressWidth = Math.min(g.progress_pct, 100);
+      return `<div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-center gap-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${esc(g.target_date)}</p></div></div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-${statusColor}-600 bg-${statusColor}-50 px-2 py-1 rounded-lg">${statusIcon} ${statusText}</span>
+            <button onclick="deleteGoal(${g.id})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+          </div>
+        </div>
+        <div class="mb-4">
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold text-gray-600">${INR(g.current_value)}</span><span class="font-bold text-gray-400">${INR(g.target_amount)}</span></div>
+          <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden"><div class="bg-${statusColor}-500 h-3 rounded-full transition-all duration-500" style="width:${progressWidth}%"></div></div>
+          <p class="text-[10px] text-gray-400 mt-1 font-bold">${g.progress_pct.toFixed(1)}% achieved</p>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly SIP</p><p class="text-sm font-bold text-gray-800 mt-1">${g.monthly_sip > 0 ? INR(g.monthly_sip) : '—'}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Projected</p><p class="text-sm font-bold text-gray-800 mt-1">${INR_SHORT(g.projected_value)}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'ETA' : 'SIP Gap'}</p><p class="text-sm font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-1">${g.on_track ? (g.projected_months ? g.projected_months + ' mo' : '—') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p></div>
+        </div>
+        ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 mt-4 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 mt-4 font-bold">No holdings linked</p>'}
+      </div>`;
+    }).join('');
+  } catch(e) { console.error('Failed to load goals', e); }
+}
+
+// Load goals when tab is switched
+const _origSwitchTab = switchTab;
+switchTab = function(tab) {
+  _origSwitchTab(tab);
+  if (tab === 'goals') loadGoals();
+};
+
+// Init goals on app load
+loadGoalTemplates();
 
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
 

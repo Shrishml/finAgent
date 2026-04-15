@@ -16,7 +16,8 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals
+from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
 # Logging setup
@@ -294,6 +295,158 @@ async def clear(request: Request):
     return JSONResponse({"status": "ok", "message": "All holdings cleared"})
 
 
+
+# --- Goals ---
+
+def _compute_goal_progress(goal: Goal, holdings: list) -> dict:
+    """Compute progress, monthly SIP, and projection for a goal."""
+    from datetime import date as _date, timedelta
+    import math
+
+    # Sum current value of linked holdings
+    linked_value = 0.0
+    monthly_sip = 0.0
+    for h in holdings:
+        key = f"{h.folio}/{h.scheme_name}"
+        if key not in goal.linked_folios:
+            continue
+        linked_value += h.current_value
+        # Detect SIP: average monthly investment over last 6 months
+        cutoff = _date.today() - timedelta(days=180)
+        recent_investments = sum(
+            t.amount for t in h.transactions
+            if t.amount > 0 and t.date >= cutoff
+        )
+        monthly_sip += recent_investments / 6
+
+    progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
+    target_dt = _date.fromisoformat(goal.target_date)
+    months_left = max(0, (target_dt.year - _date.today().year) * 12 + target_dt.month - _date.today().month)
+
+    # Project future value: FV = PV*(1+r)^n + SIP*[((1+r)^n - 1)/r]
+    monthly_rate = goal.growth_rate / 12
+    if monthly_rate > 0 and months_left > 0:
+        fv_lump = linked_value * (1 + monthly_rate) ** months_left
+        fv_sip = monthly_sip * (((1 + monthly_rate) ** months_left - 1) / monthly_rate)
+        projected_value = fv_lump + fv_sip
+    else:
+        projected_value = linked_value + monthly_sip * months_left
+
+    # Estimate months to reach target (binary search)
+    projected_months = None
+    if monthly_rate > 0 and (linked_value > 0 or monthly_sip > 0):
+        for m in range(1, 600):  # up to 50 years
+            fv = linked_value * (1 + monthly_rate) ** m + monthly_sip * (((1 + monthly_rate) ** m - 1) / monthly_rate)
+            if fv >= goal.target_amount:
+                projected_months = m
+                break
+
+    on_track = projected_value >= goal.target_amount if months_left > 0 else linked_value >= goal.target_amount
+
+    # SIP gap: how much more monthly SIP needed to hit target
+    sip_gap = 0.0
+    if not on_track and months_left > 0 and monthly_rate > 0:
+        # target = PV*(1+r)^n + (SIP+gap)*[((1+r)^n - 1)/r]
+        fv_lump = linked_value * (1 + monthly_rate) ** months_left
+        annuity_factor = ((1 + monthly_rate) ** months_left - 1) / monthly_rate
+        if annuity_factor > 0:
+            required_sip = (goal.target_amount - fv_lump) / annuity_factor
+            sip_gap = max(0, required_sip - monthly_sip)
+
+    return {
+        "current_value": round(linked_value, 2),
+        "progress_pct": round(min(progress_pct, 100), 1),
+        "monthly_sip": round(monthly_sip, 2),
+        "projected_value": round(projected_value, 2),
+        "months_left": months_left,
+        "projected_months": projected_months,
+        "on_track": on_track,
+        "sip_gap": round(sip_gap, 2),
+    }
+
+
+@app.get("/goals/templates")
+async def goal_templates():
+    """Return available goal templates with defaults."""
+    return JSONResponse({
+        "templates": {k: v for k, v in GOAL_TEMPLATES.items()}
+    })
+
+
+@app.get("/goals")
+async def get_goals(request: Request, user_id: int = Depends(require_auth)):
+    """List user's goals with progress projections."""
+    goals = load_goals(user_id)
+    holdings = load_holdings(user_id)
+    return JSONResponse({
+        "goals": [
+            {
+                "id": g.id, "name": g.name, "template": g.template,
+                "target_amount": g.target_amount, "target_date": g.target_date,
+                "linked_folios": g.linked_folios, "growth_rate": g.growth_rate,
+                "created_at": g.created_at,
+                **_compute_goal_progress(g, holdings),
+            }
+            for g in goals
+        ]
+    })
+
+
+@app.post("/goals")
+async def create_goal(request: Request, user_id: int = Depends(require_auth)):
+    """Create a new goal."""
+    body = await request.json()
+    name = body.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Goal name required")
+    template = body.get("template", "custom")
+    if template not in GOAL_TEMPLATES:
+        raise HTTPException(status_code=400, detail=f"Unknown template: {template}")
+    target_amount = body.get("target_amount", 0)
+    target_date = body.get("target_date", "")
+    if not target_date or target_amount <= 0:
+        raise HTTPException(status_code=400, detail="target_amount and target_date required")
+    goal = Goal(
+        user_id=user_id, name=name, template=template,
+        target_amount=target_amount, target_date=target_date,
+        linked_folios=body.get("linked_folios", []),
+        growth_rate=body.get("growth_rate", 0),
+    )
+    gid = save_goal(goal)
+    log.info(f"Goal created: {name} (id={gid}) for user {user_id}")
+    return JSONResponse({"status": "ok", "goal_id": gid})
+
+
+@app.put("/goals/{goal_id}")
+async def update_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
+    """Update an existing goal."""
+    body = await request.json()
+    goals = load_goals(user_id)
+    existing = next((g for g in goals if g.id == goal_id), None)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    # Apply updates
+    existing.name = body.get("name", existing.name)
+    existing.template = body.get("template", existing.template)
+    existing.target_amount = body.get("target_amount", existing.target_amount)
+    existing.target_date = body.get("target_date", existing.target_date)
+    existing.linked_folios = body.get("linked_folios", existing.linked_folios)
+    if body.get("growth_rate"):
+        existing.growth_rate = body["growth_rate"]
+    save_goal(existing)
+    log.info(f"Goal updated: {existing.name} (id={goal_id})")
+    return JSONResponse({"status": "ok"})
+
+
+@app.delete("/goals/{goal_id}")
+async def remove_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
+    """Delete a goal."""
+    if not delete_goal(goal_id, user_id):
+        raise HTTPException(status_code=404, detail="Goal not found")
+    log.info(f"Goal deleted: id={goal_id} for user {user_id}")
+    return JSONResponse({"status": "ok"})
+
+
 @app.post("/dev/seed")
 async def dev_seed():
     """Seed dev user with demo holdings. Only available in DEV_MODE."""
@@ -319,6 +472,7 @@ async def dev_reset():
         raise HTTPException(status_code=404)
     dev_uid = _get_dev_user_id()
     clear_holdings(dev_uid)
+    clear_goals(dev_uid)
     log.info(f"DEV_MODE: cleared dev user {dev_uid}")
     return JSONResponse({"status": "ok"})
 

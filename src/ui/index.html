@@ -359,14 +359,10 @@
 </div>
 
 <script>
-// If signed in with data, redirect to /app
+// If signed in, redirect to /app (onboarding handles no-holdings case)
 checkSession().then(user => {
   if (user) {
-    $('demo-divider').classList.add('hidden');
-    $('demo-btn').classList.add('hidden');
-    fetch('/holdings').then(r => r.ok ? r.json() : Promise.reject()).then(d => {
-      if (d.count > 0) location.href = '/app';
-    });
+    location.href = '/app';
   }
 });
 

@@ -600,11 +600,45 @@ async function initApp() {
       if (user) {
         const h = await fetch('/holdings').then(safeJson);
         if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
-        else location.href='/';
+        else startOnboarding(user);
       } else {
         location.href = '/';
       }
     } catch(e) { location.href='/'; }
+  }
+}
+
+function startOnboarding(user) {
+  // Show dashboard with empty state + open chat for onboarding
+  $('loading-state').classList.add('hidden');
+  $('dashboard').classList.remove('hidden');
+  $('summary-bar').innerHTML = `
+    <div class="text-center py-4">
+      <h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome${user.name ? ', ' + user.name.split(' ')[0] : ''}! 👋</h1>
+      <p class="text-gray-300 text-sm">Let's build your financial profile through a quick chat.</p>
+    </div>`;
+  // Hide tabs and show a simple message
+  document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+  $('tab-overview').classList.remove('hidden');
+  $('tab-overview').innerHTML = `
+    <div class="text-center py-16 px-6">
+      <div class="text-6xl mb-6">💬</div>
+      <h2 class="text-2xl font-black text-gray-800 mb-3">Your Financial Advisor is Ready</h2>
+      <p class="text-gray-500 max-w-md mx-auto mb-8">I'll ask you a few questions about your income, expenses, investments, and goals. Takes about 5 minutes — and your dashboard will build itself.</p>
+      <button onclick="toggleChat(); sendOnboardingStart()" class="px-8 py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl text-lg">
+        Start Chat →
+      </button>
+      <p class="text-xs text-gray-400 mt-4">Or <a href="#" onclick="document.querySelector('#toggle-upload').click(); return false" class="text-emerald-600 hover:underline">upload a CAS statement</a> if you have one ready.</p>
+    </div>`;
+}
+
+function sendOnboardingStart() {
+  // Send initial message to trigger welcome
+  const input = $('chat-input');
+  if (input && !input.value) {
+    input.value = 'Hi';
+    $('chat-form').dispatchEvent(new Event('submit'));
   }
 }
 initApp();

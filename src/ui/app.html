@@ -170,7 +170,7 @@
               <div id="goal-holdings-list" class="mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
             </div>
             <div class="flex gap-3 pt-2">
-              <button onclick="submitGoal()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create Goal</button>
+              <button onclick="submitGoal()" id="goal-submit-btn" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create Goal</button>
               <button onclick="hideGoalForm()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">Cancel</button>
             </div>
           </div>
@@ -612,6 +612,7 @@ initApp();
 // --- Goals ---
 let _goalTemplates = {};
 let _selectedTemplate = 'custom';
+let _editingGoalId = null;
 
 async function loadGoalTemplates() {
   try {
@@ -621,11 +622,35 @@ async function loadGoalTemplates() {
 }
 
 function showGoalForm() {
+  _editingGoalId = null;
   $('goal-form-section').classList.remove('hidden');
+  $('goal-submit-btn').textContent = 'Create Goal';
+  $('goal-name').value = '';
+  $('goal-amount').value = '';
+  $('goal-date').value = '';
   renderTemplateGrid();
   renderHoldingsCheckboxes();
+  $('goal-form-section').scrollIntoView({ behavior: 'smooth' });
 }
-function hideGoalForm() { $('goal-form-section').classList.add('hidden'); }
+function hideGoalForm() { _editingGoalId = null; $('goal-form-section').classList.add('hidden'); }
+
+function editGoal(id) {
+  fetch('/goals').then(safeJson).then(data => {
+    const g = (data.goals || []).find(x => x.id === id);
+    if (!g) return;
+    _editingGoalId = id;
+    _selectedTemplate = g.template;
+    $('goal-form-section').classList.remove('hidden');
+    $('goal-submit-btn').textContent = 'Update Goal';
+    renderTemplateGrid();
+    renderHoldingsCheckboxes(g.linked_folios);
+    $('goal-name').value = g.name;
+    $('goal-amount').value = g.target_amount;
+    $('goal-date').value = g.target_date;
+    selectTemplate(g.template);
+    $('goal-form-section').scrollIntoView({ behavior: 'smooth' });
+  });
+}
 
 function renderTemplateGrid() {
   $('goal-template-grid').innerHTML = Object.entries(_goalTemplates).map(([k, t]) =>
@@ -647,13 +672,15 @@ function selectTemplate(key) {
   $('tmpl-' + key).classList.remove('border-gray-100', 'bg-white');
 }
 
-function renderHoldingsCheckboxes() {
-  $('goal-holdings-list').innerHTML = _holdings.map(h =>
-    `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-      <input type="checkbox" value="${esc(h.folio + '/' + h.scheme)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded">
+function renderHoldingsCheckboxes(selectedFolios) {
+  const sel = new Set(selectedFolios || []);
+  $('goal-holdings-list').innerHTML = _holdings.map(h => {
+    const key = h.folio + '/' + h.scheme;
+    return `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+      <input type="checkbox" value="${esc(key)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded" ${sel.has(key) ? 'checked' : ''}>
       <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}</div></div>
-    </label>`
-  ).join('') || '<p class="text-xs text-gray-400">No holdings to link. Upload a CAS statement first.</p>';
+    </label>`;
+  }).join('') || '<p class="text-xs text-gray-400">No holdings to link. Upload a CAS statement first.</p>';
 }
 
 async function submitGoal() {
@@ -662,14 +689,14 @@ async function submitGoal() {
   const date = $('goal-date').value;
   if (!name || !amount || !date) { alert('Please fill in all fields'); return; }
   const folios = [...document.querySelectorAll('.goal-holding-cb:checked')].map(cb => cb.value);
+  const body = { name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: folios };
   try {
-    const res = await fetch('/goals', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: folios })
-    });
+    const url = _editingGoalId ? '/goals/' + _editingGoalId : '/goals';
+    const method = _editingGoalId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await safeJson(res);
-    if (data.status === 'ok') { hideGoalForm(); loadGoals(); trackEvent('goal_created', { template: _selectedTemplate }); }
-  } catch(e) { alert('Failed to create goal: ' + e.message); }
+    if (data.status === 'ok') { hideGoalForm(); loadGoals(); trackEvent(_editingGoalId ? 'goal_updated' : 'goal_created', { template: _selectedTemplate }); }
+  } catch(e) { alert('Failed to save goal: ' + e.message); }
 }
 
 async function deleteGoal(id) {
@@ -695,6 +722,7 @@ async function loadGoals() {
           <div class="flex items-center gap-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${esc(g.target_date)}</p></div></div>
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-${statusColor}-600 bg-${statusColor}-50 px-2 py-1 rounded-lg">${statusIcon} ${statusText}</span>
+            <button onclick="editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
             <button onclick="deleteGoal(${g.id})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
           </div>
         </div>

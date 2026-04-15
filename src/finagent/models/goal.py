@@ -22,7 +22,7 @@ class Goal:
     template: str  # key from GOAL_TEMPLATES
     target_amount: float
     target_date: str  # ISO date "2035-01-01"
-    linked_folios: list[str] = field(default_factory=list)  # ["folio/scheme", ...]
+    linked_folios: list = field(default_factory=list)  # [{"folio": "F1/Scheme", "pct": 60}, ...]
     growth_rate: float = 0.0  # 0 = use template default
     id: int | None = None
     created_at: str = ""

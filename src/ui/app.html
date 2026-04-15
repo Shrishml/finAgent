@@ -163,7 +163,7 @@
           <div class="space-y-4">
             <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal Name</label><input id="goal-name" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="e.g. Dream House"></div>
             <div class="grid grid-cols-2 gap-4">
-              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount (₹)</label><input id="goal-amount" type="number" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="5000000"></div>
+              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount (₹)</label><input id="goal-amount" type="text" inputmode="numeric" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="50,00,000"></div>
               <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Date</label><input id="goal-date" type="date" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></div>
             </div>
             <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Link Holdings</label>
@@ -645,7 +645,7 @@ function editGoal(id) {
     renderTemplateGrid();
     renderHoldingsCheckboxes(g.linked_folios);
     $('goal-name').value = g.name;
-    $('goal-amount').value = g.target_amount;
+    $('goal-amount').value = parseInt(g.target_amount).toLocaleString('en-IN');
     $('goal-date').value = g.target_date;
     selectTemplate(g.template);
     $('goal-form-section').scrollIntoView({ behavior: 'smooth' });
@@ -673,29 +673,56 @@ function selectTemplate(key) {
 }
 
 function renderHoldingsCheckboxes(selectedFolios) {
-  const sel = new Set(selectedFolios || []);
-  $('goal-holdings-list').innerHTML = _holdings.map(h => {
-    const key = h.folio + '/' + h.scheme;
-    return `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-      <input type="checkbox" value="${esc(key)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded" ${sel.has(key) ? 'checked' : ''}>
-      <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}</div></div>
-    </label>`;
-  }).join('') || '<p class="text-xs text-gray-400">No holdings to link. Upload a CAS statement first.</p>';
+  // selectedFolios: [{folio, pct}] or ["folio"] (old format)
+  const selMap = {};
+  (selectedFolios || []).forEach(lf => {
+    if (typeof lf === 'object') selMap[lf.folio] = lf.pct || 100;
+    else selMap[lf] = 100;
+  });
+  const excludeParam = _editingGoalId ? '?exclude=' + _editingGoalId : '';
+  fetch('/goals/allocations' + excludeParam).then(safeJson).then(data => {
+    const alloc = data.allocations || {};
+    $('goal-holdings-list').innerHTML = _holdings.map(h => {
+      const key = h.folio + '/' + h.scheme;
+      const used = alloc[key] || 0;
+      const avail = 100 - used;
+      const checked = key in selMap;
+      const pct = selMap[key] || Math.min(100, avail);
+      if (avail <= 0 && !checked) return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl opacity-50">
+        <input type="checkbox" disabled class="w-4 h-4 rounded"><div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-400 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-red-400">100% allocated</div></div></div>`;
+      return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+        <input type="checkbox" value="${esc(key)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded" ${checked ? 'checked' : ''}>
+        <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}${used > 0 ? ' · <span class="text-amber-500">'+used+'% used</span>' : ''}</div></div>
+        <div class="flex items-center gap-1 shrink-0"><input type="number" min="1" max="${avail}" value="${Math.min(pct, avail)}" data-folio="${esc(key)}" class="goal-pct-input w-14 text-center border rounded-lg px-1 py-1 text-xs font-bold" ${!checked ? 'disabled' : ''}><span class="text-[10px] text-gray-400">%</span></div>
+      </div>`;
+    }).join('') || '<p class="text-xs text-gray-400">No holdings to link.</p>';
+    $('goal-holdings-list').querySelectorAll('.goal-holding-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
+        if (pi) pi.disabled = !cb.checked;
+      });
+    });
+  }).catch(() => {});
 }
 
 async function submitGoal() {
   const name = $('goal-name').value.trim();
-  const amount = parseFloat($('goal-amount').value);
+  const raw = $('goal-amount').value.replace(/,/g, '');
+  const amount = parseFloat(raw);
   const date = $('goal-date').value;
   if (!name || !amount || !date) { alert('Please fill in all fields'); return; }
-  const folios = [...document.querySelectorAll('.goal-holding-cb:checked')].map(cb => cb.value);
+  const folios = [...document.querySelectorAll('.goal-holding-cb:checked')].map(cb => {
+    const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
+    return { folio: cb.value, pct: parseInt(pi?.value || 100) };
+  });
   const body = { name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: folios };
   try {
     const url = _editingGoalId ? '/goals/' + _editingGoalId : '/goals';
     const method = _editingGoalId ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const data = await safeJson(res);
+    const data = await res.json();
     if (data.status === 'ok') { hideGoalForm(); loadGoals(); trackEvent(_editingGoalId ? 'goal_updated' : 'goal_created', { template: _selectedTemplate }); }
+    else { alert(data.detail || 'Failed to save goal'); }
   } catch(e) { alert('Failed to save goal: ' + e.message); }
 }
 
@@ -751,6 +778,14 @@ switchTab = function(tab) {
 
 // Init goals on app load
 loadGoalTemplates();
+
+// Indian comma formatting for amount input (12,34,567)
+document.addEventListener('input', e => {
+  if (e.target.id !== 'goal-amount') return;
+  const raw = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+  if (!raw) { e.target.value = ''; return; }
+  e.target.value = parseInt(raw).toLocaleString('en-IN');
+});
 
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
 

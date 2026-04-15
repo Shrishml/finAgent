@@ -307,21 +307,29 @@ def _compute_goal_progress(goal: Goal, holdings: list) -> dict:
     from datetime import date as _date, timedelta
     import math
 
-    # Sum current value of linked holdings
+    # Sum current value of linked holdings (weighted by allocation %)
     linked_value = 0.0
     monthly_sip = 0.0
+    # Build lookup: folio_key → allocation pct
+    alloc_map = {}
+    for lf in goal.linked_folios:
+        if isinstance(lf, dict):
+            alloc_map[lf["folio"]] = lf.get("pct", 100) / 100
+        else:
+            alloc_map[lf] = 1.0  # backward compat with old string format
     for h in holdings:
         key = f"{h.folio}/{h.scheme_name}"
-        if key not in goal.linked_folios:
+        if key not in alloc_map:
             continue
-        linked_value += h.current_value
+        weight = alloc_map[key]
+        linked_value += h.current_value * weight
         # Detect SIP: average monthly investment over last 6 months
         cutoff = _date.today() - timedelta(days=180)
         recent_investments = sum(
             t.amount for t in h.transactions
             if t.amount > 0 and t.date >= cutoff
         )
-        monthly_sip += recent_investments / 6
+        monthly_sip += (recent_investments / 6) * weight
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
     target_dt = _date.fromisoformat(goal.target_date)
@@ -377,6 +385,26 @@ async def goal_templates():
     })
 
 
+@app.get("/goals/allocations")
+async def goal_allocations(request: Request, user_id: int = Depends(require_auth)):
+    """Return total allocated % per fund across all goals. Excludes a specific goal if ?exclude=ID."""
+    from starlette.datastructures import QueryParams
+    exclude_id = request.query_params.get("exclude")
+    exclude_id = int(exclude_id) if exclude_id else None
+    goals = load_goals(user_id)
+    alloc = {}  # folio_key → total allocated pct
+    for g in goals:
+        if g.id == exclude_id:
+            continue
+        for lf in g.linked_folios:
+            if isinstance(lf, dict):
+                key = lf["folio"]
+                alloc[key] = alloc.get(key, 0) + lf.get("pct", 100)
+            else:
+                alloc[lf] = alloc.get(lf, 0) + 100
+    return JSONResponse({"allocations": alloc})
+
+
 @app.get("/goals")
 async def get_goals(request: Request, user_id: int = Depends(require_auth)):
     """List user's goals with progress projections."""
@@ -396,6 +424,28 @@ async def get_goals(request: Request, user_id: int = Depends(require_auth)):
     })
 
 
+def _validate_allocations(user_id: int, linked_folios: list, exclude_goal_id: int | None = None):
+    """Check that no fund exceeds 100% allocation across all goals."""
+    existing_goals = load_goals(user_id)
+    alloc = {}
+    for g in existing_goals:
+        if g.id == exclude_goal_id:
+            continue
+        for lf in g.linked_folios:
+            if isinstance(lf, dict):
+                alloc[lf["folio"]] = alloc.get(lf["folio"], 0) + lf.get("pct", 100)
+            else:
+                alloc[lf] = alloc.get(lf, 0) + 100
+    for lf in linked_folios:
+        if isinstance(lf, dict):
+            key, pct = lf["folio"], lf.get("pct", 100)
+        else:
+            key, pct = lf, 100
+        total = alloc.get(key, 0) + pct
+        if total > 100:
+            raise HTTPException(status_code=400, detail=f"Fund '{key}' would be {total}% allocated (max 100%)")
+
+
 @app.post("/goals")
 async def create_goal(request: Request, user_id: int = Depends(require_auth)):
     """Create a new goal."""
@@ -410,10 +460,12 @@ async def create_goal(request: Request, user_id: int = Depends(require_auth)):
     target_date = body.get("target_date", "")
     if not target_date or target_amount <= 0:
         raise HTTPException(status_code=400, detail="target_amount and target_date required")
+    linked = body.get("linked_folios", [])
+    _validate_allocations(user_id, linked)
     goal = Goal(
         user_id=user_id, name=name, template=template,
         target_amount=target_amount, target_date=target_date,
-        linked_folios=body.get("linked_folios", []),
+        linked_folios=linked,
         growth_rate=body.get("growth_rate", 0),
     )
     gid = save_goal(goal)
@@ -435,6 +487,8 @@ async def update_goal(goal_id: int, request: Request, user_id: int = Depends(req
     existing.target_amount = body.get("target_amount", existing.target_amount)
     existing.target_date = body.get("target_date", existing.target_date)
     existing.linked_folios = body.get("linked_folios", existing.linked_folios)
+    if "linked_folios" in body:
+        _validate_allocations(user_id, existing.linked_folios, exclude_goal_id=goal_id)
     if body.get("growth_rate"):
         existing.growth_rate = body["growth_rate"]
     save_goal(existing)

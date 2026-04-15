@@ -74,6 +74,9 @@ finagent/
 
 ### Build → Test → Deploy Workflow
 
+> **⚠️ A feature is NOT complete until it is tested and verified on beta.captwist.in.**
+> Testing on beta is the agent's responsibility. Do not report a feature as done without confirming it works on beta.
+
 ```bash
 # 1. Work on dev branch
 git checkout dev

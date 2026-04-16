@@ -156,6 +156,8 @@ async def handle_query_stream(query: str, user_id: int | None = None):
                         yield "[STATUS] Thinking..."
                 result = task.result()
                 yield result["response"]
+                if result.get("onboarding_complete"):
+                    yield "[ONBOARDING_COMPLETE]"
                 return
 
     yield "[STATUS] Analyzing your question..."

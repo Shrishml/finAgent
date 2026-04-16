@@ -212,13 +212,14 @@ async def _extract_and_respond(
         raw = await llm.complete(prompt, json_mode=True)
         # Parse JSON — handle markdown code blocks
         raw = raw.strip()
+        log.info(f"[onboarding] raw LLM response ({len(raw)} chars): {raw[:500]}")
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
         result = json.loads(raw)
         log.info(f"[onboarding] pillar={current_pillar} extractions={result.get('extractions', {})}")
         return result
     except (json.JSONDecodeError, Exception) as e:
-        log.error(f"[onboarding] LLM extraction failed: {e}")
+        log.error(f"[onboarding] LLM extraction failed: {e}, raw={raw[:300] if 'raw' in dir() else 'no response'}")
         return {
             "extractions": {},
             "pillar_complete": False,

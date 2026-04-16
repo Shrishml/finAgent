@@ -16,7 +16,7 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile
 from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
@@ -611,6 +611,82 @@ async def dev_reset():
     clear_goals(dev_uid)
     log.info(f"DEV_MODE: cleared dev user {dev_uid}")
     return JSONResponse({"status": "ok"})
+
+
+@app.get("/profile")
+async def get_profile(request: Request):
+    """Return user's financial profile and health score."""
+    user_id = _get_user_id(request) or DEMO_USER_ID
+    profile = load_profile(user_id)
+    if not profile:
+        return JSONResponse({"profile": None, "onboarding_complete": False})
+
+    # Health score: 0-100 based on data completeness and financial health
+    score = 0
+    flags = []
+    if profile.monthly_income > 0:
+        score += 15
+    if profile.monthly_expenses > 0:
+        score += 10
+        if profile.savings_rate and profile.savings_rate >= 0.3:
+            score += 10
+            flags.append(("✅", f"Savings rate {profile.savings_rate:.0%} — excellent!"))
+        elif profile.savings_rate and profile.savings_rate >= 0.2:
+            score += 5
+            flags.append(("🟡", f"Savings rate {profile.savings_rate:.0%} — aim for 30%+"))
+        elif profile.savings_rate is not None:
+            flags.append(("🔴", f"Savings rate {profile.savings_rate:.0%} — needs improvement"))
+    if profile.term_cover > 0:
+        score += 15
+        flags.append(("✅", f"Term cover ₹{profile.term_cover/100000:.0f}L"))
+    elif "insurance" in profile.pillars_completed:
+        flags.append(("🔴", "No term life insurance — top priority!"))
+    if profile.health_cover > 0 or not profile.health_employer_only:
+        score += 10
+    elif "insurance" in profile.pillars_completed:
+        score += 5
+        flags.append(("🟡", "Only employer health cover — consider personal policy"))
+    if not profile.loans or profile.total_emi == 0:
+        score += 15
+        flags.append(("✅", "Debt free!"))
+    elif profile.monthly_income > 0:
+        dti = profile.total_emi / profile.monthly_income
+        if dti < 0.3:
+            score += 10
+            flags.append(("✅", f"Debt-to-income {dti:.0%} — manageable"))
+        else:
+            score += 5
+            flags.append(("🟡", f"Debt-to-income {dti:.0%} — consider reducing"))
+    if profile.age > 0:
+        score += 5
+    if profile.risk_tolerance:
+        score += 5
+    if len(profile.pillars_completed) >= 6:
+        score += 10
+
+    return JSONResponse({
+        "profile": {
+            "monthly_income": profile.monthly_income,
+            "monthly_expenses": profile.monthly_expenses,
+            "savings_rate": profile.savings_rate,
+            "occupation": profile.occupation,
+            "employer": profile.employer,
+            "age": profile.age,
+            "dependents": profile.dependents,
+            "risk_tolerance": profile.risk_tolerance,
+            "loans": profile.loans,
+            "total_emi": profile.total_emi,
+            "term_cover": profile.term_cover,
+            "health_cover": profile.health_cover,
+            "health_employer_only": profile.health_employer_only,
+            "pillars_completed": profile.pillars_completed,
+            "pillars_skipped": profile.pillars_skipped,
+            "onboarding_complete": profile.onboarding_complete,
+        },
+        "health_score": min(score, 100),
+        "flags": flags,
+        "onboarding_complete": profile.onboarding_complete,
+    })
 
 
 @app.get("/suggestions")

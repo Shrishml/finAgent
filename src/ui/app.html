@@ -88,6 +88,7 @@
         <button onclick="switchTab('overview')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-emerald-600 text-emerald-600" data-tab="overview">Overview</button>
         <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Holdings</button>
         <button onclick="switchTab('goals')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="goals">Goals</button>
+        <button onclick="switchTab('profile')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="profile">Profile</button>
       </div>
     </div>
 
@@ -185,6 +186,54 @@
         <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create your first goal</button>
       </div>
       <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="tab-profile" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
+      <div id="profile-loading" class="text-center py-16"><div class="text-4xl mb-4">⏳</div><p class="text-gray-500">Loading profile...</p></div>
+      <div id="profile-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">👤</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No profile yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Chat with FinBestie to build your financial profile</p>
+        <button onclick="toggleChat()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700">Start Chat →</button>
+      </div>
+      <div id="profile-content" class="hidden space-y-8">
+        <!-- Health Score -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm text-center">
+          <h3 class="text-xl font-extrabold text-gray-900 mb-4">Financial Health Score</h3>
+          <div id="health-score-ring" class="relative inline-flex items-center justify-center w-36 h-36 mb-4">
+            <svg class="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+              <circle id="score-arc" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327"/>
+            </svg>
+            <span id="score-value" class="absolute text-3xl font-black text-gray-900">0</span>
+          </div>
+          <div id="health-flags" class="text-left max-w-md mx-auto space-y-2"></div>
+        </div>
+        <!-- Profile Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">💰 Income</h4>
+            <div id="profile-income" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🛒 Expenses</h4>
+            <div id="profile-expenses" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🏦 Liabilities</h4>
+            <div id="profile-liabilities" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🛡️ Insurance</h4>
+            <div id="profile-insurance" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm md:col-span-2">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">👤 About You</h4>
+            <div id="profile-about" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -804,12 +853,59 @@ async function loadGoals() {
   } catch(e) { console.error('Failed to load goals', e); }
 }
 
-// Load goals when tab is switched
+// Load goals/profile when tab is switched
 const _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
   if (tab === 'goals') loadGoals();
+  if (tab === 'profile') loadProfile();
 };
+
+function _inr(n) { return n ? '₹' + parseInt(n).toLocaleString('en-IN') : '₹0'; }
+let _profileLoaded = false;
+async function loadProfile() {
+  if (_profileLoaded) return;
+  try {
+    const data = await fetch('/profile').then(r => r.json());
+    $('profile-loading').classList.add('hidden');
+    if (!data.profile || !data.onboarding_complete) { $('profile-empty').classList.remove('hidden'); return; }
+    _profileLoaded = true;
+    const p = data.profile;
+    $('profile-content').classList.remove('hidden');
+    // Health score ring
+    const score = data.health_score;
+    const arc = document.getElementById('score-arc');
+    arc.style.transition = 'stroke-dashoffset 1s ease';
+    arc.style.strokeDashoffset = 327 - (327 * score / 100);
+    arc.style.stroke = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+    $('score-value').textContent = score;
+    $('health-flags').innerHTML = data.flags.map(([i, t]) => `<div class="flex items-start gap-2"><span>${i}</span><span class="text-sm text-gray-600">${t}</span></div>`).join('');
+    // Cards
+    const row = (l, v) => `<div class="flex justify-between"><span>${l}</span><span class="font-bold">${v}</span></div>`;
+    $('profile-income').innerHTML = [
+      p.monthly_income > 0 && row('Monthly Income', _inr(p.monthly_income)),
+      p.occupation && row('Occupation', p.occupation),
+      p.employer && row('Employer', p.employer),
+    ].filter(Boolean).join('') || '<span class="text-gray-400">Not provided</span>';
+    $('profile-expenses').innerHTML = [
+      p.monthly_expenses > 0 && row('Monthly Expenses', _inr(p.monthly_expenses)),
+      p.savings_rate != null && row('Savings Rate', (p.savings_rate * 100).toFixed(0) + '%'),
+    ].filter(Boolean).join('') || '<span class="text-gray-400">Not provided</span>';
+    if (p.loans && p.loans.length > 0) {
+      $('profile-liabilities').innerHTML = p.loans.map(l => row(l.type || 'Loan', _inr(l.emi) + '/mo')).join('') +
+        `<div class="flex justify-between border-t pt-2 mt-2"><span class="font-bold">Total EMI</span><span class="font-bold">${_inr(p.total_emi)}</span></div>`;
+    } else { $('profile-liabilities').innerHTML = '<span class="text-emerald-600 font-bold">Debt free! ✅</span>'; }
+    $('profile-insurance').innerHTML = [
+      row('Term Cover', p.term_cover > 0 ? _inr(p.term_cover) : '❌ None'),
+      row('Health Cover', p.health_employer_only ? 'Employer only' : _inr(p.health_cover)),
+    ].join('');
+    $('profile-about').innerHTML = [
+      p.age > 0 && row('Age', p.age),
+      p.dependents > 0 && row('Dependents', p.dependents),
+      p.risk_tolerance && row('Risk Appetite', p.risk_tolerance.charAt(0).toUpperCase() + p.risk_tolerance.slice(1)),
+    ].filter(Boolean).join('') || '<span class="text-gray-400">Complete onboarding to fill this in</span>';
+  } catch(e) { $('profile-loading').classList.add('hidden'); $('profile-empty').classList.remove('hidden'); }
+}
 
 // Init goals on app load
 loadGoalTemplates();

@@ -161,8 +161,7 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
         profile.pillars_completed.append("wrapup")
 
     # Check if all done
-    next_pillar = profile.current_pillar
-    if next_pillar is None and current == "wrapup":
+    if current == "wrapup" and "wrapup" in profile.pillars_completed:
         profile.onboarding_complete = True
 
     save_profile(profile)
@@ -261,7 +260,8 @@ def _apply_extractions(profile: UserProfile, extractions: dict):
         if key == "loans" and isinstance(value, list):
             profile.loans = value
         elif key == "goals_mentioned" and isinstance(value, list):
-            profile.goals_mentioned = value
+            existing = set(profile.goals_mentioned)
+            profile.goals_mentioned.extend(g for g in value if g not in existing)
         elif key in field_map and value is not None:
             # Convert string numbers
             if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime", "location", "marital_status"):

@@ -233,6 +233,11 @@
             <div id="profile-about" class="space-y-2 text-sm text-gray-700"></div>
           </div>
         </div>
+        <!-- Action Items -->
+        <div id="action-items-section" class="hidden bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+          <h3 class="text-xl font-extrabold text-gray-900 mb-4">📋 What to Do Next</h3>
+          <div id="action-items-list" class="space-y-3"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -915,6 +920,16 @@ async function loadProfile() {
       p.dependents > 0 && row('Dependents', p.dependents),
       p.risk_tolerance && row('Risk Appetite', p.risk_tolerance.charAt(0).toUpperCase() + p.risk_tolerance.slice(1)),
     ].filter(Boolean).join('') || '<span class="text-gray-400">Complete onboarding to fill this in</span>';
+    // Action items
+    if (data.action_items && data.action_items.length > 0) {
+      $('action-items-section').classList.remove('hidden');
+      $('action-items-list').innerHTML = data.action_items.map(item =>
+        `<div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors${item.action === 'goals' ? ' cursor-pointer" onclick="switchTab(\'goals\'); showGoalForm()' : ''}">
+          <span class="text-xl">${item.icon}</span>
+          <span class="text-sm text-gray-700">${item.text}</span>
+        </div>`
+      ).join('');
+    }
   } catch(e) { $('profile-loading').classList.add('hidden'); $('profile-empty').classList.remove('hidden'); }
 }
 

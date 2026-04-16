@@ -613,6 +613,24 @@ async def dev_reset():
     return JSONResponse({"status": "ok"})
 
 
+def _build_action_items(profile, user_id):
+    """Generate prioritized action items based on profile gaps."""
+    items = []
+    holdings = load_holdings(user_id)
+    if not holdings:
+        items.append({"icon": "📄", "text": "Upload a CAMS/KFintech CAS statement to track your mutual funds", "priority": 1})
+    if profile.term_cover == 0 and "insurance" in profile.pillars_completed:
+        items.append({"icon": "🛡️", "text": "Get a term life insurance policy — top priority with dependents", "priority": 1})
+    if profile.health_employer_only and "insurance" in profile.pillars_completed:
+        items.append({"icon": "🏥", "text": "Consider a personal health insurance policy beyond employer cover", "priority": 2})
+    for g in profile.goals_mentioned:
+        items.append({"icon": "🎯", "text": f"Set up goal: {g}", "priority": 2, "action": "goals"})
+    if profile.pillars_skipped:
+        for p in profile.pillars_skipped:
+            items.append({"icon": "⏭️", "text": f"Complete skipped section: {p}", "priority": 3})
+    return sorted(items, key=lambda x: x.get("priority", 9))
+
+
 @app.get("/profile")
 async def get_profile(request: Request):
     """Return user's financial profile and health score."""
@@ -682,9 +700,11 @@ async def get_profile(request: Request):
             "pillars_completed": profile.pillars_completed,
             "pillars_skipped": profile.pillars_skipped,
             "onboarding_complete": profile.onboarding_complete,
+            "goals_mentioned": profile.goals_mentioned,
         },
         "health_score": min(score, 100),
         "flags": flags,
+        "action_items": _build_action_items(profile, user_id),
         "onboarding_complete": profile.onboarding_complete,
     })
 

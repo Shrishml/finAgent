@@ -323,6 +323,7 @@ def save_profile(profile: UserProfile):
         "pillars_completed": profile.pillars_completed,
         "pillars_skipped": profile.pillars_skipped,
         "onboarding_complete": profile.onboarding_complete,
+        "goals_mentioned": profile.goals_mentioned,
     }
     conn.execute(
         "INSERT OR REPLACE INTO user_profiles (user_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
@@ -363,6 +364,7 @@ def load_profile(user_id: int) -> UserProfile | None:
         pillars_completed=d.get("pillars_completed", []),
         pillars_skipped=d.get("pillars_skipped", []),
         onboarding_complete=d.get("onboarding_complete", False),
+        goals_mentioned=d.get("goals_mentioned", []),
     )
 
 

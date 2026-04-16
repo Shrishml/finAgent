@@ -31,7 +31,8 @@ class UserProfile:
     health_cover: float = 0
     health_employer_only: bool = True
 
-    # Pillar 6: Goals — stored in goals table, no fields here
+    # Pillar 6: Goals
+    goals_mentioned: list[str] = field(default_factory=list)
 
     # Demographics
     age: int = 0

@@ -250,6 +250,8 @@ def _apply_extractions(profile: UserProfile, extractions: dict):
     for key, value in extractions.items():
         if key == "loans" and isinstance(value, list):
             profile.loans = value
+        elif key == "goals_mentioned" and isinstance(value, list):
+            profile.goals_mentioned = value
         elif key in field_map and value is not None:
             # Convert string numbers
             if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime"):

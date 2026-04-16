@@ -35,6 +35,7 @@ class GeminiCLIProvider(LLMProvider):
         t0 = time.time()
         proc = await asyncio.create_subprocess_exec(
             "gemini", "-p", full_prompt, "--approval-mode=yolo",
+            "--output-format", "json",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -96,6 +97,15 @@ class GeminiCLIProvider(LLMProvider):
 
     def _extract_response(self, raw: str, json_mode: bool) -> str:
         text = _ANSI_RE.sub("", raw)  # strip ANSI color codes first
+
+        # --output-format json wraps response in {"response": "...", "stats": {...}}
+        try:
+            wrapper = json.loads(text)
+            if isinstance(wrapper, dict) and "response" in wrapper:
+                text = wrapper["response"]
+        except (json.JSONDecodeError, Exception):
+            pass  # not wrapped, use raw text
+
         for pat in _STRIP_PATTERNS:
             text = pat.sub("", text)
         text = text.strip()

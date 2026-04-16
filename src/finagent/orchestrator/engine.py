@@ -85,7 +85,14 @@ async def handle_query_stream(query: str, user_id: int | None = None):
             if not any(kw in q_lower for kw in _BYPASS_KEYWORDS):
                 yield "[STATUS] Understanding your response..."
                 user_name = get_user_name(user_id)
-                result = await handle_onboarding(query, user_id, user_name)
+                # Run onboarding with keepalive pings to prevent SSE timeout
+                import asyncio
+                task = asyncio.create_task(handle_onboarding(query, user_id, user_name))
+                while not task.done():
+                    await asyncio.sleep(3)
+                    if not task.done():
+                        yield "[STATUS] Thinking..."
+                result = task.result()
                 yield result["response"]
                 return
 

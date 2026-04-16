@@ -16,7 +16,7 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile, update_profile
 from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
@@ -707,6 +707,23 @@ async def get_profile(request: Request):
         "action_items": _build_action_items(profile, user_id),
         "onboarding_complete": profile.onboarding_complete,
     })
+
+
+@app.put("/profile")
+async def save_profile_endpoint(request: Request, user_id: int = Depends(require_auth)):
+    """Save/update user profile from onboarding cards."""
+    body = await request.json()
+    # Whitelist allowed fields
+    allowed = {
+        "monthly_income", "annual_bonus", "spouse_income", "other_income",
+        "monthly_expenses", "rent", "emis", "loans",
+        "term_cover", "health_cover", "health_employer_only",
+        "age", "dependents", "occupation", "employer", "risk_tolerance",
+        "goals_mentioned", "pillars_completed", "onboarding_complete",
+    }
+    updates = {k: v for k, v in body.items() if k in allowed}
+    profile = update_profile(user_id, updates)
+    return JSONResponse({"status": "ok", "onboarding_complete": profile.onboarding_complete})
 
 
 @app.get("/suggestions")

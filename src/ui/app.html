@@ -674,37 +674,114 @@ async function initApp() {
 }
 
 function startOnboarding(user) {
-  // Show dashboard with empty state + open chat for onboarding
   $('loading-state').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
+  // Hide chat FAB during cards
+  const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = 'none';
+  const firstName = user.name ? user.name.split(' ')[0] : '';
   $('summary-bar').innerHTML = `
     <div class="text-center py-4">
-      <h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome${user.name ? ', ' + user.name.split(' ')[0] : ''}! 👋</h1>
-      <p class="text-gray-300 text-sm">Let's build your financial profile through a quick chat.</p>
+      <h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome${firstName ? ', ' + firstName : ''}! 👋</h1>
+      <p class="text-gray-300 text-sm">Quick profile setup — takes under a minute</p>
     </div>`;
-  // Hide tabs and show a simple message
   document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');
   document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
   $('tab-overview').classList.remove('hidden');
   $('tab-overview').innerHTML = `
-    <div class="text-center py-16 px-6">
-      <div class="text-6xl mb-6">💬</div>
-      <h2 class="text-2xl font-black text-gray-800 mb-3">Your Financial Advisor is Ready</h2>
-      <p class="text-gray-500 max-w-md mx-auto mb-8">I'll ask you a few questions about your income, expenses, investments, and goals. Takes about 5 minutes — and your dashboard will build itself.</p>
-      <button onclick="toggleChat(); sendOnboardingStart()" class="px-8 py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl text-lg">
-        Start Chat →
-      </button>
-      <p class="text-xs text-gray-400 mt-4">Or <a href="#" onclick="document.querySelector('#toggle-upload').click(); return false" class="text-emerald-600 hover:underline">upload a CAS statement</a> if you have one ready.</p>
+    <div class="max-w-lg mx-auto py-8 px-4">
+      <div class="flex items-center gap-2 mb-8">
+        <div class="flex-1 h-1.5 rounded-full bg-gray-200"><div id="ob-progress" class="h-1.5 rounded-full bg-emerald-500 transition-all" style="width:33%"></div></div>
+        <span id="ob-step-label" class="text-xs font-bold text-gray-400">Step 1 of 3</span>
+      </div>
+      <div id="ob-card"></div>
+    </div>`;
+  _obData = {}; _obStep = 1; _renderObStep();
+}
+
+let _obData = {}, _obStep = 1;
+const _obSteps = [
+  { title: '💰 Income & You', fields: [
+    {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'number',placeholder:'285000'},
+    {key:'occupation',label:'Occupation',type:'text',placeholder:'Software Developer'},
+    {key:'employer',label:'Employer',type:'text',placeholder:'Amazon'},
+    {key:'age',label:'Age',type:'number',placeholder:'30'},
+  ]},
+  { title: '🛒 Expenses & Loans', fields: [
+    {key:'monthly_expenses',label:'Monthly Expenses (₹)',type:'number',placeholder:'90000'},
+    {key:'rent',label:'Rent (₹)',type:'number',placeholder:'25000'},
+    {key:'emis',label:'Total EMIs (₹)',type:'number',placeholder:'23000'},
+  ]},
+  { title: '🛡️ Insurance & Assets', fields: [
+    {key:'term_cover',label:'Term Life Cover (₹)',type:'number',placeholder:'0'},
+    {key:'health_cover',label:'Personal Health Cover (₹)',type:'number',placeholder:'0'},
+    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','conservative','moderate','aggressive']},
+  ]},
+];
+
+function _renderObStep() {
+  const step = _obSteps[_obStep - 1];
+  $('ob-progress').style.width = (_obStep / 3 * 100) + '%';
+  $('ob-step-label').textContent = `Step ${_obStep} of 3`;
+  $('ob-card').innerHTML = `
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+      <h3 class="text-lg font-extrabold text-gray-900 mb-6">${step.title}</h3>
+      <div class="space-y-4">
+        ${step.fields.map(f => f.type === 'select'
+          ? `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+               ${f.options.map(o => `<option value="${o}"${_obData[f.key]===o?' selected':''}>${o ? o.charAt(0).toUpperCase()+o.slice(1) : '— Select —'}</option>`).join('')}
+             </select></div>`
+          : `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <input id="ob-${f.key}" type="${f.type}" inputmode="${f.type==='number'?'numeric':'text'}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key]||''}"></div>`
+        ).join('')}
+      </div>
+      <div class="flex gap-3 mt-8">
+        ${_obStep > 1 ? '<button onclick="_obPrev()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200">← Back</button>' : ''}
+        <button onclick="_obNext()" class="flex-1 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-lg">
+          ${_obStep === 3 ? 'Finish & See Profile ✨' : 'Next →'}
+        </button>
+      </div>
+      <p class="text-xs text-gray-400 mt-4 text-center">Leave blank to skip — you can update anytime from your Profile tab</p>
     </div>`;
 }
 
+function _obCollect() {
+  const step = _obSteps[_obStep - 1];
+  step.fields.forEach(f => {
+    const el = document.getElementById('ob-' + f.key);
+    if (!el) return;
+    const v = el.value.trim();
+    if (v) _obData[f.key] = f.type === 'number' ? parseFloat(v.replace(/,/g, '')) : v;
+  });
+}
+
+function _obPrev() { _obCollect(); _obStep--; _renderObStep(); }
+
+async function _obNext() {
+  _obCollect();
+  if (_obStep < 3) { _obStep++; _renderObStep(); return; }
+  // Final step — save to backend
+  const payload = { ..._obData, onboarding_complete: true, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
+  try {
+    await fetch('/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  } catch(e) { console.error('Profile save failed', e); }
+  // Show profile tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.style.display = '');
+  $('summary-bar').innerHTML = `<div class="text-center py-4"><h1 class="text-2xl sm:text-3xl font-black mb-2">Your Profile is Ready! 🎉</h1><p class="text-gray-300 text-sm">Upload a CAS statement to track your mutual funds</p></div>`;
+  _profileLoaded = false; // force reload
+  switchTab('profile');
+  // Show chat FAB and auto-open chat with goals prompt
+  const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
+  setTimeout(() => {
+    toggleChat();
+    addMsg("Your financial profile looks great! 💪\n\nNow let's talk about what matters most to you — **what are your big financial goals?** Buying a home, retirement, kids' education, travel?\n\nAlso, anything else you'd like me to know about your financial situation?", 'agent');
+    fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
+  }, 500);
+}
+
 function sendOnboardingStart() {
-  // Show welcome message immediately, then trigger backend to initialize
-  const box = $('chat-box');
-  const suggestions = $('suggestions-area');
-  if (suggestions) suggestions.remove();
-  addMsg("Hey! I'm FinBestie, your personal financial advisor 👋\n\nLet's build your financial picture together — takes about 5 minutes. I'll ask about your income, expenses, investments, loans, insurance, and goals.\n\nYou can skip any section or come back later.\n\n**Let's start — what do you do for work, and what's your monthly in-hand salary?**", 'agent');
-  // Silently trigger backend to initialize profile
+  // Legacy — kept for backward compat but cards handle onboarding now
+  addMsg("Hey! I'm FinBestie 👋 Let's talk about your goals and priorities.", 'agent');
   fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
 }
 initApp();

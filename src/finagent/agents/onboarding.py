@@ -157,6 +157,15 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
             profile.pillars_completed.append(current)
 
     # Force-complete wrapup if risk_tolerance was extracted (don't rely on LLM flag)
+    if current == "wrapup" and not profile.risk_tolerance:
+        # Code-side detection — don't rely solely on LLM extraction
+        q = user_message.lower()
+        if any(w in q for w in ["aggressive", "high risk", "high growth"]):
+            profile.risk_tolerance = "aggressive"
+        elif any(w in q for w in ["moderate", "balanced", "medium"]):
+            profile.risk_tolerance = "moderate"
+        elif any(w in q for w in ["conservative", "safe", "low risk", "safety"]):
+            profile.risk_tolerance = "conservative"
     if current == "wrapup" and profile.risk_tolerance and "wrapup" not in profile.pillars_completed:
         profile.pillars_completed.append("wrapup")
 

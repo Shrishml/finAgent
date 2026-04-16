@@ -156,6 +156,10 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
         if current not in profile.pillars_completed:
             profile.pillars_completed.append(current)
 
+    # Force-complete wrapup if risk_tolerance was extracted (don't rely on LLM flag)
+    if current == "wrapup" and profile.risk_tolerance and "wrapup" not in profile.pillars_completed:
+        profile.pillars_completed.append("wrapup")
+
     # Check if all done
     next_pillar = profile.current_pillar
     if next_pillar is None and current == "wrapup":

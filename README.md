@@ -165,7 +165,7 @@ finagent/
 
 ## Current Status
 
-✅ **Live** at [captwist.in](https://captwist.in) — 149+ commits across 3 weeks of development.
+✅ **Live** at [captwist.in](https://captwist.in) — 185+ commits.
 
 | Feature | Status |
 |---------|--------|
@@ -175,10 +175,10 @@ finagent/
 | AI insights engine (10 insights) | ✅ Live |
 | AI chat | ✅ Live |
 | Google Sign-In | ✅ Live |
-| Insurance domain | 🔜 Next |
-| Tax optimization | 🔜 Planned |
-| Loan analysis | 🔜 Planned |
-| Account Aggregator integration | 🔜 Planned |
+| Goal-based planning (8 templates) | ✅ Live |
+| Fund allocation per goal | ✅ Live |
+| EPF/NPS/Stocks connectors | 🔜 Next |
+| Cross-asset unified dashboard | 🔜 Planned |
 
 > See [ROADMAP.md](./ROADMAP.md) for the full plan.
 

@@ -4,19 +4,20 @@ import json
 from finagent.llm import get_provider
 
 INTENT_SCHEMA = {
-    "domain": "mf | insurance | loan | health_check | general",
+    "domain": "mf | insurance | loan | health_check | goals | general",
     "mode": "analyze | research | deep_dive | cross_domain",
 }
 
 CLASSIFY_PROMPT = """Classify this user query about personal finance. Respond with JSON only.
 
-{{"domain": "mf" or "insurance" or "loan" or "health_check" or "general", "mode": "analyze" or "research" or "deep_dive" or "cross_domain"}}
+{{"domain": "mf" or "insurance" or "loan" or "health_check" or "goals" or "general", "mode": "analyze" or "research" or "deep_dive" or "cross_domain"}}
 
 Rules:
 - "mf" = mutual funds, SIP, portfolio, expense ratio, NAV, XIRR, ELSS, index funds
 - "insurance" = health/term/life insurance, premium, coverage, claims
 - "loan" = home loan, personal loan, EMI, prepayment, interest rate
 - "health_check" = financial health score, how am I doing, action plan, diagnose my finances
+- "goals" = financial goals, saving for house/car/retirement/education/wedding/travel/emergency fund, target amount, goal planning
 - "general" = greetings, unclear, or multi-domain questions
 - "analyze" = questions about user's own data ("my portfolio", "my funds", "what do I have")
 - "research" = searching for new options ("find me", "best fund", "recommend", "compare")
@@ -60,9 +61,14 @@ def _keyword_classify(query: str) -> dict:
     loan_keywords = ["loan", "emi", "prepay", "interest rate", "mortgage"]
     health_check_keywords = ["health score", "financial health", "how am i doing", "my score",
                              "action plan", "what should i do", "financial checkup", "diagnose"]
+    goal_keywords = ["goal", "saving for", "save for", "target", "plan for", "retirement",
+                     "emergency fund", "house down payment", "child education", "wedding fund",
+                     "vacation fund", "car fund", "financial goal", "dream"]
 
     if any(k in q for k in health_check_keywords):
         domain = "health_check"
+    elif any(k in q for k in goal_keywords):
+        domain = "goals"
     elif any(k in q for k in mf_keywords):
         domain = "mf"
     elif any(k in q for k in insurance_keywords):

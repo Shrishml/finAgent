@@ -16,8 +16,8 @@ _PROVIDERS: dict[str, type[LLMProvider]] = {
     "gemini-api": GeminiAPIProvider,
 }
 
-# Detection order: prefer gemini-api if key set, then gemini-cli, then kiro
-_DETECT_ORDER = [("gemini-api", None), ("gemini", "gemini"), ("kiro", "kiro-cli")]
+# Detection order: prefer kiro-cli first, then gemini-api if key set, then gemini-cli
+_DETECT_ORDER = [("kiro", "kiro-cli"), ("gemini-api", None), ("gemini", "gemini")]
 
 _instances: dict[str, LLMProvider] = {}
 

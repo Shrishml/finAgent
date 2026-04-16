@@ -608,6 +608,16 @@ function addMsg(text, sender) {
   box.appendChild(div); box.scrollTop = box.scrollHeight; return msgEl;
 }
 
+async function loadChatHistory() {
+  try {
+    const data = await fetch('/chat/history').then(r => r.json());
+    if (data.messages && data.messages.length > 0) {
+      const sa = $('suggestions-area'); if (sa) sa.remove();
+      data.messages.forEach(m => addMsg(m.content, m.role === 'user' ? 'user' : 'agent'));
+    }
+  } catch(e) { console.error('History load fail', e); }
+}
+
 $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
@@ -653,6 +663,7 @@ async function initApp() {
     try {
       const user = await checkSession();
       if (user) {
+        loadChatHistory();
         const h = await fetch('/holdings').then(safeJson);
         if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
         else {

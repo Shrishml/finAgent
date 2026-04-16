@@ -16,7 +16,7 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile, update_profile, clear_profile, clear_conversation
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile, update_profile, clear_profile, clear_conversation, load_conversation
 from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
@@ -189,6 +189,16 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
     finally:
         tmp_path.unlink(missing_ok=True)
+
+
+@app.get("/chat/history")
+async def chat_history(request: Request):
+    """Return conversation history for the current user."""
+    user_id = _get_user_id(request)
+    if not user_id:
+        return JSONResponse({"messages": []})
+    messages = load_conversation(user_id, limit=50)
+    return JSONResponse({"messages": messages})
 
 
 @app.post("/chat")

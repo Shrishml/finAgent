@@ -83,6 +83,7 @@ async def handle_query_stream(query: str, user_id: int | None = None):
         if not profile or not profile.onboarding_complete:
             q_lower = query.lower()
             if not any(kw in q_lower for kw in _BYPASS_KEYWORDS):
+                yield "[STATUS] Understanding your response..."
                 user_name = get_user_name(user_id)
                 result = await handle_onboarding(query, user_id, user_name)
                 yield result["response"]

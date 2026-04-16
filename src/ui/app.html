@@ -957,8 +957,9 @@ switchTab = function(tab) {
 function _inr(n) { return n ? '₹' + parseInt(n).toLocaleString('en-IN') : '₹0'; }
 let _profileLoaded = false;
 async function loadProfile() {
-  if (_profileLoaded) return;
   try {
+    $('profile-empty').classList.add('hidden');
+    $('profile-content').classList.add('hidden');
     const data = await fetch('/profile').then(r => r.json());
     $('profile-loading').classList.add('hidden');
     if (!data.profile || !data.onboarding_complete) { $('profile-empty').classList.remove('hidden'); return; }

@@ -33,6 +33,7 @@ PILLAR_QUESTIONS = {
     "liabilities": "Any loans or debt? Home loan, car loan, education loan, credit card balance?",
     "insurance": "Do you have term life insurance? And health insurance beyond what your employer provides?",
     "goals": "What are you saving towards? Any big financial goals in the next 5-10 years?",
+    "wrapup": "Almost done! How old are you, and how would you describe your risk appetite — conservative, moderate, or aggressive?",
 }
 
 WELCOME_MSG = """Hey{name}! I'm FinBestie, your personal financial advisor. I'll help you see your complete financial picture and make your money work smarter.
@@ -65,6 +66,7 @@ PILLAR COMPLETION RULES:
 - liabilities: complete if user confirms loans or says "no loans"/"no debt"
 - insurance: complete if user confirms coverage or says "no insurance"
 - goals: complete if at least one goal is mentioned
+- wrapup: complete if age > 0 (risk_tolerance is optional — infer from behavior if user is unsure)
 
 EXTRACTION FIELDS (only include fields with actual data):
 - monthly_income, annual_bonus, spouse_income, other_income (numbers in INR)
@@ -106,16 +108,16 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     current = profile.current_pillar
 
-    # All pillars done
+    # All 6 pillars done — enter wrapup or finish
     if current is None:
-        if not profile.onboarding_complete:
-            profile.onboarding_complete = True
-            save_profile(profile)
-        return {
-            "response": _completion_message(profile),
-            "dashboard_updates": ["health_score"],
-            "onboarding_complete": True,
-        }
+        if profile.onboarding_complete:
+            return {
+                "response": _completion_message(profile),
+                "dashboard_updates": ["health_score"],
+                "onboarding_complete": True,
+            }
+        # Wrapup: collect age/risk if missing, then complete
+        current = "wrapup"
 
     # First message ever — send welcome
     conversation = load_conversation(user_id, limit=20)
@@ -155,16 +157,24 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     # Check if all done
     next_pillar = profile.current_pillar
-    if next_pillar is None:
+    if next_pillar is None and current == "wrapup":
         profile.onboarding_complete = True
 
     save_profile(profile)
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
+    # If wrapup just completed, append the summary
+    if profile.onboarding_complete:
+        response += "\n\n" + _completion_message(profile)
     # If pillar just completed and there's a next one, append transition
-    if (result.get("pillar_complete") or result.get("pillar_skipped")) and next_pillar:
-        response += f"\n\n{PILLAR_QUESTIONS[next_pillar]}"
+    elif (result.get("pillar_complete") or result.get("pillar_skipped")):
+        next_pillar = profile.current_pillar
+        if next_pillar:
+            response += f"\n\n{PILLAR_QUESTIONS[next_pillar]}"
+        else:
+            # All 6 pillars done, transition to wrapup
+            response += f"\n\n{PILLAR_QUESTIONS['wrapup']}"
 
     save_message(user_id, "assistant", response, {
         "pillar": current,

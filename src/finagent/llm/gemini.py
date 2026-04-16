@@ -99,6 +99,10 @@ class GeminiCLIProvider(LLMProvider):
         text = _ANSI_RE.sub("", raw)  # strip ANSI color codes first
 
         # --output-format json wraps response in {"response": "...", "stats": {...}}
+        # Strip any prefix lines (e.g. "YOLO mode is enabled") before the JSON
+        json_start = text.find("{")
+        if json_start > 0:
+            text = text[json_start:]
         try:
             wrapper = json.loads(text)
             if isinstance(wrapper, dict) and "response" in wrapper:

@@ -16,7 +16,7 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.orchestrator.engine import handle_query
-from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile, update_profile
+from finagent.storage.sqlite import save_holdings, load_holdings, clear_holdings, get_or_create_user, save_goal, load_goals, delete_goal, clear_goals, load_profile, update_profile, clear_profile, clear_conversation
 from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
 
@@ -348,13 +348,16 @@ async def demo():
 
 @app.post("/clear")
 async def clear(request: Request):
-    """Clear all stored holdings."""
+    """Clear all user data — holdings, goals, profile, conversations."""
     user_id = _get_user_id(request)
     clear_holdings(user_id)
+    clear_goals(user_id)
+    clear_profile(user_id)
+    clear_conversation(user_id)
     if user_id != DEMO_USER_ID:
         clear_holdings(DEMO_USER_ID)
-    log.info("All holdings cleared")
-    return JSONResponse({"status": "ok", "message": "All holdings cleared"})
+    log.info(f"All data cleared for user {user_id}")
+    return JSONResponse({"status": "ok", "message": "All data cleared"})
 
 
 

@@ -422,3 +422,11 @@ def clear_conversation(user_id: int):
     conn.execute("DELETE FROM conversations WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+
+def clear_profile(user_id: int):
+    """Clear user profile (onboarding data)."""
+    conn = _get_conn()
+    conn.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()

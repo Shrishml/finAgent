@@ -20,7 +20,8 @@ class UserProfile:
     rent: float = 0
     emis: float = 0
 
-    # Pillar 3: Assets — computed from holdings table, no fields here
+    # Pillar 3: Assets
+    total_investments: float = 0  # rough estimate from onboarding
 
     # Pillar 4: Liabilities
     loans: list[dict] = field(default_factory=list)

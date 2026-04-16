@@ -722,7 +722,7 @@ async def save_profile_endpoint(request: Request, user_id: int = Depends(require
     # Whitelist allowed fields
     allowed = {
         "monthly_income", "annual_bonus", "spouse_income", "other_income",
-        "monthly_expenses", "rent", "emis", "loans",
+        "monthly_expenses", "rent", "emis", "loans", "total_investments",
         "term_cover", "health_cover", "health_employer_only",
         "age", "dependents", "occupation", "employer", "risk_tolerance",
         "location", "marital_status", "kids",

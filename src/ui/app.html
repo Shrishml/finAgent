@@ -649,7 +649,18 @@ async function initApp() {
       if (user) {
         const h = await fetch('/holdings').then(safeJson);
         if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
-        else startOnboarding(user);
+        else {
+          // Check if onboarding is done — show profile tab instead of re-onboarding
+          const pData = await fetch('/profile').then(r => r.json()).catch(() => null);
+          if (pData && pData.onboarding_complete) {
+            $('loading-state').classList.add('hidden');
+            $('dashboard').classList.remove('hidden');
+            $('summary-bar').innerHTML = `<div class="text-center py-4"><h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome back${user.name ? ', ' + user.name.split(' ')[0] : ''}! 👋</h1><p class="text-gray-300 text-sm">Your financial profile is ready. Upload a CAS statement to see your portfolio.</p></div>`;
+            switchTab('profile');
+          } else {
+            startOnboarding(user);
+          }
+        }
       } else {
         location.href = '/';
       }

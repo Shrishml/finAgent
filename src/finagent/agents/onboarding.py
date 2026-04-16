@@ -282,5 +282,5 @@ def _completion_message(profile: UserProfile) -> str:
     skipped = profile.pillars_skipped
     if skipped:
         parts.append(f"\n⏭️ Skipped: {', '.join(skipped)} — you can add these anytime from your dashboard.")
-    parts.append("\nCheck your **Dashboard** to see your financial health score and personalized recommendations!")
+    parts.append("\nYou can now ask me anything — try:\n• \"How's my financial health?\"\n• \"Help me plan for my home purchase\"\n• \"What insurance do I need?\"\n\nOr upload a **CAMS/KFintech PDF** to track your mutual funds!")
     return "\n".join(parts)

@@ -39,6 +39,9 @@ class UserProfile:
     dependents: int = 0
     occupation: str = ""
     employer: str = ""
+    location: str = ""  # city
+    marital_status: str = ""  # single | married
+    kids: int = 0
     risk_tolerance: str = ""  # conservative | moderate | aggressive
 
     # Tax

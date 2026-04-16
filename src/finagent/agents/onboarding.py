@@ -34,7 +34,7 @@ PILLAR_QUESTIONS = {
     "liabilities": "Any loans or debt? Home loan, car loan, education loan, credit card balance?",
     "insurance": "Do you have term life insurance? And health insurance beyond what your employer provides?",
     "goals": "What are you saving towards? Any big financial goals in the next 5-10 years?",
-    "wrapup": "Almost done! How old are you, and how would you describe your risk appetite — conservative, moderate, or aggressive?",
+    "wrapup": "Almost done! How would you describe your risk appetite — conservative, moderate, or aggressive?",
 }
 
 WELCOME_MSG = """Hey{name}! I'm FinBestie, your personal financial advisor. I'll help you see your complete financial picture and make your money work smarter.
@@ -67,14 +67,14 @@ PILLAR COMPLETION RULES:
 - liabilities: complete if user confirms loans or says "no loans"/"no debt"
 - insurance: complete if user confirms coverage or says "no insurance"
 - goals: complete if at least one goal is mentioned
-- wrapup: complete if age > 0 (risk_tolerance is optional — infer from behavior if user is unsure)
+- wrapup: complete if risk_tolerance is provided (or user says "I don't know" — infer from behavior)
 
 EXTRACTION FIELDS (only include fields with actual data):
 - monthly_income, annual_bonus, spouse_income, other_income (numbers in INR)
 - monthly_expenses, rent, emis (numbers in INR)
 - loans: [{{"type": "home|car|education|personal|credit_card", "principal": N, "rate": N, "emi": N, "remaining_months": N}}]
 - term_cover, health_cover (sum assured in INR), health_employer_only (bool)
-- age, dependents, occupation, employer, risk_tolerance
+- age, dependents, occupation, employer, location, marital_status, kids, risk_tolerance
 - tax_regime ("old"|"new"), section_80c_used
 - goals_mentioned: [string descriptions of goals user mentioned]
 
@@ -250,6 +250,7 @@ def _apply_extractions(profile: UserProfile, extractions: dict):
         "monthly_expenses", "rent", "emis",
         "term_cover", "health_cover", "health_employer_only",
         "age", "dependents", "occupation", "employer", "risk_tolerance",
+        "location", "marital_status", "kids",
         "tax_regime", "section_80c_used",
     }
     for key, value in extractions.items():
@@ -259,7 +260,7 @@ def _apply_extractions(profile: UserProfile, extractions: dict):
             profile.goals_mentioned = value
         elif key in field_map and value is not None:
             # Convert string numbers
-            if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime"):
+            if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime", "location", "marital_status"):
                 try:
                     value = float(value.replace(",", ""))
                 except ValueError:

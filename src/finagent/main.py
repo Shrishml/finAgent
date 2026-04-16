@@ -694,6 +694,9 @@ async def get_profile(request: Request):
             "employer": profile.employer,
             "age": profile.age,
             "dependents": profile.dependents,
+            "location": profile.location,
+            "marital_status": profile.marital_status,
+            "kids": profile.kids,
             "risk_tolerance": profile.risk_tolerance,
             "loans": profile.loans,
             "total_emi": profile.total_emi,
@@ -722,6 +725,7 @@ async def save_profile_endpoint(request: Request, user_id: int = Depends(require
         "monthly_expenses", "rent", "emis", "loans",
         "term_cover", "health_cover", "health_employer_only",
         "age", "dependents", "occupation", "employer", "risk_tolerance",
+        "location", "marital_status", "kids",
         "goals_mentioned", "pillars_completed", "onboarding_complete",
     }
     updates = {k: v for k, v in body.items() if k in allowed}

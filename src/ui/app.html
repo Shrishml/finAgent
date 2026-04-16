@@ -700,21 +700,22 @@ function startOnboarding(user) {
 
 let _obData = {}, _obStep = 1;
 const _obSteps = [
-  { title: '💰 Income & You', fields: [
-    {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'number',placeholder:'285000'},
+  { title: '👤 About You', fields: [
+    {key:'age',label:'Age',type:'number',placeholder:'28'},
     {key:'occupation',label:'Occupation',type:'text',placeholder:'Software Developer'},
-    {key:'employer',label:'Employer',type:'text',placeholder:'Amazon'},
-    {key:'age',label:'Age',type:'number',placeholder:'30'},
+    {key:'location',label:'City',type:'text',placeholder:'Bangalore'},
+    {key:'marital_status',label:'Marital Status',type:'select',options:['','single','married']},
+    {key:'kids',label:'Kids',type:'select',options:['0','1','2','3+'],showIf:'married'},
   ]},
-  { title: '🛒 Expenses & Loans', fields: [
-    {key:'monthly_expenses',label:'Monthly Expenses (₹)',type:'number',placeholder:'90000'},
-    {key:'rent',label:'Rent (₹)',type:'number',placeholder:'25000'},
-    {key:'emis',label:'Total EMIs (₹)',type:'number',placeholder:'23000'},
-  ]},
-  { title: '🛡️ Insurance & Assets', fields: [
+  { title: '💰 Income & Expenses', fields: [
+    {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'number',placeholder:'75000'},
+    {key:'monthly_expenses',label:'Monthly Expenses (₹)',type:'number',placeholder:'40000'},
     {key:'term_cover',label:'Term Life Cover (₹)',type:'number',placeholder:'0'},
     {key:'health_cover',label:'Personal Health Cover (₹)',type:'number',placeholder:'0'},
-    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','conservative','moderate','aggressive']},
+  ]},
+  { title: '🏦 Assets & Loans', fields: [
+    {key:'rent',label:'Rent (₹)',type:'number',placeholder:'15000'},
+    {key:'emis',label:'Total EMIs (₹)',type:'number',placeholder:'0'},
   ]},
 ];
 
@@ -722,13 +723,14 @@ function _renderObStep() {
   const step = _obSteps[_obStep - 1];
   $('ob-progress').style.width = (_obStep / 3 * 100) + '%';
   $('ob-step-label').textContent = `Step ${_obStep} of 3`;
+  const visibleFields = step.fields.filter(f => !f.showIf || _obData.marital_status === f.showIf);
   $('ob-card').innerHTML = `
     <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
       <h3 class="text-lg font-extrabold text-gray-900 mb-6">${step.title}</h3>
       <div class="space-y-4">
-        ${step.fields.map(f => f.type === 'select'
+        ${visibleFields.map(f => f.type === 'select'
           ? `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
-             <select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+             <select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none bg-white"${f.key==='marital_status'?' onchange="_obData.marital_status=this.value;_renderObStep()"':''}>
                ${f.options.map(o => `<option value="${o}"${_obData[f.key]===o?' selected':''}>${o ? o.charAt(0).toUpperCase()+o.slice(1) : '— Select —'}</option>`).join('')}
              </select></div>`
           : `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
@@ -738,7 +740,7 @@ function _renderObStep() {
       <div class="flex gap-3 mt-8">
         ${_obStep > 1 ? '<button onclick="_obPrev()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200">← Back</button>' : ''}
         <button onclick="_obNext()" class="flex-1 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-lg">
-          ${_obStep === 3 ? 'Finish & See Profile ✨' : 'Next →'}
+          ${_obStep === 3 ? 'Finish & Start Chat ✨' : 'Next →'}
         </button>
       </div>
       <p class="text-xs text-gray-400 mt-4 text-center">Leave blank to skip — you can update anytime from your Profile tab</p>
@@ -748,11 +750,17 @@ function _renderObStep() {
 function _obCollect() {
   const step = _obSteps[_obStep - 1];
   step.fields.forEach(f => {
+    if (f.showIf && _obData.marital_status !== f.showIf) return;
     const el = document.getElementById('ob-' + f.key);
     if (!el) return;
     const v = el.value.trim();
     if (v) _obData[f.key] = f.type === 'number' ? parseFloat(v.replace(/,/g, '')) : v;
   });
+  // Compute dependents from marital_status + kids
+  const married = _obData.marital_status === 'married';
+  const kids = married ? parseInt(_obData.kids || '0') : 0;
+  _obData.dependents = (married ? 1 : 0) + (kids >= 3 ? 3 : kids);
+  _obData.kids = kids;
 }
 
 function _obPrev() { _obCollect(); _obStep--; _renderObStep(); }
@@ -996,7 +1004,8 @@ async function loadProfile() {
     ].join('');
     $('profile-about').innerHTML = [
       p.age > 0 && row('Age', p.age),
-      p.dependents > 0 && row('Dependents', p.dependents),
+      p.location && row('Location', p.location),
+      p.marital_status && row('Status', p.marital_status === 'married' ? 'Married' + (p.kids > 0 ? ` + ${p.kids} kid${p.kids>1?'s':''}` : '') : 'Single'),
       p.risk_tolerance && row('Risk Appetite', p.risk_tolerance.charAt(0).toUpperCase() + p.risk_tolerance.slice(1)),
     ].filter(Boolean).join('') || '<span class="text-gray-400">Complete onboarding to fill this in</span>';
     // Action items

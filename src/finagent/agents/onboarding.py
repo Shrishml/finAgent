@@ -4,9 +4,10 @@ import logging
 
 from finagent.llm import get_provider
 from finagent.models.profile import UserProfile, PILLAR_ORDER
+from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.storage.sqlite import (
     load_profile, save_profile, update_profile,
-    save_message, load_conversation,
+    save_message, load_conversation, save_goal,
 )
 
 log = logging.getLogger("finagent")
@@ -162,6 +163,10 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     save_profile(profile)
 
+    # Create Goal records when goals pillar completes
+    if current == "goals" and result.get("pillar_complete") and profile.goals_mentioned:
+        _create_goals_from_mentions(user_id, profile.goals_mentioned)
+
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
     # If wrapup just completed, append the summary
@@ -284,3 +289,42 @@ def _completion_message(profile: UserProfile) -> str:
         parts.append(f"\n⏭️ Skipped: {', '.join(skipped)} — you can add these anytime from your dashboard.")
     parts.append("\nYou can now ask me anything — try:\n• \"How's my financial health?\"\n• \"Help me plan for my home purchase\"\n• \"What insurance do I need?\"\n\nOr upload a **CAMS/KFintech PDF** to track your mutual funds!")
     return "\n".join(parts)
+
+
+# Template matching keywords
+_TEMPLATE_KEYWORDS = {
+    "retirement": ["retire", "retirement", "early retirement"],
+    "house": ["home", "house", "flat", "apartment", "property", "bangalore", "mumbai", "delhi"],
+    "education": ["education", "college", "school", "child education", "kid"],
+    "car": ["car", "vehicle", "bike"],
+    "marriage": ["marriage", "wedding"],
+    "emergency": ["emergency", "rainy day", "safety net"],
+    "travel": ["travel", "vacation", "trip", "holiday"],
+}
+
+
+def _match_template(goal_text: str) -> str:
+    """Match a goal description to the best template key."""
+    g = goal_text.lower()
+    for template, keywords in _TEMPLATE_KEYWORDS.items():
+        if any(kw in g for kw in keywords):
+            return template
+    return "custom"
+
+
+def _create_goals_from_mentions(user_id: int, goals_mentioned: list[str]):
+    """Create Goal records from onboarding goal mentions."""
+    from datetime import date, timedelta
+    for text in goals_mentioned:
+        template = _match_template(text)
+        tmpl = GOAL_TEMPLATES[template]
+        target_date = (date.today() + timedelta(days=5*365)).isoformat()
+        goal = Goal(
+            user_id=user_id,
+            name=text,
+            template=template,
+            target_amount=tmpl["suggested_amount"],
+            target_date=target_date,
+        )
+        save_goal(goal)
+        log.info(f"[onboarding] created goal: {text} → template={template}")

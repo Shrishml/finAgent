@@ -761,7 +761,7 @@ async function _obNext() {
   _obCollect();
   if (_obStep < 3) { _obStep++; _renderObStep(); return; }
   // Final step — save to backend
-  const payload = { ..._obData, onboarding_complete: true, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
+  const payload = { ..._obData, onboarding_complete: false, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
   try {
     await fetch('/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   } catch(e) { console.error('Profile save failed', e); }
@@ -774,7 +774,7 @@ async function _obNext() {
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
   setTimeout(() => {
     toggleChat();
-    addMsg("Your financial profile looks great! 💪\n\nNow let's talk about what matters most to you — **what are your big financial goals?** Buying a home, retirement, kids' education, travel?\n\nAlso, anything else you'd like me to know about your financial situation?", 'agent');
+    addMsg("Your financial profile looks great! 💪\n\nWhat are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
     fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
   }, 500);
 }

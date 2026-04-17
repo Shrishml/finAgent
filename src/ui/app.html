@@ -20,7 +20,7 @@
   }
 
   @media (max-width: 640px) {
-    #chat-widget { width: 100% !important; height: 100% !important; max-height: 100% !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; }
+    #chat-widget { width: 100% !important; height: 100dvh !important; max-height: 100dvh !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; }
     .chat-closed { transform: translateY(100%) !important; }
   }
 </style>
@@ -1162,6 +1162,12 @@ $('modal-upload-form').addEventListener('submit', async (e) => {
   $('modal-upload-btn').textContent = 'Upload & Merge';
   $('modal-upload-btn').disabled = false;
 });
+// Mobile keyboard: scroll chat to bottom when viewport shrinks
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const cb = $('chat-box'); if (cb) cb.scrollTop = cb.scrollHeight;
+  });
+}
 </script>
 </body>
 </html>

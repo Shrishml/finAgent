@@ -835,7 +835,7 @@ async function _obNext() {
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
   setTimeout(() => {
     toggleChat();
-    addMsg("Your financial profile looks great! 💪\n\nWhat are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
+    addMsg("Now let's talk about your goals — what are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
     fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
   }, 500);
 }

@@ -168,6 +168,11 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
             profile.risk_tolerance = "conservative"
     if current == "wrapup" and profile.risk_tolerance and "wrapup" not in profile.pillars_completed:
         profile.pillars_completed.append("wrapup")
+    # Also complete if LLM flagged pillar_complete during wrapup
+    if current == "wrapup" and result.get("pillar_complete") and "wrapup" not in profile.pillars_completed:
+        profile.pillars_completed.append("wrapup")
+        if not profile.risk_tolerance:
+            profile.risk_tolerance = "moderate"  # default if LLM completed but code didn't detect
 
     # Check if all done
     if current == "wrapup" and "wrapup" in profile.pillars_completed:
@@ -181,9 +186,9 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
-    # If wrapup just completed, append the summary
+    # If wrapup just completed, use the summary as the response
     if profile.onboarding_complete:
-        response += "\n\n" + _completion_message(profile)
+        response = _completion_message(profile)
     # If pillar just completed and there's a next one, append transition
     elif (result.get("pillar_complete") or result.get("pillar_skipped")):
         next_pillar = profile.current_pillar

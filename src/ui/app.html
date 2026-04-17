@@ -665,7 +665,7 @@ $('chat-form').addEventListener('submit', async (e) => {
         if (!line.trim()) continue;
         if (!line.startsWith('data: ')) continue;
         const d = line.slice(6); if (d === '[DONE]') break;
-        if (d === '[ONBOARDING_COMPLETE]') { setTimeout(() => { switchTab('goals'); }, 3000); continue; }
+        if (d === '[ONBOARDING_COMPLETE]') { if (window.innerWidth > 640) setTimeout(() => switchTab('goals'), 3000); continue; }
         if (d.startsWith('[STATUS] ')) { msgEl.innerHTML = `<span class="thinking-dots font-bold text-emerald-600">⏳ ${esc(d.slice(9))}<span>.</span><span>.</span><span>.</span></span>`; continue; }
         full += d; msgEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }

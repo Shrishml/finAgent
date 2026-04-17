@@ -86,6 +86,7 @@ IMPORTANT:
 - Be encouraging about good financial habits, gently flag concerns
 - Use Indian number formatting (₹1,10,000 not ₹110,000) in your response
 - Keep responses concise — 2-4 sentences max
+- PERSONALISE: Reference the user's previously shared data naturally. E.g. if they earn ₹1,50,000 and spend ₹80,000, mention their ₹70,000 savings when discussing goals. Don't re-ask what's already in the profile. Tailor questions to their specific situation (age, family, income level).
 
 Respond as JSON:
 {{
@@ -221,15 +222,14 @@ async def _extract_and_respond(
         for m in conversation[-10:]
     )
 
-    profile_json = json.dumps({
-        "monthly_income": profile.monthly_income,
-        "monthly_expenses": profile.monthly_expenses,
-        "loans": profile.loans,
-        "term_cover": profile.term_cover,
-        "health_cover": profile.health_cover,
-        "age": profile.age,
-        "occupation": profile.occupation,
-    }, indent=2)
+    # Pass full profile so LLM can personalise based on everything collected so far
+    from dataclasses import asdict
+    full = asdict(profile)
+    # Remove internal state fields (passed separately)
+    for k in ("user_id", "pillars_completed", "pillars_skipped", "onboarding_complete"):
+        full.pop(k, None)
+    # Strip empty/zero/None values to keep prompt concise
+    profile_json = json.dumps({k: v for k, v in full.items() if v}, indent=2)
 
     prompt = EXTRACTION_PROMPT.format(
         profile_json=profile_json,

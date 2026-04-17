@@ -301,7 +301,7 @@ def _completion_message(profile: UserProfile) -> str:
     skipped = profile.pillars_skipped
     if skipped:
         parts.append(f"\n⏭️ Skipped: {', '.join(skipped)} — you can add these anytime from your dashboard.")
-    parts.append("\nHere's what you can do next:\n📊 **Profile tab** — see your financial health score and action items\n🎯 **Goals tab** — your goals are already here! Set target amounts and dates\n💼 **Holdings tab** — upload a CAMS/KFintech PDF to track mutual funds\n💬 **This chat** — ask me anything: \"How's my financial health?\" or \"Help me plan for my home\"\n\n👉 Start with the **Goals tab** to fine-tune your targets!")
+    parts.append("\n✅ **Onboarding complete!** I've set up your financial profile.\n\n👉 Head to the **Goals tab** to see your goals and fine-tune targets.")
     return "\n".join(parts)
 
 

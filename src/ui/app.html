@@ -833,10 +833,15 @@ async function _obNext() {
   _profileLoaded = false; // force reload
   // Show chat FAB and auto-open chat with goals prompt
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
-  setTimeout(() => {
+  setTimeout(async () => {
     toggleChat();
-    addMsg("Now let's talk about your goals — what are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
-    fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
+    try {
+      const r = await fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) });
+      const d = await r.json();
+      addMsg(d.response || "What are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
+    } catch(e) {
+      addMsg("What are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
+    }
   }, 500);
 }
 

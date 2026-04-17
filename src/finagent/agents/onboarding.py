@@ -212,9 +212,10 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
-    # If wrapup just completed, generate personalized snapshot
+    # If wrapup just completed, append personalized snapshot after LLM's response
     if profile.onboarding_complete:
-        response = await _generate_snapshot(profile)
+        snapshot = await _generate_snapshot(profile)
+        response += f"\n\n{snapshot}"
     # If pillar just completed and there's a next one, append transition
     elif (result.get("pillar_complete") or result.get("pillar_skipped")):
         next_pillar = profile.current_pillar

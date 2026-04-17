@@ -301,30 +301,8 @@ def clear_goals(user_id: int):
 def save_profile(profile: UserProfile):
     """Upsert user profile as JSON blob."""
     conn = _get_conn()
-    data = {
-        "monthly_income": profile.monthly_income,
-        "annual_bonus": profile.annual_bonus,
-        "spouse_income": profile.spouse_income,
-        "other_income": profile.other_income,
-        "monthly_expenses": profile.monthly_expenses,
-        "rent": profile.rent,
-        "emis": profile.emis,
-        "loans": profile.loans,
-        "term_cover": profile.term_cover,
-        "health_cover": profile.health_cover,
-        "health_employer_only": profile.health_employer_only,
-        "age": profile.age,
-        "dependents": profile.dependents,
-        "occupation": profile.occupation,
-        "employer": profile.employer,
-        "risk_tolerance": profile.risk_tolerance,
-        "tax_regime": profile.tax_regime,
-        "section_80c_used": profile.section_80c_used,
-        "pillars_completed": profile.pillars_completed,
-        "pillars_skipped": profile.pillars_skipped,
-        "onboarding_complete": profile.onboarding_complete,
-        "goals_mentioned": profile.goals_mentioned,
-    }
+    from dataclasses import asdict
+    data = {k: v for k, v in asdict(profile).items() if k != "user_id"}
     conn.execute(
         "INSERT OR REPLACE INTO user_profiles (user_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
         (profile.user_id, json.dumps(data)),
@@ -341,31 +319,16 @@ def load_profile(user_id: int) -> UserProfile | None:
     if not row:
         return None
     d = json.loads(row[0])
-    return UserProfile(
-        user_id=user_id,
-        monthly_income=d.get("monthly_income", 0),
-        annual_bonus=d.get("annual_bonus", 0),
-        spouse_income=d.get("spouse_income", 0),
-        other_income=d.get("other_income", 0),
-        monthly_expenses=d.get("monthly_expenses", 0),
-        rent=d.get("rent", 0),
-        emis=d.get("emis", 0),
-        loans=d.get("loans", []),
-        term_cover=d.get("term_cover", 0),
-        health_cover=d.get("health_cover", 0),
-        health_employer_only=d.get("health_employer_only", True),
-        age=d.get("age", 0),
-        dependents=d.get("dependents", 0),
-        occupation=d.get("occupation", ""),
-        employer=d.get("employer", ""),
-        risk_tolerance=d.get("risk_tolerance", ""),
-        tax_regime=d.get("tax_regime", ""),
-        section_80c_used=d.get("section_80c_used", 0),
-        pillars_completed=d.get("pillars_completed", []),
-        pillars_skipped=d.get("pillars_skipped", []),
-        onboarding_complete=d.get("onboarding_complete", False),
-        goals_mentioned=d.get("goals_mentioned", []),
-    )
+    from dataclasses import fields as dc_fields, MISSING
+    kwargs = {"user_id": user_id}
+    for f in dc_fields(UserProfile):
+        if f.name == "user_id":
+            continue
+        if f.default is not MISSING:
+            kwargs[f.name] = d.get(f.name, f.default)
+        else:
+            kwargs[f.name] = d.get(f.name, f.default_factory())
+    return UserProfile(**kwargs)
 
 
 def update_profile(user_id: int, updates: dict) -> UserProfile | None:

@@ -1162,22 +1162,20 @@ $('modal-upload-form').addEventListener('submit', async (e) => {
   $('modal-upload-btn').textContent = 'Upload & Merge';
   $('modal-upload-btn').disabled = false;
 });
-// Mobile keyboard: resize chat widget to visual viewport and scroll to bottom
+// Mobile keyboard: pin chat widget to visual viewport
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
+  const sync = () => {
     const w = $('chat-widget');
-    if (w && !w.classList.contains('chat-closed')) {
-      w.style.height = window.visualViewport.height + 'px';
-      w.style.maxHeight = window.visualViewport.height + 'px';
-    }
+    if (!w || w.classList.contains('chat-closed')) return;
+    const vv = window.visualViewport;
+    w.style.height = vv.height + 'px';
+    w.style.maxHeight = vv.height + 'px';
+    w.style.top = vv.offsetTop + 'px';
+    w.style.bottom = 'auto';
     const cb = $('chat-box'); if (cb) cb.scrollTop = cb.scrollHeight;
-  });
-  window.visualViewport.addEventListener('scroll', () => {
-    const w = $('chat-widget');
-    if (w && !w.classList.contains('chat-closed')) {
-      w.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
-    }
-  });
+  };
+  window.visualViewport.addEventListener('resize', sync);
+  window.visualViewport.addEventListener('scroll', sync);
 }
 </script>
 </body>

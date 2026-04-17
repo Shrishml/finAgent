@@ -835,12 +835,13 @@ async function _obNext() {
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
   setTimeout(async () => {
     toggleChat();
+    const msgEl = addMsg('', 'agent'); msgEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Analysing your profile<span>.</span><span>.</span><span>.</span></span>';
     try {
       const r = await fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) });
       const d = await r.json();
-      addMsg(d.response || "What are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
+      msgEl.innerHTML = marked.parse(d.response || "What are you saving towards? Any big financial goals in the next 5-10 years?");
     } catch(e) {
-      addMsg("What are you saving towards? Any big financial goals in the next 5-10 years?", 'agent');
+      msgEl.innerHTML = marked.parse("What are you saving towards? Any big financial goals in the next 5-10 years?");
     }
   }, 500);
 }

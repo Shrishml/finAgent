@@ -20,7 +20,7 @@
   }
 
   @media (max-width: 640px) {
-    #chat-widget { width: 100% !important; height: 100dvh !important; max-height: 100dvh !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; }
+    #chat-widget { width: 100% !important; height: 100dvh !important; max-height: 100dvh !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; top: auto !important; }
     .chat-closed { transform: translateY(100%) !important; }
   }
 </style>
@@ -1164,20 +1164,19 @@ $('modal-upload-form').addEventListener('submit', async (e) => {
   $('modal-upload-btn').textContent = 'Upload & Merge';
   $('modal-upload-btn').disabled = false;
 });
-// Mobile keyboard: pin chat widget to visual viewport
-if (window.visualViewport) {
+// Mobile keyboard: keep input above keyboard
+if (window.visualViewport && window.innerWidth <= 640) {
+  const w = $('chat-widget');
   const sync = () => {
-    const w = $('chat-widget');
     if (!w || w.classList.contains('chat-closed')) return;
-    const vv = window.visualViewport;
-    w.style.height = vv.height + 'px';
-    w.style.maxHeight = vv.height + 'px';
-    w.style.top = vv.offsetTop + 'px';
-    w.style.bottom = 'auto';
+    const h = window.visualViewport.height;
+    w.style.setProperty('height', h + 'px', 'important');
+    w.style.setProperty('max-height', h + 'px', 'important');
+    w.style.setProperty('top', '0', 'important');
+    w.style.setProperty('bottom', 'auto', 'important');
     const cb = $('chat-box'); if (cb) cb.scrollTop = cb.scrollHeight;
   };
   window.visualViewport.addEventListener('resize', sync);
-  window.visualViewport.addEventListener('scroll', sync);
 }
 </script>
 </body>

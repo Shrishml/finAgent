@@ -124,8 +124,7 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
     conversation = load_conversation(user_id, limit=20)
     if not conversation or user_message == "__onboarding_init__":
         if user_message == "__onboarding_init__":
-            # Silent init from frontend — just create profile, frontend shows welcome
-            save_message(user_id, "assistant", PILLAR_QUESTIONS[current], {"pillar": current, "type": "welcome"})
+            # Silent init from frontend — frontend already shows welcome, don't save duplicate
             return {"response": "", "dashboard_updates": [], "onboarding_complete": False}
         welcome = WELCOME_MSG.format(
             name=f" {user_name.split()[0]}" if user_name else "",

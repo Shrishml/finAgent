@@ -640,6 +640,8 @@ async function loadChatHistory() {
     const data = await fetch('/chat/history').then(r => r.json());
     if (data.messages && data.messages.length > 0) {
       const sa = $('suggestions-area'); if (sa) sa.remove();
+      const box = $('chat-box');
+      if (box.querySelectorAll('.chat-msg').length > 0) return; // already populated
       data.messages.forEach(m => addMsg(m.content, m.role === 'user' ? 'user' : 'agent'));
     }
   } catch(e) { console.error('History load fail', e); }

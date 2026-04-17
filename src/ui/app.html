@@ -93,6 +93,26 @@
     </div>
 
     <div id="tab-overview" class="tab-content max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-16 w-full overflow-x-hidden">
+      <div id="overview-empty" class="hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <button onclick="$('upload-modal').classList.remove('hidden')" class="bg-white rounded-2xl border-2 border-dashed border-emerald-300 p-6 sm:p-8 text-center hover:border-emerald-500 hover:shadow-lg transition-all group">
+            <div class="text-4xl mb-3">📄</div>
+            <h4 class="text-sm font-bold text-gray-900 mb-1">Upload CAS Statement</h4>
+            <p class="text-xs text-gray-500">Import your mutual fund portfolio from CAMS or KFintech</p>
+          </button>
+          <button onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 text-center hover:shadow-lg transition-all group">
+            <div class="text-4xl mb-3">🎯</div>
+            <h4 class="text-sm font-bold text-gray-900 mb-1">Set Financial Goals</h4>
+            <p class="text-xs text-gray-500">Plan for your house, retirement, education & more</p>
+          </button>
+          <button onclick="toggleChat()" class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 text-center hover:shadow-lg transition-all group">
+            <div class="text-4xl mb-3">💬</div>
+            <h4 class="text-sm font-bold text-gray-900 mb-1">Chat with Advisor</h4>
+            <p class="text-xs text-gray-500">Get personalized financial guidance anytime</p>
+          </button>
+        </div>
+      </div>
+      <div id="overview-portfolio" class="space-y-8 sm:space-y-16">
       <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 w-full">
           <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Performance</h3><p class="text-xs text-gray-500 mt-1">Total value vs. investment</p></div>
@@ -127,10 +147,17 @@
         <div id="good-insights-row" class="mb-10 hidden"><h4 class="text-[13px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">What's working</h4><div id="good-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
         <div id="action-insights-row" class="hidden"><h4 class="text-[13px] font-bold text-amber-600 uppercase tracking-[0.2em] mb-4">Worth a look</h4><div id="action-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
       </div>
+      </div>
     </div>
 
     <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
-      <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-10 w-full">
+      <div id="funds-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">📄</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No holdings yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Upload your CAS statement to track your mutual fund portfolio</p>
+        <button onclick="$('upload-modal').classList.remove('hidden')" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Upload CAS Statement</button>
+      </div>
+      <div id="funds-table-wrap" class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-10 w-full">
         <div class="px-4 sm:px-8 py-4 sm:py-6 border-b bg-gray-50/30"><h3 class="text-base sm:text-lg font-extrabold text-gray-900">Your Portfolio Holdings</h3></div>
         <div class="overflow-x-auto w-full"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-[9px] sm:text-[10px] uppercase tracking-widest border-b">
           <th class="px-4 sm:px-8 py-4 font-bold cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('scheme')">Scheme <span id="sort-scheme" class="text-gray-300 group-hover:text-gray-500"></span></th>
@@ -673,7 +700,10 @@ async function initApp() {
             $('loading-state').classList.add('hidden');
             $('dashboard').classList.remove('hidden');
             $('summary-bar').innerHTML = `<div class="text-center py-4"><h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome back${user.name ? ', ' + user.name.split(' ')[0] : ''}! 👋</h1><p class="text-gray-300 text-sm">Your financial profile is ready. Upload a CAS statement to see your portfolio.</p></div>`;
-            switchTab('profile');
+            $('overview-empty').classList.remove('hidden');
+            $('overview-portfolio').classList.add('hidden');
+            $('funds-empty').classList.remove('hidden');
+            $('funds-table-wrap').classList.add('hidden');
           } else {
             startOnboarding(user);
           }
@@ -719,17 +749,24 @@ const _obSteps = [
     {key:'kids',label:'Kids',type:'select',options:['0','1','2','3+'],showIf:'married'},
   ]},
   { title: '💰 Income & Expenses', fields: [
-    {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'number',placeholder:'75000'},
-    {key:'monthly_expenses',label:'Monthly Expenses (₹)',type:'number',placeholder:'40000'},
-    {key:'term_cover',label:'Term Life Cover (₹)',type:'number',placeholder:'0'},
-    {key:'health_cover',label:'Personal Health Cover (₹)',type:'number',placeholder:'0'},
+    {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'inr',placeholder:'75,000'},
+    {key:'monthly_expenses',label:'Monthly Expenses (₹)',type:'inr',placeholder:'40,000'},
+    {key:'term_cover',label:'Term Life Cover (₹)',type:'inr',placeholder:'0'},
+    {key:'health_cover',label:'Personal Health Cover (₹)',type:'inr',placeholder:'0'},
   ]},
   { title: '🏦 Assets & Loans', fields: [
-    {key:'total_investments',label:'Total Investments — MFs, FDs, Stocks, etc. (₹)',type:'number',placeholder:'500000'},
-    {key:'emis',label:'Total EMIs (₹/month)',type:'number',placeholder:'0'},
+    {key:'total_investments',label:'Total Investments — MFs, FDs, Stocks, etc. (₹)',type:'inr',placeholder:'5,00,000'},
+    {key:'emis',label:'Total EMIs (₹/month)',type:'inr',placeholder:'0'},
   ]},
 ];
 
+function _fmtInr(v) {
+  const n = parseInt(String(v).replace(/[^0-9]/g, ''));
+  if (!n) return '';
+  const s = String(n), last3 = s.slice(-3), rest = s.slice(0, -3);
+  if (!rest) return last3;
+  return rest.replace(/\B(?=(\d{2})+$)/g, ',') + ',' + last3;
+}
 function _renderObStep() {
   const step = _obSteps[_obStep - 1];
   $('ob-progress').style.width = (_obStep / 3 * 100) + '%';
@@ -744,6 +781,9 @@ function _renderObStep() {
              <select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none bg-white"${f.key==='marital_status'?' onchange="_obData.marital_status=this.value;_renderObStep()"':''}>
                ${f.options.map(o => `<option value="${o}"${_obData[f.key]===o?' selected':''}>${o ? o.charAt(0).toUpperCase()+o.slice(1) : '— Select —'}</option>`).join('')}
              </select></div>`
+          : f.type === 'inr'
+          ? `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <input id="ob-${f.key}" type="text" inputmode="numeric" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key] ? _fmtInr(_obData[f.key]) : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="this.value=_fmtInr(this.value)"></div>`
           : `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
              <input id="ob-${f.key}" type="${f.type}" inputmode="${f.type==='number'?'numeric':'text'}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key]||''}"></div>`
         ).join('')}
@@ -765,7 +805,7 @@ function _obCollect() {
     const el = document.getElementById('ob-' + f.key);
     if (!el) return;
     const v = el.value.trim();
-    if (v) _obData[f.key] = f.type === 'number' ? parseFloat(v.replace(/,/g, '')) : v;
+    if (v) _obData[f.key] = (f.type === 'number' || f.type === 'inr') ? parseFloat(v.replace(/,/g, '')) : v;
   });
   // Compute dependents from marital_status + kids
   const married = _obData.marital_status === 'married';

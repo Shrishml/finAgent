@@ -722,6 +722,7 @@ async def get_profile(request: Request):
         "flags": flags,
         "action_items": _build_action_items(profile, user_id),
         "onboarding_complete": profile.onboarding_complete,
+        "financial_snapshot": profile.financial_snapshot or None,
     })
 
 

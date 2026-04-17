@@ -53,6 +53,7 @@ class UserProfile:
     pillars_completed: list[str] = field(default_factory=list)
     pillars_skipped: list[str] = field(default_factory=list)
     onboarding_complete: bool = False
+    financial_snapshot: str = ""  # LLM-generated personalized snapshot at onboarding completion
 
     @property
     def current_pillar(self) -> str | None:

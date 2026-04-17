@@ -37,6 +37,26 @@ PILLAR_QUESTIONS = {
     "wrapup": "Almost done! How would you describe your risk appetite — conservative, moderate, or aggressive?",
 }
 
+SNAPSHOT_PROMPT = """You are FinBestie. The user just finished onboarding. Generate a personalized financial snapshot based on their profile.
+
+PROFILE:
+{profile_json}
+
+RULES:
+- Start with a 1-line summary of their financial position (e.g. "You're a 28-year-old in Bangalore saving 47% of your income — that's strong.")
+- Then list 2-3 RED FLAGS (🔴) — things that need urgent attention. Be specific with numbers. Examples:
+  - No term insurance with dependents
+  - Debt-to-income ratio above 40%
+  - Zero emergency fund
+  - Savings rate below 20%
+- Then list 1-2 BRIGHT SPOTS (✅) — things they're doing well
+- End with ONE specific next step question: "Want me to help you fix [biggest gap]?"
+- Use Indian number formatting (₹1,10,000)
+- Keep it under 200 words — punchy, not preachy
+- If data is missing for a check, skip it — don't flag missing data as a problem
+- Be direct. "You have no term insurance and a kid — that's a ₹1Cr risk" not "You might want to consider insurance"
+"""
+
 WELCOME_MSG = """Hey{name}! I'm FinBestie, your personal financial advisor. I'll help you see your complete financial picture and make your money work smarter.
 
 Let's build your profile through a quick chat — takes about 5 minutes. You can skip any section or come back to it later.
@@ -114,7 +134,7 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
     if current is None:
         if profile.onboarding_complete:
             return {
-                "response": _completion_message(profile),
+                "response": await _generate_snapshot(profile),
                 "dashboard_updates": ["health_score"],
                 "onboarding_complete": True,
             }
@@ -187,9 +207,9 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
-    # If wrapup just completed, use the summary as the response
+    # If wrapup just completed, generate personalized snapshot
     if profile.onboarding_complete:
-        response = _completion_message(profile)
+        response = await _generate_snapshot(profile)
     # If pillar just completed and there's a next one, append transition
     elif (result.get("pillar_complete") or result.get("pillar_skipped")):
         next_pillar = profile.current_pillar
@@ -286,8 +306,31 @@ def _apply_extractions(profile: UserProfile, extractions: dict):
             setattr(profile, key, value)
 
 
-def _completion_message(profile: UserProfile) -> str:
-    """Generate completion message with summary."""
+async def _generate_snapshot(profile: UserProfile) -> str:
+    """Generate personalized financial snapshot via LLM, cache on profile."""
+    if profile.financial_snapshot:
+        return profile.financial_snapshot
+    from dataclasses import asdict
+    full = asdict(profile)
+    for k in ("user_id", "pillars_completed", "pillars_skipped", "onboarding_complete", "financial_snapshot"):
+        full.pop(k, None)
+    profile_json = json.dumps({k: v for k, v in full.items() if v}, indent=2)
+    llm = get_provider("default")
+    try:
+        snapshot = await llm.complete(SNAPSHOT_PROMPT.format(profile_json=profile_json))
+        snapshot = snapshot.strip()
+        if snapshot.startswith("```"):
+            snapshot = snapshot.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    except Exception as e:
+        log.error(f"Snapshot generation failed: {e}")
+        snapshot = _completion_message_fallback(profile)
+    profile.financial_snapshot = snapshot
+    save_profile(profile)
+    return snapshot
+
+
+def _completion_message_fallback(profile: UserProfile) -> str:
+    """Static fallback if LLM snapshot fails."""
     parts = ["Great — your financial profile is ready! Here's what I've captured:\n"]
     if profile.monthly_income > 0:
         parts.append(f"💰 Income: ₹{_fmt_inr(profile.monthly_income)}/month")

@@ -10,7 +10,7 @@ from .base import LLMProvider
 log = logging.getLogger("finagent")
 
 # Markers kiro-cli may emit that aren't part of the LLM response
-_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 _STRIP_PATTERNS = [
     re.compile(r"^╭.*╮$", re.MULTILINE),
     re.compile(r"^╰.*╯$", re.MULTILINE),

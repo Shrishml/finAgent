@@ -58,7 +58,7 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
         tmp_path.unlink(missing_ok=True)
 
 
-_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 
 @router.get("/chat/history")
 async def chat_history(request: Request):

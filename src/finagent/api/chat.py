@@ -3,7 +3,7 @@ import logging
 import re
 import traceback
 
-_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, StreamingResponse

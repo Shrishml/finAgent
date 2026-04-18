@@ -10,7 +10,7 @@ from .base import LLMProvider
 log = logging.getLogger("finagent")
 
 # Markers gemini-cli may emit that aren't part of the LLM response
-_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 _STRIP_PATTERNS = [
     # Strip any lines that look like status headers or CLI chrome
     re.compile(r"^# .*", re.MULTILINE),

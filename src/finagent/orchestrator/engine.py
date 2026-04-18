@@ -284,6 +284,8 @@ async def handle_query_stream(query: str, user_id: int | None = None):
                         yield "[STATUS] Thinking..."
                 result = task.result()
                 yield result["response"]
+                for g in result.get("created_goals", []):
+                    yield f"[ACTION:goal_card] {json.dumps(g)}"
                 if result.get("onboarding_complete"):
                     yield "[ONBOARDING_COMPLETE]"
                 return

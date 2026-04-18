@@ -207,8 +207,9 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
     save_profile(profile)
 
     # Create Goal records when goals pillar completes
+    created_goals = []
     if current == "goals" and result.get("pillar_complete") and profile.goals_mentioned:
-        _create_goals_from_mentions(user_id, profile.goals_mentioned)
+        created_goals = _create_goals_from_mentions(user_id, profile.goals_mentioned)
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
@@ -235,6 +236,7 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
         "response": response,
         "dashboard_updates": result.get("dashboard_updates", []),
         "onboarding_complete": profile.onboarding_complete,
+        "created_goals": created_goals,
     }
 
 
@@ -380,9 +382,10 @@ def _match_template(goal_text: str) -> str:
     return "custom"
 
 
-def _create_goals_from_mentions(user_id: int, goals_mentioned: list[str]):
-    """Create Goal records from onboarding goal mentions."""
+def _create_goals_from_mentions(user_id: int, goals_mentioned: list[str]) -> list[dict]:
+    """Create Goal records from onboarding goal mentions. Returns created goal data for action events."""
     from datetime import date, timedelta
+    created = []
     for text in goals_mentioned:
         template = _match_template(text)
         tmpl = GOAL_TEMPLATES[template]
@@ -394,5 +397,15 @@ def _create_goals_from_mentions(user_id: int, goals_mentioned: list[str]):
             target_amount=tmpl["suggested_amount"],
             target_date=target_date,
         )
-        save_goal(goal)
+        goal_id = save_goal(goal)
         log.info(f"[onboarding] created goal: {text} → template={template}")
+        created.append({
+            "goal_id": goal_id,
+            "name": text,
+            "template": template,
+            "label": tmpl.get("label", "⚙️ Custom"),
+            "target_amount": tmpl["suggested_amount"],
+            "target_date": target_date,
+            "growth_rate": goal.growth_rate,
+        })
+    return created

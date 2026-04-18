@@ -96,6 +96,16 @@ def _get_conn() -> sqlite3.Connection:
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_user ON conversations(user_id, created_at)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            snapshot TEXT NOT NULL,
+            trigger TEXT NOT NULL DEFAULT 'onboarding',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_snap_user ON user_snapshots(user_id, created_at)")
     conn.commit()
     return conn
 
@@ -341,6 +351,51 @@ def update_profile(user_id: int, updates: dict) -> UserProfile | None:
             setattr(profile, key, value)
     save_profile(profile)
     return profile
+
+
+# --- Snapshots ---
+
+
+def save_snapshot(user_id: int, snapshot: str, trigger: str = "onboarding") -> int:
+    """Save a new snapshot. Returns snapshot id."""
+    conn = _get_conn()
+    cur = conn.execute(
+        "INSERT INTO user_snapshots (user_id, snapshot, trigger) VALUES (?, ?, ?)",
+        (user_id, snapshot, trigger),
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
+def get_latest_snapshot(user_id: int) -> dict | None:
+    """Get most recent snapshot for user."""
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT id, snapshot, trigger, created_at FROM user_snapshots WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "snapshot": row[1], "trigger": row[2], "created_at": row[3]}
+
+
+def should_update_snapshot(user_id: int, profile_updated_at: str | None = None) -> tuple[bool, str]:
+    """Check if snapshot needs regeneration. Returns (should_update, reason)."""
+    from datetime import datetime, timedelta
+    snap = get_latest_snapshot(user_id)
+    profile = load_profile(user_id)
+    if not profile:
+        return False, ""
+    has_data = profile.monthly_income > 0 or profile.monthly_expenses > 0 or profile.age > 0
+    if not snap:
+        return (True, "first_snapshot") if has_data else (False, "")
+    snap_time = datetime.fromisoformat(snap["created_at"].replace("Z", "+00:00")) if isinstance(snap["created_at"], str) else snap["created_at"]
+    if isinstance(snap_time, str):
+        snap_time = datetime.fromisoformat(snap_time)
+    now = datetime.utcnow()
+    if (now - snap_time.replace(tzinfo=None)).days > 30:
+        return True, "stale"
+    return False, ""
 
 
 # --- Conversations ---

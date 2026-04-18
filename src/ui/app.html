@@ -624,7 +624,7 @@ function loadPortfolioChart(period='5Y') {
 }
 
 function renderActionComponent(type, data, container) {
-  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable };
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, snapshot_card: renderSnapshotCard };
   const fn = renderers[type];
   if (fn) fn(data, container);
   else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }
@@ -639,6 +639,12 @@ function renderComparisonTable(d, container) {
     <a href="${esc(p.url)}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline">View on ${esc(p.provider)} →</a>
   </div>`).join('');
   el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">🛡️ ${esc(d.title || 'Insurance Plans')}</h4><div class="flex flex-col gap-2">${rows}</div>`;
+  container.appendChild(el);
+}
+function renderSnapshotCard(d, container) {
+  const el = document.createElement('div');
+  el.className = 'bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl p-5 shadow-sm';
+  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📊 Financial Snapshot</h4><div class="prose prose-sm prose-emerald">${marked.parse(d.snapshot || '')}</div>`;
   container.appendChild(el);
 }
 function renderGoalCard(d, container) {
@@ -792,6 +798,7 @@ const _obSteps = [
     {key:'location',label:'City',type:'text',placeholder:'Bangalore'},
     {key:'marital_status',label:'Marital Status',type:'select',options:['','single','married']},
     {key:'kids',label:'Kids',type:'select',options:['0','1','2','3+'],showIf:'married'},
+    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','conservative','moderate','aggressive']},
   ]},
   { title: '💰 Income & Expenses', fields: [
     {key:'monthly_income',label:'Monthly In-Hand Salary (₹)',type:'inr',placeholder:'75,000'},

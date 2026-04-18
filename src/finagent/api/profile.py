@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from finagent.storage.sqlite import load_profile, update_profile, load_holdings
+from finagent.storage.sqlite import load_profile, update_profile, load_holdings, get_latest_snapshot
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
@@ -110,3 +110,12 @@ async def save_profile_endpoint(request: Request, user_id: int = Depends(require
     updates = {k: v for k, v in body.items() if k in allowed}
     profile = update_profile(user_id, updates)
     return JSONResponse({"status": "ok", "onboarding_complete": profile.onboarding_complete})
+
+
+@router.get("/snapshot")
+async def get_snapshot(request: Request):
+    user_id = get_user_id(request) or DEMO_USER_ID
+    snap = get_latest_snapshot(user_id)
+    if not snap:
+        return JSONResponse({"snapshot": None})
+    return JSONResponse(snap)

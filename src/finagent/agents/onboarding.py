@@ -228,10 +228,12 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
 
     response = result.get("response", "I didn't quite catch that. Could you tell me more?")
 
-    # If wrapup just completed, append personalized snapshot after LLM's response
+    # If wrapup just completed, generate snapshot via action
     if profile.onboarding_complete:
-        snapshot = await _generate_snapshot(profile)
-        response += f"\n\n{snapshot}"
+        from finagent.actions.generate_snapshot import execute as gen_snapshot
+        snap_result = await gen_snapshot({"reason": "onboarding_complete"}, user_id, {"profile": {}})
+        if snap_result.get("snapshot"):
+            response += f"\n\n{snap_result['snapshot']}"
     # If pillar just completed and there's a next one, append transition
     elif (result.get("pillar_complete") or result.get("pillar_skipped")):
         next_pillar = profile.current_pillar

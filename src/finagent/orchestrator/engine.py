@@ -6,7 +6,7 @@ import time
 from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import handle_onboarding
 from finagent.orchestrator.router import classify_intent
-from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, get_user_name, load_conversation, save_message
+from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, get_user_name, load_conversation, save_message, get_latest_snapshot
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
 
@@ -21,6 +21,7 @@ ADVISOR_PROMPT = """You are FinBestie, a friendly Indian financial advisor. Answ
 USER PROFILE:
 {profile_json}
 
+{snapshot_section}
 RECENT CONVERSATION:
 {conversation}
 
@@ -86,8 +87,12 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
         for m in conversation[-10:]
     ) or "No prior conversation"
 
+    snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
+    snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
+
     prompt = ADVISOR_PROMPT.format(
         profile_json=json.dumps(profile_data, indent=2),
+        snapshot_section=snapshot_section,
         conversation=conv_str,
         query=query,
         tools_prompt=get_tools_prompt(),
@@ -136,6 +141,9 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
     if user_id and user_id > 0:
         save_message(user_id, "user", query, {"type": "advisor"})
 
+    snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
+    snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
+
     llm = get_provider("default")
     all_clean_text = ""
     action_context = ""  # accumulates action results for chaining
@@ -148,6 +156,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
 
         prompt = ADVISOR_PROMPT.format(
             profile_json=json.dumps(profile_data, indent=2),
+            snapshot_section=snapshot_section,
             conversation=conv_str,
             query=query + extra,
             tools_prompt=get_tools_prompt(),

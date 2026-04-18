@@ -879,29 +879,19 @@ function _obPrev() { _obCollect(); _obStep--; _renderObStep(); }
 async function _obNext() {
   _obCollect();
   if (_obStep < 3) { _obStep++; _renderObStep(); return; }
-  // Final step — save to backend
-  const payload = { ..._obData, onboarding_complete: false, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
+  // Final step — save to backend with onboarding complete
+  const payload = { ..._obData, onboarding_complete: true, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
   try {
     await fetch('/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   } catch(e) { console.error('Profile save failed', e); }
-  // Restore normal tabs and clear card HTML from overview
+  // Restore normal tabs, switch to Profile tab
   document.querySelectorAll('.tab-btn').forEach(b => b.style.display = '');
   $('tab-overview').innerHTML = '';
-  $('summary-bar').innerHTML = `<div class="text-center py-4"><h1 class="text-2xl sm:text-3xl font-black mb-2">Almost there! 🎉</h1><p class="text-gray-300 text-sm">Tell FinBestie about your goals in the chat →</p></div>`;
-  _profileLoaded = false; // force reload
-  // Show chat FAB and auto-open chat with goals prompt
+  _profileLoaded = false;
+  switchTab('profile');
+  // Show chat FAB and open chat — agent will reason about what to ask next
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
-  setTimeout(async () => {
-    toggleChat();
-    const msgEl = addMsg('', 'agent'); msgEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Analysing your profile<span>.</span><span>.</span><span>.</span></span>';
-    try {
-      const r = await fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) });
-      const d = await r.json();
-      msgEl.innerHTML = marked.parse(d.response || "What are you saving towards? Any big financial goals in the next 5-10 years?");
-    } catch(e) {
-      msgEl.innerHTML = marked.parse("What are you saving towards? Any big financial goals in the next 5-10 years?");
-    }
-  }, 500);
+  setTimeout(() => toggleChat(), 600);
 }
 
 function sendOnboardingStart() {

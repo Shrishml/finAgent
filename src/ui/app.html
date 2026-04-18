@@ -624,10 +624,22 @@ function loadPortfolioChart(period='5Y') {
 }
 
 function renderActionComponent(type, data, container) {
-  const renderers = { goal_card: renderGoalCard };
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable };
   const fn = renderers[type];
   if (fn) fn(data, container);
-  else console.warn('Unknown action component:', type);
+  else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }
+}
+function renderComparisonTable(d, container) {
+  const el = document.createElement('div');
+  el.className = 'bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm';
+  const rows = (d.items || []).map((p, i) => `<div class="bg-white rounded-xl p-3 border border-blue-100 ${i === 0 ? 'ring-2 ring-blue-400' : ''}">
+    <div class="flex items-start justify-between mb-2"><div><h5 class="font-bold text-gray-900 text-sm">${esc(p.name)}</h5><p class="text-[10px] text-gray-400 font-bold">${esc(p.type)} · CSR ${p.csr}%</p></div>${i === 0 ? '<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-lg">BEST VALUE</span>' : ''}</div>
+    <div class="flex gap-4 mb-2"><div><p class="text-[9px] text-gray-400 font-bold uppercase">Monthly</p><p class="text-sm font-bold text-gray-900">${INR(p.premium_monthly)}</p></div><div><p class="text-[9px] text-gray-400 font-bold uppercase">Annual</p><p class="text-sm font-bold text-gray-900">${INR(p.premium_annual)}</p></div><div><p class="text-[9px] text-gray-400 font-bold uppercase">Cover</p><p class="text-sm font-bold text-gray-900">${INR_SHORT(p.cover_amount)}</p></div></div>
+    <div class="flex flex-wrap gap-1 mb-2">${(p.features || []).map(f => `<span class="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${esc(f)}</span>`).join('')}</div>
+    <a href="${esc(p.url)}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline">View on ${esc(p.provider)} →</a>
+  </div>`).join('');
+  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">🛡️ ${esc(d.title || 'Insurance Plans')}</h4><div class="flex flex-col gap-2">${rows}</div>`;
+  container.appendChild(el);
 }
 function renderGoalCard(d, container) {
   const emoji = (d.label || '🎯').split(' ')[0];

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "maxlife-smart-secure-plus",
+    "name": "Max Life Smart Secure Plus",
+    "provider": "Max Life Insurance",
+    "type": "term",
+    "min_age": 18, "max_age": 65,
+    "min_cover": 2500000, "max_cover": 100000000,
+    "claim_settlement_ratio": 99.51,
+    "features": ["Life cover + terminal illness", "Option to increase cover at milestones", "Return of premium variant available"],
+    "premium_table": {
+      "25_50L_M": 5400, "25_1Cr_M": 8900,
+      "30_50L_M": 6200, "30_1Cr_M": 10500, "30_2Cr_M": 18200,
+      "35_50L_M": 8100, "35_1Cr_M": 14200, "35_2Cr_M": 25500,
+      "40_1Cr_M": 21500, "40_2Cr_M": 39800
+    },
+    "url": "https://www.maxlifeinsurance.com/term-insurance-plans/smart-secure-plus"
+  },
+  {
+    "id": "maxlife-flexi-wealth-plus",
+    "name": "Max Life Flexi Wealth Advantage",
+    "provider": "Max Life Insurance",
+    "type": "term_return",
+    "min_age": 18, "max_age": 60,
+    "min_cover": 2500000, "max_cover": 50000000,
+    "claim_settlement_ratio": 99.51,
+    "features": ["Life cover + maturity benefit", "Guaranteed additions", "Flexible premium payment terms"],
+    "premium_table": {
+      "25_50L_M": 18500, "25_1Cr_M": 35000,
+      "30_50L_M": 21000, "30_1Cr_M": 40500, "30_2Cr_M": 78000,
+      "35_50L_M": 26500, "35_1Cr_M": 51000, "35_2Cr_M": 99000,
+      "40_1Cr_M": 68000, "40_2Cr_M": 132000
+    },
+    "url": "https://www.maxlifeinsurance.com/savings-plans/flexi-wealth-advantage-plan"
+  },
+  {
+    "id": "maxlife-online-term-plus",
+    "name": "Max Life Online Term Plan Plus",
+    "provider": "Max Life Insurance",
+    "type": "term",
+    "min_age": 18, "max_age": 60,
+    "min_cover": 2500000, "max_cover": 50000000,
+    "claim_settlement_ratio": 99.51,
+    "features": ["Pure term — lowest premium", "Online-only discount", "Critical illness rider available"],
+    "premium_table": {
+      "25_50L_M": 4200, "25_1Cr_M": 7100,
+      "30_50L_M": 4900, "30_1Cr_M": 8400, "30_2Cr_M": 14800,
+      "35_50L_M": 6500, "35_1Cr_M": 11500, "35_2Cr_M": 20800,
+      "40_1Cr_M": 17800, "40_2Cr_M": 33200
+    },
+    "url": "https://www.maxlifeinsurance.com/term-insurance-plans/online-term-plan-plus"
+  }
+]

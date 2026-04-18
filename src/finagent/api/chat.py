@@ -1,6 +1,9 @@
 """Chat routes — sync, streaming, history."""
 import logging
+import re
 import traceback
+
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -30,7 +33,7 @@ async def chat(request: Request, query: str = Form(...)):
     log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query, user_id=user_id)
-        return JSONResponse({"status": "ok", "response": response})
+        return JSONResponse({"status": "ok", "response": _ANSI_RE.sub('', response)})
     except Exception as e:
         log.error(f"Chat failed: {e}\n{traceback.format_exc()}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -45,7 +48,7 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
     async def event_generator():
         try:
             async for chunk in handle_query_stream(query, user_id=user_id):
-                yield f"data: {chunk}\n\n"
+                yield f"data: {_ANSI_RE.sub('', chunk)}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             log.error(f"Stream failed: {e}")

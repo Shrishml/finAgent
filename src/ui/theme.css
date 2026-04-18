@@ -65,6 +65,8 @@ body {
 .chat-msg.prose h1,.chat-msg.prose h2,.chat-msg.prose h3 { font-size: 0.95rem; font-weight: 700; margin: 0.75em 0 0.4em; }
 .chat-msg.prose p { margin: 0.5em 0; }
 .chat-msg.prose ul,.chat-msg.prose ol { margin: 0.5em 0; padding-left: 1.5em; }
+.chat-msg.prose ul { list-style-type: disc; }
+.chat-msg.prose ol { list-style-type: decimal; }
 .chat-msg.prose li { margin: 0.25em 0; }
 .chat-msg.prose strong { font-weight: 700; color: #111827; }
 .chat-msg.prose code { background: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.85em; font-family: ui-monospace, monospace; }

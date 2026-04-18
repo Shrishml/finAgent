@@ -41,7 +41,6 @@ Extract into these fields (only include fields with actual data):
 - term_cover, health_cover (sum assured in INR), health_employer_only (bool)
 - age, dependents, occupation, employer, location, marital_status, kids, risk_tolerance
 - tax_regime ("old"|"new"), section_80c_used
-- goals_mentioned: [string descriptions of goals]
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -89,12 +88,6 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         if key == "loans" and isinstance(value, list):
             profile.loans = value
             changed = True
-        elif key == "goals_mentioned" and isinstance(value, list):
-            existing = set(profile.goals_mentioned)
-            new = [g for g in value if g not in existing]
-            if new:
-                profile.goals_mentioned.extend(new)
-                changed = True
         elif key in field_map and value is not None:
             if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime", "location", "marital_status"):
                 try:

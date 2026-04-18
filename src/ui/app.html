@@ -243,11 +243,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
           <div id="profile-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 text-sm"></div>
         </div>
-        <!-- Action Items -->
-        <div id="action-items-section" class="hidden bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-          <h3 class="text-lg font-extrabold text-gray-900 mb-4">📋 What to Do Next</h3>
-          <div id="action-items-list" class="space-y-3"></div>
-        </div>
+      </div>
       </div>
     </div>
   </main>
@@ -1080,16 +1076,6 @@ async function loadProfile() {
     ];
     window._profileFields = fields;
     _renderProfileGrid(fields, false);
-    // Action items
-    if (data.action_items && data.action_items.length > 0) {
-      $('action-items-section').classList.remove('hidden');
-      $('action-items-list').innerHTML = data.action_items.map(item =>
-        `<div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors${item.action === 'goals' ? ' cursor-pointer" onclick="switchTab(\'goals\'); showGoalForm()' : ''}">
-          <span class="text-xl">${item.icon}</span>
-          <span class="text-sm text-gray-700">${item.text}</span>
-        </div>`
-      ).join('');
-    }
   } catch(e) { $('profile-loading').classList.add('hidden'); $('profile-empty').classList.remove('hidden'); }
 }
 

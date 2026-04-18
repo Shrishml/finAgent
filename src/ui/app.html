@@ -820,18 +820,18 @@ function _renderObStep() {
       ${step.subtitle ? `<p class="text-xs text-gray-400 mb-6">${step.subtitle}</p>` : '<div class="mb-6"></div>'}
       <div class="space-y-4">
         ${visibleFields.map(f => f.type === 'select'
-          ? `<div class="sm:flex sm:items-start sm:gap-4"><div class="sm:w-2/5 sm:pt-3"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label></div>
+          ? `<div class="sm:flex sm:items-center sm:gap-4"><div class="sm:w-2/5"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>${f.hint ? `<p class="text-[10px] text-gray-400 mt-0.5 hidden sm:block">${f.hint}</p>` : ''}</div>
              <div class="sm:w-3/5 mt-1 sm:mt-0"><select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"${f.key==='marital_status'?' onchange="_obCollect();_renderObStep()"':''}>
                ${f.options.map(o => `<option value="${o}"${_obData[f.key]===o?' selected':''}>${o ? o.charAt(0).toUpperCase()+o.slice(1) : '— Select —'}</option>`).join('')}
-             </select>${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div></div>`
+             </select>${f.hint ? `<p class="text-[10px] text-gray-400 mt-1 sm:hidden">${f.hint}</p>` : ''}</div></div>`
           : f.type === 'inr'
-          ? `<div class="sm:flex sm:items-start sm:gap-4"><div class="sm:w-2/5 sm:pt-3"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label></div>
+          ? `<div class="sm:flex sm:items-center sm:gap-4"><div class="sm:w-2/5"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>${f.hint ? `<p class="text-[10px] text-gray-400 mt-0.5 hidden sm:block">${f.hint}</p>` : ''}</div>
              <div class="sm:w-3/5 mt-1 sm:mt-0"><div class="relative"><span class="absolute left-4 top-3 text-sm text-gray-400">₹</span>
              <input id="ob-${f.key}" type="text" inputmode="numeric" class="w-full border rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key] ? _fmtInr(_obData[f.key]) : ''}" oninput="_fmtInrLive(this)"></div>
-             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div></div>`
-          : `<div class="sm:flex sm:items-start sm:gap-4"><div class="sm:w-2/5 sm:pt-3"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label></div>
+             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1 sm:hidden">${f.hint}</p>` : ''}</div></div>`
+          : `<div class="sm:flex sm:items-center sm:gap-4"><div class="sm:w-2/5"><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>${f.hint ? `<p class="text-[10px] text-gray-400 mt-0.5 hidden sm:block">${f.hint}</p>` : ''}</div>
              <div class="sm:w-3/5 mt-1 sm:mt-0"><input id="ob-${f.key}" type="${f.type}" inputmode="${f.type==='number'?'numeric':'text'}" class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key]||''}">
-             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div></div>`
+             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1 sm:hidden">${f.hint}</p>` : ''}</div></div>`
         ).join('')}
       </div>
       <div class="flex gap-3 mt-8">

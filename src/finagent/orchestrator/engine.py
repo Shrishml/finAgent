@@ -1,42 +1,95 @@
-"""Orchestrator — routes classified intents to domain agents."""
+"""Orchestrator — single agent loop with profile-state-driven reasoning."""
 import json
 import logging
 import re
 import time
+from dataclasses import asdict
+
 from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import extract_profile_data, apply_extractions, create_goals_from_mentions
 from finagent.orchestrator.router import classify_intent
-from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, save_profile, load_conversation, save_message, get_latest_snapshot
+from finagent.storage.sqlite import (
+    load_holdings, save_holdings, load_profile, save_profile,
+    load_conversation, save_message, get_latest_snapshot, save_snapshot,
+)
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
 
 log = logging.getLogger("finagent")
-_agents = {"mf": MFAgent()}
-
-ADVISOR_PROMPT = """You are FinBestie, a friendly Indian financial advisor. Answer the user's question using their profile data and conversation history.
-
-USER PROFILE:
-{profile_json}
-
-{snapshot_section}
-RECENT CONVERSATION:
-{conversation}
-
-USER QUESTION: {query}
-
-Rules:
-- Use Indian number formatting (₹1,10,000)
-- Be specific and actionable based on their actual financial data
-- If the question is about goals, reference their stated goals and suggest concrete steps
-- Keep response concise — 3-6 sentences
-- If you don't have enough data to answer well, say what's missing{tools_prompt}"""
+_mf_agent = MFAgent()
 
 # Regex to find [ACTION: name(param=value, ...)] in LLM output
 _ACTION_RE = re.compile(r'\[ACTION:\s*(\w+)\(([^)]*)\)\]')
 
 
+def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
+    """Build profile JSON and missing-fields hint for the prompt."""
+    if not profile:
+        return "{}", "No profile data yet. Ask the user about their financial situation."
+
+    data = {
+        "monthly_income": profile.monthly_income,
+        "monthly_expenses": profile.monthly_expenses,
+        "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else None,
+        "loans": profile.loans or None,
+        "term_cover": profile.term_cover or None,
+        "health_cover": profile.health_cover or None,
+        "age": profile.age or None,
+        "risk_tolerance": profile.risk_tolerance or None,
+        "goals": profile.goals_mentioned or None,
+        "occupation": profile.occupation or None,
+        "location": profile.location or None,
+        "dependents": profile.dependents or None,
+    }
+    profile_json = json.dumps({k: v for k, v in data.items() if v}, indent=2)
+
+    # Identify gaps
+    missing = []
+    if not profile.monthly_income:
+        missing.append("income")
+    if not profile.monthly_expenses:
+        missing.append("expenses")
+    if not profile.age:
+        missing.append("age")
+    if not profile.risk_tolerance:
+        missing.append("risk appetite")
+    if not profile.term_cover and not profile.health_cover:
+        missing.append("insurance details")
+    if not profile.goals_mentioned:
+        missing.append("financial goals")
+
+    if missing:
+        hint = f"Missing data: {', '.join(missing)}. Naturally weave questions about these into conversation when relevant — don't interrogate."
+    else:
+        hint = "Profile is complete. Focus on actionable advice."
+
+    return profile_json, hint
+
+
+AGENT_PROMPT = """You are FinBestie, a friendly Indian financial advisor. You have a continuous relationship with this user — remember their context and build on it.
+
+USER PROFILE:
+{profile_json}
+
+{snapshot_section}
+PROFILE STATUS: {profile_hint}
+
+RECENT CONVERSATION:
+{conversation}
+
+USER: {query}
+
+RULES:
+- Use Indian number formatting (₹1,10,000)
+- Be specific and actionable based on their actual data
+- Reference their goals, income, and situation naturally
+- Keep responses concise — 3-6 sentences
+- If data is missing for a good answer, mention what would help (but don't block on it)
+- When the user shares financial data (income, expenses, goals, etc.), acknowledge it naturally — extraction happens automatically
+- NEVER say "your onboarding is complete" or reference any onboarding process{tools_prompt}"""
+
+
 def _parse_action_params(params_str: str) -> dict:
-    """Parse 'key=value, key2=value2' into dict."""
     params = {}
     if not params_str.strip():
         return params
@@ -45,7 +98,6 @@ def _parse_action_params(params_str: str) -> dict:
         if "=" in part:
             k, v = part.split("=", 1)
             v = v.strip().strip('"').strip("'")
-            # Try numeric conversion
             try:
                 v = int(v)
             except ValueError:
@@ -57,32 +109,141 @@ def _parse_action_params(params_str: str) -> dict:
     return params
 
 
-async def _advisor_respond(query: str, user_id: int | None) -> str:
-    """Profile-aware advisor for all queries."""
-    from finagent.llm import get_provider
+async def _maybe_extract_and_update(query: str, user_id: int | None, profile) -> bool:
+    """Try to extract profile data from the user's message. Returns True if profile changed."""
+    if not user_id or user_id <= 0 or not profile:
+        return False
+    # Skip extraction for very short or clearly non-data messages
+    if len(query) < 10 or query.startswith("/") or query == "__onboarding_init__":
+        return False
 
-    # Translate card completion signal into a meaningful query
+    extractions = await extract_profile_data(query, profile)
+    if not extractions:
+        return False
+
+    changed = apply_extractions(profile, extractions)
+    if changed:
+        save_profile(profile)
+        log.info(f"[orchestrator] extracted and saved: {list(extractions.keys())}")
+
+        # Auto-create goals if new ones mentioned
+        if "goals_mentioned" in extractions:
+            create_goals_from_mentions(user_id, extractions["goals_mentioned"])
+
+    return changed
+
+
+async def _maybe_update_snapshot(user_id: int, profile, profile_changed: bool):
+    """Trigger snapshot update if profile changed significantly."""
+    if not user_id or user_id <= 0 or not profile_changed:
+        return
+    # Only regenerate if we have minimum data
+    has_data = (profile.monthly_income > 0 or profile.monthly_expenses > 0) and profile.age > 0
+    if not has_data:
+        return
+    snap = get_latest_snapshot(user_id)
+    if snap:
+        # Don't regenerate too frequently — at most once per conversation
+        return
+    # First snapshot — generate it
+    from finagent.actions.generate_snapshot import execute as gen_snapshot
+    await gen_snapshot({"reason": "first_data"}, user_id, {})
+
+
+def _is_mf_query(query: str, intent: dict) -> bool:
+    """Check if this query needs the specialized MF agent."""
+    return intent.get("domain") == "mf" and intent.get("mode") in ("analyze", "deep_dive")
+
+
+async def handle_query(query: str, user_id: int | None = None) -> str:
+    """Single agent loop: extract → route → respond."""
+    t0 = time.time()
+    log.info(f"[orchestrator] start query={query!r} user_id={user_id}")
+
     if query == "__onboarding_init__":
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
+    if not profile and user_id and user_id > 0:
+        from finagent.models.profile import UserProfile
+        profile = UserProfile(user_id=user_id)
+        save_profile(profile)
+
+    # Continuous extraction — every message might contain financial data
+    profile_changed = await _maybe_extract_and_update(query, user_id, profile)
+    await _maybe_update_snapshot(user_id, profile, profile_changed)
+
+    # Route MF-specific queries to specialized agent
+    intent = await classify_intent(query)
+    log.info(f"[orchestrator] intent={intent} ({time.time()-t0:.1f}s)")
+
+    if _is_mf_query(query, intent):
+        holdings = load_holdings(user_id)
+        if holdings:
+            if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
+                try:
+                    holdings = enrich_holdings(holdings)
+                    save_holdings(holdings, user_id)
+                except Exception:
+                    pass
+            if intent["mode"] == "deep_dive":
+                match = _match_fund(query, holdings)
+                if match:
+                    return await _mf_agent.deep_dive(query, match.amfi_code, match.scheme_name)
+            return await _mf_agent.analyze(query, holdings)
+
+    # Everything else → profile-aware advisor
+    return await _advisor_respond(query, user_id, profile)
+
+
+async def handle_query_stream(query: str, user_id: int | None = None):
+    """Streaming version of the single agent loop."""
+    if query == "__onboarding_init__":
+        query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
+
+    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    if not profile and user_id and user_id > 0:
+        from finagent.models.profile import UserProfile
+        profile = UserProfile(user_id=user_id)
+        save_profile(profile)
+
+    # Continuous extraction
+    profile_changed = await _maybe_extract_and_update(query, user_id, profile)
+    await _maybe_update_snapshot(user_id, profile, profile_changed)
+
+    # Route MF queries to specialized agent
+    yield "[STATUS] Analyzing your question..."
+    intent = await classify_intent(query)
+
+    if _is_mf_query(query, intent):
+        holdings = load_holdings(user_id)
+        if holdings:
+            if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
+                try:
+                    yield "[STATUS] Enriching fund data..."
+                    holdings = enrich_holdings(holdings)
+                    save_holdings(holdings, user_id)
+                except Exception:
+                    pass
+            yield f"[STATUS] Reviewing {len(holdings)} funds..."
+            async for chunk in _mf_agent.analyze_stream(query, holdings):
+                yield chunk
+            return
+
+    # Everything else → streaming advisor with action chaining
+    async for chunk in _advisor_respond_stream(query, user_id, profile):
+        yield chunk
+
+
+async def _advisor_respond(query: str, user_id: int | None, profile=None) -> str:
+    """Profile-state-driven advisor."""
+    from finagent.llm import get_provider
+
+    if not profile:
+        profile = load_profile(user_id) if user_id and user_id > 0 else None
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
 
-    profile_data = {}
-    if profile:
-        profile_data = {
-            "monthly_income": profile.monthly_income,
-            "monthly_expenses": profile.monthly_expenses,
-            "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else "unknown",
-            "loans": profile.loans,
-            "term_cover": profile.term_cover,
-            "health_cover": profile.health_cover,
-            "age": profile.age,
-            "risk_tolerance": profile.risk_tolerance,
-            "goals": profile.goals_mentioned,
-            "occupation": profile.occupation,
-        }
-
+    profile_json, profile_hint = _build_profile_context(profile, user_id)
     conv_str = "\n".join(
         f"{'User' if m['role'] == 'user' else 'FinBestie'}: {m['content']}"
         for m in conversation[-10:]
@@ -91,15 +252,15 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
     snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
     snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
 
-    prompt = ADVISOR_PROMPT.format(
-        profile_json=json.dumps(profile_data, indent=2),
+    prompt = AGENT_PROMPT.format(
+        profile_json=profile_json,
         snapshot_section=snapshot_section,
+        profile_hint=profile_hint,
         conversation=conv_str,
         query=query,
         tools_prompt=get_tools_prompt(),
     )
 
-    # Save the user message to conversation history
     if user_id and user_id > 0:
         save_message(user_id, "user", query, {"type": "advisor"})
 
@@ -112,31 +273,15 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
     return response
 
 
-async def _advisor_respond_stream(query: str, user_id: int | None):
+async def _advisor_respond_stream(query: str, user_id: int | None, profile=None):
     """Streaming advisor with action chaining (max 3 rounds)."""
     from finagent.llm import get_provider
 
-    if query == "__onboarding_init__":
-        query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
-
-    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    if not profile:
+        profile = load_profile(user_id) if user_id and user_id > 0 else None
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
 
-    profile_data = {}
-    if profile:
-        profile_data = {
-            "monthly_income": profile.monthly_income,
-            "monthly_expenses": profile.monthly_expenses,
-            "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else "unknown",
-            "loans": profile.loans,
-            "term_cover": profile.term_cover,
-            "health_cover": profile.health_cover,
-            "age": profile.age,
-            "risk_tolerance": profile.risk_tolerance,
-            "goals": profile.goals_mentioned,
-            "occupation": profile.occupation,
-        }
-
+    profile_json, profile_hint = _build_profile_context(profile, user_id)
     conv_str = "\n".join(
         f"{'User' if m['role'] == 'user' else 'FinBestie'}: {m['content']}"
         for m in conversation[-10:]
@@ -150,7 +295,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
 
     llm = get_provider("default")
     all_clean_text = ""
-    action_context = ""  # accumulates action results for chaining
+    action_context = ""
     MAX_ROUNDS = 3
 
     for round_num in range(MAX_ROUNDS):
@@ -158,9 +303,10 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
         if action_context:
             extra = f"\n\nPREVIOUS ACTION RESULTS (use these to inform your response, do NOT repeat the action):\n{action_context}\n\nContinue your response to the user. You may call additional tools if needed, or just summarize."
 
-        prompt = ADVISOR_PROMPT.format(
-            profile_json=json.dumps(profile_data, indent=2),
+        prompt = AGENT_PROMPT.format(
+            profile_json=profile_json,
             snapshot_section=snapshot_section,
+            profile_hint=profile_hint,
             conversation=conv_str,
             query=query + extra,
             tools_prompt=get_tools_prompt(),
@@ -175,17 +321,14 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
         actions_found = list(_ACTION_RE.finditer(full_response))
 
         if not actions_found:
-            # No actions — done
             all_clean_text += full_response
             break
 
-        # Yield text before first action
         text_before = full_response[:actions_found[0].start()].strip()
         if text_before and "[ACTION:" in full_response:
             yield "\n"
         all_clean_text += _ACTION_RE.sub("", full_response).strip() + " "
 
-        # Execute actions, collect results for chaining
         round_results = []
         for match in actions_found:
             action_name = match.group(1)
@@ -199,7 +342,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
             yield f"[ACTION_STATUS] {schema.get('status_message', 'Working on it')}..."
 
             try:
-                result = await entry["execute"](params, user_id, {"profile": profile_data})
+                result = await entry["execute"](params, user_id, {"profile": profile_json})
                 if "error" in result:
                     yield f"\n⚠️ {result['error']}"
                     round_results.append(f"{action_name}: ERROR — {result['error']}")
@@ -220,88 +363,11 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
 
         action_context += "\n".join(round_results) + "\n"
 
-        # If this is the last allowed round, don't loop
         if round_num >= MAX_ROUNDS - 1:
             break
 
     if user_id and user_id > 0:
         save_message(user_id, "assistant", all_clean_text.strip(), {"type": "advisor"})
-
-
-async def handle_query(query: str, user_id: int | None = None) -> str:
-    """Main entry point: classify intent → route to agent → return response."""
-    t0 = time.time()
-    log.info(f"[orchestrator] start query={query!r} user_id={user_id}")
-
-    intent = await classify_intent(query)
-    log.info(f"[orchestrator] classify_intent took {time.time()-t0:.1f}s → {intent}")
-    domain = intent.get("domain", "general")
-    mode = intent.get("mode", "analyze")
-
-    agent = _agents.get(domain)
-    if not agent:
-        return await _advisor_respond(query, user_id)
-
-    holdings = load_holdings(user_id)
-    log.info(f"[orchestrator] loaded {len(holdings)} holdings")
-
-    # Lazy enrichment: if any holdings lack expense ratios, enrich and save
-    if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
-        try:
-            t1 = time.time()
-            holdings = enrich_holdings(holdings)
-            save_holdings(holdings, user_id)
-            log.info(f"[orchestrator] enrichment took {time.time()-t1:.1f}s")
-        except Exception:
-            pass  # Use unenriched data
-
-    t2 = time.time()
-    log.info(f"[orchestrator] calling agent.{mode}()")
-
-    if mode == "analyze":
-        result = await agent.analyze(query, holdings)
-    elif mode == "research":
-        result = await agent.research(query)
-    elif mode == "deep_dive":
-        match = _match_fund(query, holdings)
-        if match:
-            result = await agent.deep_dive(query, match.amfi_code, match.scheme_name)
-        else:
-            result = await agent.analyze(query, holdings)
-    else:
-        result = await agent.analyze(query, holdings)
-
-    log.info(f"[orchestrator] agent.{mode}() took {time.time()-t2:.1f}s, total={time.time()-t0:.1f}s")
-    return result
-
-
-async def handle_query_stream(query: str, user_id: int | None = None):
-    """Streaming version — yields chunks as LLM generates them."""
-    yield "[STATUS] Analyzing your question..."
-    intent = await classify_intent(query)
-    domain = intent.get("domain", "general")
-
-    agent = _agents.get(domain)
-    if not agent:
-        # Use action-aware streaming advisor
-        async for chunk in _advisor_respond_stream(query, user_id):
-            yield chunk
-        return
-
-    yield "[STATUS] Loading your portfolio..."
-    holdings = load_holdings(user_id)
-    if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
-        try:
-            yield "[STATUS] Enriching fund data..."
-            holdings = enrich_holdings(holdings)
-            save_holdings(holdings, user_id)
-        except Exception:
-            pass
-
-    yield f"[STATUS] Reviewing {len(holdings)} funds..."
-
-    async for chunk in agent.analyze_stream(query, holdings):
-        yield chunk
 
 
 def _match_fund(query: str, holdings: list) -> object | None:
@@ -311,7 +377,6 @@ def _match_fund(query: str, holdings: list) -> object | None:
     for h in holdings:
         if not h.amfi_code:
             continue
-        # Score by how many words from scheme name appear in query
         words = h.scheme_name.lower().split()
         score = sum(1 for w in words if len(w) > 2 and w in q)
         if score > best_score:

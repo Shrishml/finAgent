@@ -1,11 +1,14 @@
 """Orchestrator — routes classified intents to domain agents."""
+import json
 import logging
+import re
 import time
 from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import handle_onboarding
 from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, get_user_name, load_conversation, save_message
 from finagent.connectors.amfi import enrich_holdings
+from finagent.actions import ACTION_REGISTRY, get_tools_prompt
 
 log = logging.getLogger("finagent")
 _agents = {"mf": MFAgent()}
@@ -28,13 +31,37 @@ Rules:
 - Be specific and actionable based on their actual financial data
 - If the question is about goals, reference their stated goals and suggest concrete steps
 - Keep response concise — 3-6 sentences
-- If you don't have enough data to answer well, say what's missing"""
+- If you don't have enough data to answer well, say what's missing{tools_prompt}"""
+
+# Regex to find [ACTION: name(param=value, ...)] in LLM output
+_ACTION_RE = re.compile(r'\[ACTION:\s*(\w+)\(([^)]*)\)\]')
+
+
+def _parse_action_params(params_str: str) -> dict:
+    """Parse 'key=value, key2=value2' into dict."""
+    params = {}
+    if not params_str.strip():
+        return params
+    for part in params_str.split(","):
+        part = part.strip()
+        if "=" in part:
+            k, v = part.split("=", 1)
+            v = v.strip().strip('"').strip("'")
+            # Try numeric conversion
+            try:
+                v = int(v)
+            except ValueError:
+                try:
+                    v = float(v)
+                except ValueError:
+                    pass
+            params[k.strip()] = v
+    return params
 
 
 async def _advisor_respond(query: str, user_id: int | None) -> str:
     """Profile-aware advisor for goals, health_check, insurance, loan, and general queries."""
     from finagent.llm import get_provider
-    import json
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
@@ -63,6 +90,7 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
         profile_json=json.dumps(profile_data, indent=2),
         conversation=conv_str,
         query=query,
+        tools_prompt=get_tools_prompt(),
     )
 
     # Save the user message to conversation history
@@ -76,6 +104,106 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
         save_message(user_id, "assistant", response, {"type": "advisor"})
 
     return response
+
+
+async def _advisor_respond_stream(query: str, user_id: int | None):
+    """Streaming advisor that detects and executes action calls."""
+    from finagent.llm import get_provider
+
+    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
+
+    profile_data = {}
+    if profile:
+        profile_data = {
+            "monthly_income": profile.monthly_income,
+            "monthly_expenses": profile.monthly_expenses,
+            "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else "unknown",
+            "loans": profile.loans,
+            "term_cover": profile.term_cover,
+            "health_cover": profile.health_cover,
+            "age": profile.age,
+            "risk_tolerance": profile.risk_tolerance,
+            "goals": profile.goals_mentioned,
+            "occupation": profile.occupation,
+        }
+
+    conv_str = "\n".join(
+        f"{'User' if m['role'] == 'user' else 'FinBestie'}: {m['content']}"
+        for m in conversation[-10:]
+    ) or "No prior conversation"
+
+    prompt = ADVISOR_PROMPT.format(
+        profile_json=json.dumps(profile_data, indent=2),
+        conversation=conv_str,
+        query=query,
+        tools_prompt=get_tools_prompt(),
+    )
+
+    if user_id and user_id > 0:
+        save_message(user_id, "user", query, {"type": "advisor"})
+
+    llm = get_provider("default")
+
+    # Collect full response to detect actions, but stream text portions
+    full_response = ""
+    async for chunk in llm.complete_stream(prompt):
+        full_response += chunk
+        # Don't stream action markers to frontend — we'll handle them after
+        if "[ACTION:" not in full_response:
+            yield chunk
+        else:
+            # Buffer once we see a potential action marker
+            pass
+
+    # Check for action calls in the complete response
+    actions_found = list(_ACTION_RE.finditer(full_response))
+
+    if actions_found:
+        # Yield the text before the first action marker
+        text_before = full_response[:actions_found[0].start()].strip()
+        if text_before and "[ACTION:" in full_response:
+            # We buffered, so yield the clean text now
+            yield "\n"  # separator
+
+        # Execute each action
+        for match in actions_found:
+            action_name = match.group(1)
+            params_str = match.group(2)
+            params = _parse_action_params(params_str)
+
+            entry = ACTION_REGISTRY.get(action_name)
+            if not entry:
+                log.warning(f"[orchestrator] Unknown action: {action_name}")
+                continue
+
+            schema = entry["schema"]
+            yield f"[ACTION_STATUS] {schema.get('status_message', 'Working on it')}..."
+
+            try:
+                result = await entry["execute"](params, user_id, {"profile": profile_data})
+                if "error" in result:
+                    yield f"\n⚠️ {result['error']}"
+                else:
+                    if result.get("ui_component") and result.get("ui_data"):
+                        yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
+                    yield f"[ACTION_STATUS] ✅ Done"
+            except Exception as e:
+                log.error(f"[orchestrator] Action {action_name} failed: {e}")
+                yield f"\n⚠️ Something went wrong: {e}"
+
+        # Yield any text after the last action marker
+        text_after = full_response[actions_found[-1].end():].strip()
+        if text_after:
+            yield f"\n{text_after}"
+    else:
+        # No actions — text was already streamed
+        pass
+
+    if user_id and user_id > 0:
+        # Save clean response (without action markers)
+        clean = _ACTION_RE.sub("", full_response).strip()
+        save_message(user_id, "assistant", clean, {"type": "advisor"})
 
 
 async def handle_query(query: str, user_id: int | None = None) -> str:
@@ -166,7 +294,9 @@ async def handle_query_stream(query: str, user_id: int | None = None):
 
     agent = _agents.get(domain)
     if not agent:
-        yield await _advisor_respond(query, user_id)
+        # Use action-aware streaming advisor
+        async for chunk in _advisor_respond_stream(query, user_id):
+            yield chunk
         return
 
     yield "[STATUS] Loading your portfolio..."

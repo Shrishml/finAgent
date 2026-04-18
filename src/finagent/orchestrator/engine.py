@@ -4,17 +4,14 @@ import logging
 import re
 import time
 from finagent.agents.mf import MFAgent
-from finagent.agents.onboarding import handle_onboarding
+from finagent.agents.onboarding import extract_profile_data, apply_extractions, create_goals_from_mentions
 from finagent.orchestrator.router import classify_intent
-from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, get_user_name, load_conversation, save_message, get_latest_snapshot
+from finagent.storage.sqlite import load_holdings, save_holdings, load_profile, save_profile, load_conversation, save_message, get_latest_snapshot
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
 
 log = logging.getLogger("finagent")
 _agents = {"mf": MFAgent()}
-
-# Keywords that should bypass onboarding and go straight to domain agents
-_BYPASS_KEYWORDS = ["my portfolio", "my funds", "show my", "upload", "holdings", "xirr", "expense ratio"]
 
 ADVISOR_PROMPT = """You are FinBestie, a friendly Indian financial advisor. Answer the user's question using their profile data and conversation history.
 
@@ -61,8 +58,12 @@ def _parse_action_params(params_str: str) -> dict:
 
 
 async def _advisor_respond(query: str, user_id: int | None) -> str:
-    """Profile-aware advisor for goals, health_check, insurance, loan, and general queries."""
+    """Profile-aware advisor for all queries."""
     from finagent.llm import get_provider
+
+    # Translate card completion signal into a meaningful query
+    if query == "__onboarding_init__":
+        query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
@@ -114,6 +115,9 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
 async def _advisor_respond_stream(query: str, user_id: int | None):
     """Streaming advisor with action chaining (max 3 rounds)."""
     from finagent.llm import get_provider
+
+    if query == "__onboarding_init__":
+        query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
@@ -229,18 +233,6 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     t0 = time.time()
     log.info(f"[orchestrator] start query={query!r} user_id={user_id}")
 
-    # Check if user needs onboarding (skip for demo user -1)
-    if user_id and user_id > 0:
-        profile = load_profile(user_id)
-        if not profile or not profile.onboarding_complete:
-            # Allow bypass if user explicitly asks about their portfolio
-            q_lower = query.lower()
-            if not any(kw in q_lower for kw in _BYPASS_KEYWORDS):
-                user_name = get_user_name(user_id)
-                result = await handle_onboarding(query, user_id, user_name)
-                log.info(f"[orchestrator] onboarding took {time.time()-t0:.1f}s, complete={result['onboarding_complete']}")
-                return result["response"]
-
     intent = await classify_intent(query)
     log.info(f"[orchestrator] classify_intent took {time.time()-t0:.1f}s → {intent}")
     domain = intent.get("domain", "general")
@@ -285,29 +277,6 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
 
 async def handle_query_stream(query: str, user_id: int | None = None):
     """Streaming version — yields chunks as LLM generates them."""
-    # Check if user needs onboarding (skip for demo user -1)
-    if user_id and user_id > 0:
-        profile = load_profile(user_id)
-        if not profile or not profile.onboarding_complete:
-            q_lower = query.lower()
-            if not any(kw in q_lower for kw in _BYPASS_KEYWORDS):
-                yield "[STATUS] Understanding your response..."
-                user_name = get_user_name(user_id)
-                # Run onboarding with keepalive pings to prevent SSE timeout
-                import asyncio
-                task = asyncio.create_task(handle_onboarding(query, user_id, user_name))
-                while not task.done():
-                    await asyncio.sleep(3)
-                    if not task.done():
-                        yield "[STATUS] Thinking..."
-                result = task.result()
-                yield result["response"]
-                for g in result.get("created_goals", []):
-                    yield f"[ACTION:goal_card] {json.dumps(g)}"
-                if result.get("onboarding_complete"):
-                    yield "[ONBOARDING_COMPLETE]"
-                return
-
     yield "[STATUS] Analyzing your question..."
     intent = await classify_intent(query)
     domain = intent.get("domain", "general")

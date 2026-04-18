@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/static/theme.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>marked.setOptions({ breaks: true, gfm: true });</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/common.js"></script>
@@ -691,7 +692,7 @@ $('chat-form').addEventListener('submit', async (e) => {
   const msgBody = document.createElement('div'); msgBody.className = 'flex-1 min-w-0';
   const statusEl = document.createElement('div'); statusEl.className = 'action-status hidden mb-1';
   const actionsEl = document.createElement('div'); actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
-  const chatEl = document.createElement('div'); chatEl.className = 'chat-text prose prose-sm prose-emerald max-w-none';
+  const chatEl = document.createElement('div'); chatEl.className = 'chat-text max-w-none';
   msgBody.append(statusEl, actionsEl, chatEl);
   msgWrap.append(icon, msgBody);
   const msgEl = addMsg('', 'agent');

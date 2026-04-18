@@ -107,7 +107,7 @@ async def _advisor_respond(query: str, user_id: int | None) -> str:
 
 
 async def _advisor_respond_stream(query: str, user_id: int | None):
-    """Streaming advisor that detects and executes action calls."""
+    """Streaming advisor with action chaining (max 3 rounds)."""
     from finagent.llm import get_provider
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
@@ -133,45 +133,50 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
         for m in conversation[-10:]
     ) or "No prior conversation"
 
-    prompt = ADVISOR_PROMPT.format(
-        profile_json=json.dumps(profile_data, indent=2),
-        conversation=conv_str,
-        query=query,
-        tools_prompt=get_tools_prompt(),
-    )
-
     if user_id and user_id > 0:
         save_message(user_id, "user", query, {"type": "advisor"})
 
     llm = get_provider("default")
+    all_clean_text = ""
+    action_context = ""  # accumulates action results for chaining
+    MAX_ROUNDS = 3
 
-    # Collect full response to detect actions, but stream text portions
-    full_response = ""
-    async for chunk in llm.complete_stream(prompt):
-        full_response += chunk
-        # Don't stream action markers to frontend — we'll handle them after
-        if "[ACTION:" not in full_response:
-            yield chunk
-        else:
-            # Buffer once we see a potential action marker
-            pass
+    for round_num in range(MAX_ROUNDS):
+        extra = ""
+        if action_context:
+            extra = f"\n\nPREVIOUS ACTION RESULTS (use these to inform your response, do NOT repeat the action):\n{action_context}\n\nContinue your response to the user. You may call additional tools if needed, or just summarize."
 
-    # Check for action calls in the complete response
-    actions_found = list(_ACTION_RE.finditer(full_response))
+        prompt = ADVISOR_PROMPT.format(
+            profile_json=json.dumps(profile_data, indent=2),
+            conversation=conv_str,
+            query=query + extra,
+            tools_prompt=get_tools_prompt(),
+        )
 
-    if actions_found:
-        # Yield the text before the first action marker
+        full_response = ""
+        async for chunk in llm.complete_stream(prompt):
+            full_response += chunk
+            if "[ACTION:" not in full_response:
+                yield chunk
+
+        actions_found = list(_ACTION_RE.finditer(full_response))
+
+        if not actions_found:
+            # No actions — done
+            all_clean_text += full_response
+            break
+
+        # Yield text before first action
         text_before = full_response[:actions_found[0].start()].strip()
         if text_before and "[ACTION:" in full_response:
-            # We buffered, so yield the clean text now
-            yield "\n"  # separator
+            yield "\n"
+        all_clean_text += _ACTION_RE.sub("", full_response).strip() + " "
 
-        # Execute each action
+        # Execute actions, collect results for chaining
+        round_results = []
         for match in actions_found:
             action_name = match.group(1)
-            params_str = match.group(2)
-            params = _parse_action_params(params_str)
-
+            params = _parse_action_params(match.group(2))
             entry = ACTION_REGISTRY.get(action_name)
             if not entry:
                 log.warning(f"[orchestrator] Unknown action: {action_name}")
@@ -184,26 +189,30 @@ async def _advisor_respond_stream(query: str, user_id: int | None):
                 result = await entry["execute"](params, user_id, {"profile": profile_data})
                 if "error" in result:
                     yield f"\n⚠️ {result['error']}"
+                    round_results.append(f"{action_name}: ERROR — {result['error']}")
                 else:
                     if result.get("ui_component") and result.get("ui_data"):
                         yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
-                    yield f"[ACTION_STATUS] ✅ Done"
+                    yield "[ACTION_STATUS] ✅ Done"
+                    round_results.append(f"{action_name}: SUCCESS — {result.get('message', 'done')}")
             except Exception as e:
                 log.error(f"[orchestrator] Action {action_name} failed: {e}")
                 yield f"\n⚠️ Something went wrong: {e}"
+                round_results.append(f"{action_name}: FAILED — {e}")
 
-        # Yield any text after the last action marker
         text_after = full_response[actions_found[-1].end():].strip()
         if text_after:
             yield f"\n{text_after}"
-    else:
-        # No actions — text was already streamed
-        pass
+            all_clean_text += text_after + " "
+
+        action_context += "\n".join(round_results) + "\n"
+
+        # If this is the last allowed round, don't loop
+        if round_num >= MAX_ROUNDS - 1:
+            break
 
     if user_id and user_id > 0:
-        # Save clean response (without action markers)
-        clean = _ACTION_RE.sub("", full_response).strip()
-        save_message(user_id, "assistant", clean, {"type": "advisor"})
+        save_message(user_id, "assistant", all_clean_text.strip(), {"type": "advisor"})
 
 
 async def handle_query(query: str, user_id: int | None = None) -> str:

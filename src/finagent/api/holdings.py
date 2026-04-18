@@ -58,6 +58,8 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
         tmp_path.unlink(missing_ok=True)
 
 
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+
 @router.get("/chat/history")
 async def chat_history(request: Request):
     """Return conversation history for the current user."""
@@ -65,6 +67,8 @@ async def chat_history(request: Request):
     if not user_id:
         return JSONResponse({"messages": []})
     messages = load_conversation(user_id, limit=50)
+    for m in messages:
+        m["content"] = _ANSI_RE.sub("", m["content"])
     return JSONResponse({"messages": messages})
 
 

@@ -9,10 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 marked.setOptions({ breaks: true, gfm: true });
-const _markedParse = marked.parse.bind(marked);
-marked.parse = function(src, opt) {
-  return _markedParse(src, opt).replace(/<ul>/g, '<ul class="list-disc pl-5 my-2">').replace(/<ol>/g, '<ol class="list-decimal pl-5 my-2">');
-};
+function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="list-disc pl-5 my-2">').replace(/<ol>/g, '<ol class="list-decimal pl-5 my-2">'); }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -651,7 +648,7 @@ function renderComparisonTable(d, container) {
 function renderSnapshotCard(d, container) {
   const el = document.createElement('div');
   el.className = 'bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl p-5 shadow-sm';
-  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📊 Financial Snapshot</h4><div class="prose prose-sm prose-emerald">${marked.parse(d.snapshot || '')}</div>`;
+  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📊 Financial Snapshot</h4><div class="prose prose-sm prose-emerald">${md(d.snapshot || '')}</div>`;
   container.appendChild(el);
 }
 function renderGoalCard(d, container) {
@@ -670,7 +667,7 @@ function addMsg(text, sender) {
   div.innerHTML = content; 
   const msgEl = div.querySelector('.chat-msg');
   if (sender === 'user') msgEl.textContent = text;
-  else msgEl.innerHTML = marked.parse(text || '');
+  else msgEl.innerHTML = md(text);
   box.appendChild(div); box.scrollTop = box.scrollHeight; return msgEl;
 }
 
@@ -723,7 +720,7 @@ $('chat-form').addEventListener('submit', async (e) => {
           if (m) { statusEl.classList.add('hidden'); renderActionComponent(m[1], JSON.parse(m[2]), actionsEl); }
           continue;
         }
-        full += d + '\n'; chatEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
+        full += d + '\n'; chatEl.innerHTML = md(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }
   } catch(err) { chatEl.innerHTML = '<span class="text-red-500 font-bold uppercase text-[9px]">⚠️ Error. Try again.</span>'; }

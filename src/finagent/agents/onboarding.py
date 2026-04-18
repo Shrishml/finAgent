@@ -1,17 +1,14 @@
-"""Profile data extraction and goal creation utilities.
+"""Profile data extraction utilities.
 
-Formerly the onboarding state machine. Now just provides:
+Provides:
 - extract_profile_data(): LLM-based extraction from user messages
 - apply_extractions(): Apply extracted data to profile
-- create_goals_from_mentions(): Create Goal records from mentioned goals
 """
 import json
 import logging
 
 from finagent.llm import get_provider
 from finagent.models.profile import UserProfile
-from finagent.models.goal import Goal, GOAL_TEMPLATES
-from finagent.storage.sqlite import load_profile, save_profile, save_goal
 
 log = logging.getLogger("finagent")
 
@@ -109,53 +106,3 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                 setattr(profile, key, value)
                 changed = True
     return changed
-
-
-# --- Goal creation from mentions ---
-
-_TEMPLATE_KEYWORDS = {
-    "retirement": ["retire", "retirement", "early retirement"],
-    "house": ["home", "house", "flat", "apartment", "property", "bangalore", "mumbai", "delhi"],
-    "education": ["education", "college", "school", "child education", "kid"],
-    "car": ["car", "vehicle", "bike"],
-    "marriage": ["marriage", "wedding"],
-    "emergency": ["emergency", "rainy day", "safety net"],
-    "travel": ["travel", "vacation", "trip", "holiday"],
-}
-
-
-def _match_template(goal_text: str) -> str:
-    g = goal_text.lower()
-    for template, keywords in _TEMPLATE_KEYWORDS.items():
-        if any(kw in g for kw in keywords):
-            return template
-    return "custom"
-
-
-def create_goals_from_mentions(user_id: int, goals_mentioned: list[str]) -> list[dict]:
-    """Create Goal records from goal mentions. Returns created goal data."""
-    from datetime import date, timedelta
-    created = []
-    for text in goals_mentioned:
-        template = _match_template(text)
-        tmpl = GOAL_TEMPLATES[template]
-        target_date = (date.today() + timedelta(days=5 * 365)).isoformat()
-        goal = Goal(
-            user_id=user_id,
-            name=text,
-            template=template,
-            target_amount=tmpl["suggested_amount"],
-            target_date=target_date,
-        )
-        goal_id = save_goal(goal)
-        log.info(f"[goals] created goal: {text} → template={template}")
-        created.append({
-            "goal_id": goal_id,
-            "name": text,
-            "template": template,
-            "label": tmpl.get("label", "⚙️ Custom"),
-            "target_amount": tmpl["suggested_amount"],
-            "target_date": target_date,
-            "growth_rate": goal.growth_rate,
-        })
-    return created

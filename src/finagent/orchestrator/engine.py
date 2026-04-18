@@ -6,7 +6,7 @@ import time
 from dataclasses import asdict
 
 from finagent.agents.mf import MFAgent
-from finagent.agents.onboarding import extract_profile_data, apply_extractions, create_goals_from_mentions
+from finagent.agents.onboarding import extract_profile_data, apply_extractions
 from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import (
     load_holdings, save_holdings, load_profile, save_profile,
@@ -125,10 +125,6 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
     if changed:
         save_profile(profile)
         log.info(f"[orchestrator] extracted and saved: {list(extractions.keys())}")
-
-        # Auto-create goals if new ones mentioned
-        if "goals_mentioned" in extractions:
-            create_goals_from_mentions(user_id, extractions["goals_mentioned"])
 
     return changed
 

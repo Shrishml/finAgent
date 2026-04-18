@@ -34,7 +34,8 @@ def _compute_goal_progress(goal: Goal, holdings: list) -> dict:
         monthly_sip += (recent_investments / 6) * weight
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
-    target_dt = _date.fromisoformat(goal.target_date)
+    td = goal.target_date if len(goal.target_date) > 7 else goal.target_date + "-01"
+    target_dt = _date.fromisoformat(td)
     months_left = max(0, (target_dt.year - _date.today().year) * 12 + target_dt.month - _date.today().month)
 
     monthly_rate = goal.growth_rate / 12

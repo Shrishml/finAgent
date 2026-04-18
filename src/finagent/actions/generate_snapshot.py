@@ -83,8 +83,6 @@ async def execute(params: dict, user_id: int | None, context: dict) -> dict:
     log.info(f"[snapshot] Generated snapshot #{snap_id} for user {user_id} (trigger={reason})")
 
     return {
-        "message": f"Snapshot generated (trigger: {reason})",
-        "snapshot": snapshot,
-        "ui_component": "snapshot_card",
-        "ui_data": {"snapshot": snapshot, "trigger": reason, "id": snap_id},
+        "message": f"Snapshot updated (trigger: {reason})",
+        "silent": True,
     }

@@ -343,9 +343,10 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
                     yield f"\n⚠️ {result['error']}"
                     round_results.append(f"{action_name}: ERROR — {result['error']}")
                 else:
-                    if result.get("ui_component") and result.get("ui_data"):
-                        yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
-                    yield "[ACTION_STATUS] ✅ Done"
+                    if not result.get("silent"):
+                        if result.get("ui_component") and result.get("ui_data"):
+                            yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
+                        yield "[ACTION_STATUS] ✅ Done"
                     round_results.append(f"{action_name}: SUCCESS — {result.get('message', 'done')}")
             except Exception as e:
                 log.error(f"[orchestrator] Action {action_name} failed: {e}")

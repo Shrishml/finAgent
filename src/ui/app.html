@@ -229,44 +229,23 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <button onclick="toggleChat()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700">Start Chat →</button>
       </div>
       <div id="profile-content" class="hidden space-y-8">
-        <!-- Health Score -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm text-center">
-          <h3 class="text-xl font-extrabold text-gray-900 mb-4">Financial Health Score</h3>
-          <div id="health-score-ring" class="relative inline-flex items-center justify-center w-36 h-36 mb-4">
-            <svg class="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10"/>
-              <circle id="score-arc" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327"/>
-            </svg>
-            <span id="score-value" class="absolute text-3xl font-black text-gray-900">0</span>
-          </div>
-          <div id="health-flags" class="text-left max-w-md mx-auto space-y-2"></div>
+        <!-- Snapshot -->
+        <div id="snapshot-section" class="hidden bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <h3 class="text-lg font-extrabold text-gray-900 mb-3">📊 Financial Snapshot</h3>
+          <div id="snapshot-content" class="prose prose-sm prose-emerald"></div>
+          <p id="snapshot-time" class="text-[10px] text-gray-400 mt-3"></p>
         </div>
-        <!-- Profile Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">💰 Income</h4>
-            <div id="profile-income" class="space-y-2 text-sm text-gray-700"></div>
+        <!-- Editable Details -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-extrabold text-gray-900">📝 My Details</h3>
+            <button id="profile-edit-btn" onclick="toggleProfileEdit()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors">Edit</button>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🛒 Expenses</h4>
-            <div id="profile-expenses" class="space-y-2 text-sm text-gray-700"></div>
-          </div>
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🏦 Liabilities</h4>
-            <div id="profile-liabilities" class="space-y-2 text-sm text-gray-700"></div>
-          </div>
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">🛡️ Insurance</h4>
-            <div id="profile-insurance" class="space-y-2 text-sm text-gray-700"></div>
-          </div>
-          <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm md:col-span-2">
-            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">👤 About You</h4>
-            <div id="profile-about" class="space-y-2 text-sm text-gray-700"></div>
-          </div>
+          <div id="profile-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 text-sm"></div>
         </div>
         <!-- Action Items -->
         <div id="action-items-section" class="hidden bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-          <h3 class="text-xl font-extrabold text-gray-900 mb-4">📋 What to Do Next</h3>
+          <h3 class="text-lg font-extrabold text-gray-900 mb-4">📋 What to Do Next</h3>
           <div id="action-items-list" class="space-y-3"></div>
         </div>
       </div>
@@ -628,7 +607,7 @@ function loadPortfolioChart(period='5Y') {
 }
 
 function renderActionComponent(type, data, container) {
-  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, snapshot_card: renderSnapshotCard };
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable };
   const fn = renderers[type];
   if (fn) fn(data, container);
   else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }
@@ -643,12 +622,6 @@ function renderComparisonTable(d, container) {
     <a href="${esc(p.url)}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline">View on ${esc(p.provider)} →</a>
   </div>`).join('');
   el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">🛡️ ${esc(d.title || 'Insurance Plans')}</h4><div class="flex flex-col gap-2">${rows}</div>`;
-  container.appendChild(el);
-}
-function renderSnapshotCard(d, container) {
-  const el = document.createElement('div');
-  el.className = 'bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl p-5 shadow-sm';
-  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📊 Financial Snapshot</h4><div class="prose prose-sm prose-emerald">${md(d.snapshot || '')}</div>`;
   container.appendChild(el);
 }
 function renderGoalCard(d, container) {
@@ -1085,39 +1058,28 @@ async function loadProfile() {
     _profileLoaded = true;
     const p = data.profile;
     $('profile-content').classList.remove('hidden');
-    // Health score ring
-    const score = data.health_score;
-    const arc = document.getElementById('score-arc');
-    arc.style.transition = 'stroke-dashoffset 1s ease';
-    arc.style.strokeDashoffset = 327 - (327 * score / 100);
-    arc.style.stroke = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
-    $('score-value').textContent = score;
-    $('health-flags').innerHTML = data.flags.map(([i, t]) => `<div class="flex items-start gap-2"><span>${i}</span><span class="text-sm text-gray-600">${t}</span></div>`).join('');
-    // Cards
-    const row = (l, v) => `<div class="flex justify-between"><span>${l}</span><span class="font-bold">${v}</span></div>`;
-    $('profile-income').innerHTML = [
-      p.monthly_income > 0 && row('Monthly Income', _inr(p.monthly_income)),
-      p.occupation && row('Occupation', p.occupation),
-      p.employer && row('Employer', p.employer),
-    ].filter(Boolean).join('') || '<span class="text-gray-400">Not provided</span>';
-    $('profile-expenses').innerHTML = [
-      p.monthly_expenses > 0 && row('Monthly Expenses', _inr(p.monthly_expenses)),
-      p.savings_rate != null && row('Savings Rate', (p.savings_rate * 100).toFixed(0) + '%'),
-    ].filter(Boolean).join('') || '<span class="text-gray-400">Not provided</span>';
-    if (p.loans && p.loans.length > 0) {
-      $('profile-liabilities').innerHTML = p.loans.map(l => row(l.type || 'Loan', _inr(l.emi) + '/mo')).join('') +
-        `<div class="flex justify-between border-t pt-2 mt-2"><span class="font-bold">Total EMI</span><span class="font-bold">${_inr(p.total_emi)}</span></div>`;
-    } else { $('profile-liabilities').innerHTML = '<span class="text-emerald-600 font-bold">Debt free! ✅</span>'; }
-    $('profile-insurance').innerHTML = [
-      row('Term Cover', p.term_cover > 0 ? _inr(p.term_cover) : '❌ None'),
-      row('Health Cover', p.health_employer_only ? 'Employer only' : _inr(p.health_cover)),
-    ].join('');
-    $('profile-about').innerHTML = [
-      p.age > 0 && row('Age', p.age),
-      p.location && row('Location', p.location),
-      p.marital_status && row('Status', p.marital_status === 'married' ? 'Married' + (p.kids > 0 ? ` + ${p.kids} kid${p.kids>1?'s':''}` : '') : 'Single'),
-      p.risk_tolerance && row('Risk Appetite', p.risk_tolerance.charAt(0).toUpperCase() + p.risk_tolerance.slice(1)),
-    ].filter(Boolean).join('') || '<span class="text-gray-400">Complete onboarding to fill this in</span>';
+    // Snapshot
+    if (data.financial_snapshot) {
+      $('snapshot-section').classList.remove('hidden');
+      $('snapshot-content').innerHTML = md(data.financial_snapshot);
+    }
+    // Editable details grid
+    const fields = [
+      { key: 'age', label: 'Age', val: p.age || '', type: 'number' },
+      { key: 'location', label: 'Location', val: p.location || '' },
+      { key: 'occupation', label: 'Occupation', val: p.occupation || '' },
+      { key: 'employer', label: 'Employer', val: p.employer || '' },
+      { key: 'marital_status', label: 'Marital Status', val: p.marital_status || '', type: 'select', options: ['single','married'] },
+      { key: 'kids', label: 'Kids', val: p.kids || 0, type: 'number' },
+      { key: 'monthly_income', label: 'Monthly Income', val: p.monthly_income || '', type: 'inr' },
+      { key: 'monthly_expenses', label: 'Monthly Expenses', val: p.monthly_expenses || '', type: 'inr' },
+      { key: 'total_emi', label: 'Total EMI', val: p.total_emi || '', type: 'inr' },
+      { key: 'term_cover', label: 'Term Cover', val: p.term_cover || '', type: 'inr' },
+      { key: 'health_cover', label: 'Health Cover', val: p.health_cover || '', type: 'inr' },
+      { key: 'risk_tolerance', label: 'Risk Appetite', val: p.risk_tolerance || '', type: 'select', options: ['conservative','moderate','aggressive'] },
+    ];
+    window._profileFields = fields;
+    _renderProfileGrid(fields, false);
     // Action items
     if (data.action_items && data.action_items.length > 0) {
       $('action-items-section').classList.remove('hidden');
@@ -1129,6 +1091,49 @@ async function loadProfile() {
       ).join('');
     }
   } catch(e) { $('profile-loading').classList.add('hidden'); $('profile-empty').classList.remove('hidden'); }
+}
+
+function _renderProfileGrid(fields, editing) {
+  const fmt = (f) => {
+    if (!f.val && f.val !== 0) return '<span class="text-gray-300">—</span>';
+    if (f.type === 'inr') return _inr(f.val);
+    if (f.key === 'marital_status') return f.val.charAt(0).toUpperCase() + f.val.slice(1);
+    if (f.key === 'risk_tolerance') return f.val.charAt(0).toUpperCase() + f.val.slice(1);
+    return esc(String(f.val));
+  };
+  const input = (f) => {
+    if (f.type === 'select') return `<select data-key="${f.key}" class="pf-input w-full border rounded-lg px-2 py-1.5 text-sm">${f.options.map(o => `<option value="${o}"${f.val===o?' selected':''}>${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('')}</select>`;
+    return `<input data-key="${f.key}" type="${f.type==='number'||f.type==='inr'?'number':'text'}" value="${f.type==='inr'?(f.val||''):esc(String(f.val||''))}" class="pf-input w-full border rounded-lg px-2 py-1.5 text-sm" />`;
+  };
+  $('profile-grid').innerHTML = fields.map(f =>
+    `<div class="flex flex-col gap-1">
+      <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">${f.label}</span>
+      ${editing ? input(f) : `<span class="text-gray-800 font-medium">${fmt(f)}</span>`}
+    </div>`
+  ).join('');
+  $('profile-edit-btn').textContent = editing ? 'Save' : 'Edit';
+}
+
+let _profileEditing = false;
+async function toggleProfileEdit() {
+  if (!_profileEditing) {
+    _profileEditing = true;
+    _renderProfileGrid(window._profileFields, true);
+  } else {
+    // Collect values and save
+    const payload = {};
+    document.querySelectorAll('.pf-input').forEach(el => {
+      const key = el.dataset.key;
+      const f = window._profileFields.find(x => x.key === key);
+      let val = el.value;
+      if (f.type === 'number' || f.type === 'inr') val = Number(val) || 0;
+      payload[key] = val;
+      f.val = val;
+    });
+    _profileEditing = false;
+    _renderProfileGrid(window._profileFields, false);
+    await fetch('/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  }
 }
 
 // Init goals on app load

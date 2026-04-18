@@ -299,3 +299,313 @@ Most actions reuse 2-3 components. Adding 20 actions ≈ 5-6 UI components.
 3. **Error handling**: What if action fails mid-chain? Options: (a) LLM sees error and adapts, (b) abort and tell user, (c) skip and continue with remaining actions.
 
 4. **Rate limiting**: Should there be a max actions-per-query limit? Proposed: 4 actions max per user message.
+
+
+---
+
+## Consent-Driven Action Flow
+
+The agent is an **advisor, not a broker**. It never auto-executes financial decisions. Every action that affects the user's finances follows: **recommend → explain → wait for consent → act**.
+
+```
+Agent detects gap (e.g., no term insurance)
+    ↓
+EXPLAIN: Why this matters, personalized to user's profile
+    ↓
+WAIT: "Want me to find options?" — user must say yes
+    ↓
+SEARCH: Only now does the agent call the action
+    ↓
+PRESENT: Show options in UI (comparison cards)
+    ↓
+WAIT: "Would you like to go with one of these?"
+    ↓
+GUIDE: Provide application link + checklist (no auto-purchase)
+    ↓
+CONFIRM: "Let me know once you've done it" → user confirms → update profile
+```
+
+### Example: Term Insurance for Rahul (30M, married, 1 kid, no term cover)
+
+```
+🤖 "Looking at your profile — you're 30, married with a kid, and have no term
+    insurance. If something happens to you, your family would need to cover
+    ₹60K/mo expenses + ₹2L loan with no income backup.
+    A term plan of ~₹1Cr would cost roughly ₹800-1000/mo at your age.
+    Want me to find specific options?"
+
+👤 "Yes, show me options"
+
+→ [ACTION: SEARCH_TERM_INSURANCE] — searches MaxLife plans
+→ [STATUS: 🔍 Searching plans for 30M, non-smoker, ₹1Cr cover...]
+→ UI renders comparison cards (3-4 plans)
+
+🤖 "Here are 3 MaxLife plans. I'd recommend Plan B because [reason]."
+
+👤 "Plan B looks good"
+
+🤖 "I can't purchase this for you, but here's what to do:
+    → [Link to MaxLife Plan B application]
+    → You'll need: PAN, Aadhaar, bank details
+    Once purchased, let me know and I'll update your profile."
+
+👤 "Done"
+
+→ [ACTION: UPDATE_INSURANCE] → health score: 62 → 71
+🤖 "Health score updated! Term insurance gap: closed ✅"
+```
+
+---
+
+## MaxLife Integration (Phase 1 — Static Data)
+
+Start with curated plan data, not live API. Enough to prove the flow.
+
+```
+data/
+  insurance/
+    maxlife_term_plans.json
+```
+
+```json
+[
+  {
+    "plan_id": "maxlife_smart_secure_plus",
+    "name": "Max Life Smart Secure Plus",
+    "type": "term",
+    "cover_options": [5000000, 10000000, 20000000, 50000000],
+    "premium_by_age": {
+      "25-30": {"1cr": 850, "2cr": 1600},
+      "31-35": {"1cr": 1050, "2cr": 1950}
+    },
+    "features": ["Return of premium option", "Critical illness rider", "Accidental death benefit"],
+    "claim_settlement_ratio": 99.51,
+    "application_url": "https://www.maxlifeinsurance.com/term-insurance-plans/smart-secure-plus",
+    "min_entry_age": 18,
+    "max_entry_age": 65
+  }
+]
+```
+
+The action filters plans by user's age, cover need (10x annual income), and budget:
+
+```python
+# actions/search_term_insurance.py
+SCHEMA = {
+    "name": "SEARCH_TERM_INSURANCE",
+    "description": "Find term insurance plans matching user's profile",
+    "parameters": {
+        "cover_amount": {"type": "int", "description": "Desired cover in INR"},
+        "budget_monthly": {"type": "int", "required": False, "description": "Max monthly premium"},
+    },
+    "ui_component": "comparison_table",
+    "status_message": "Searching term insurance plans for your profile"
+}
+```
+
+Later phases: live API integration, multiple providers (HDFC Life, ICICI Pru, LIC).
+
+---
+
+## SSE Status Events (Keeping Users Updated)
+
+Long-running actions (3-10s) need visible progress. Reuse existing SSE stream with a new event type.
+
+### Event Types
+
+```
+Existing:
+  data: [TOKEN] partial text          ← chat streaming
+  data: [STATUS] thinking...          ← existing status
+  data: [DONE]                        ← stream end
+
+New:
+  data: [ACTION_STATUS] 🔍 Searching MaxLife plans...     ← action progress
+  data: [ACTION_STATUS] 📊 Comparing 4 plans...           ← multi-step progress
+  data: [ACTION_STATUS] ✅ Found 3 matching plans          ← completion
+  data: [ACTION:comparison_table] {"items": [...]}         ← result render
+```
+
+### Backend (minimal addition to action executor)
+
+```python
+async def execute_with_status(action, params, send_event):
+    await send_event(f"[ACTION_STATUS] {action.schema['status_message']}...")
+    result = await action.execute(params)
+    await send_event(f"[ACTION_STATUS] ✅ Done")
+    await send_event(f"[ACTION:{action.schema['ui_component']}] {json.dumps(result)}")
+```
+
+### Frontend (render as animated indicator above chat)
+
+```
+┌─────────────────────────────────────┐
+│  🔍 Searching MaxLife plans...      │  ← fading status bar
+│                                     │
+│  🤖 Here are 3 plans that fit...   │  ← chat text
+│                                     │
+│  ┌──────┐ ┌──────┐ ┌──────┐       │  ← action result cards
+│  │Plan A│ │Plan B│ │Plan C│       │
+│  └──────┘ └──────┘ └──────┘       │
+└─────────────────────────────────────┘
+```
+
+~10 lines of frontend JS to handle `[ACTION_STATUS]` events as a temporary indicator.
+
+---
+
+## Universal Module Pattern
+
+Every financial domain (MFs, loans, insurance, EPF, stocks, salary) follows the same 3-layer architecture. Build the framework once, add modules by dropping folders.
+
+### The Pattern
+
+```
+┌──────────────────────────────────────────────┐
+│  Layer 1: Agent Actions (thin wrappers)      │
+│  ANALYSE_X / SUGGEST_X / COMPARE_X           │
+├──────────────────────────────────────────────┤
+│  Layer 2: Domain Analyser (heavy lifting)    │
+│  Parse docs, calculate metrics, score health │
+├──────────────────────────────────────────────┤
+│  Layer 3: Document Upload (data entry point) │
+│  CAS / loan statement / policy PDF / payslip │
+└──────────────────────────────────────────────┘
+```
+
+Every module:
+1. Has a **document** that unlocks deep analysis
+2. Has an **analyser** that extracts and crunches the data
+3. Has **agent actions** that orchestrate and explain
+4. Works in **degraded mode** without the document (estimates from onboarding)
+5. Agent knows **when to ask** for the document and **why it matters**
+
+### Module Directory Structure
+
+```
+modules/
+  mutual_funds/
+    analyser.py      ← parse CAS, XIRR, overlap, sector exposure
+    actions.py       ← ANALYSE_PORTFOLIO, SUGGEST_REBALANCE, COMPARE_FUNDS
+    prompts.py       ← when to ask for CAS, how to explain with/without
+  loans/
+    analyser.py      ← parse loan statement, prepay calc, refinance
+    actions.py       ← ANALYSE_LOANS, SUGGEST_REFINANCE, PREPAY_CALCULATOR
+    prompts.py       ← when to ask for loan statement
+  insurance/
+    analyser.py      ← parse policy PDF, coverage adequacy
+    actions.py       ← CHECK_COVERAGE, SEARCH_TERM_INSURANCE, COMPARE_PLANS
+    prompts.py       ← when to ask for policy document
+  epf/
+    analyser.py      ← parse EPF passbook, corpus projection
+    actions.py       ← ANALYSE_EPF, PROJECT_RETIREMENT
+    prompts.py
+  stocks/
+    analyser.py      ← parse demat holding, P&L, tax harvesting
+    actions.py       ← ANALYSE_STOCKS, TAX_HARVEST_SUGGESTIONS
+    prompts.py
+  salary/
+    analyser.py      ← parse payslip, tax optimization
+    actions.py       ← OPTIMISE_TAX, ANALYSE_SALARY_STRUCTURE
+    prompts.py
+```
+
+### Capability Matrix: With vs Without Document
+
+| Module | Document | Without Doc | With Doc |
+|--------|----------|-------------|----------|
+| Mutual Funds | CAS statement | Rough estimate from onboarding | Fund-wise XIRR, overlap, sector, rebalance |
+| Loans | Loan statement / amortization PDF | "₹2L personal loan" | Exact rate, tenure, prepay savings |
+| Insurance | Policy PDF | "₹5L health cover" | Exact terms, exclusions, coverage gaps |
+| EPF | EPF passbook | "I have EPF" | Exact balance, employer match, retirement projection |
+| Stocks | Demat holding / broker CSV | "₹3L in stocks" | Stock-wise P&L, LTCG/STCG tax liability |
+| Salary | Payslip | "₹1.5L/mo salary" | Component breakdown, HRA/80C/NPS tax gaps |
+
+### Shared Infrastructure (built once)
+
+- **Document upload pipeline**: PDF parsing, OCR (if needed), extraction, storage — reusable across modules. Only per-document-type parsing logic is unique.
+- **Action registry**: Auto-discovers actions from all module folders.
+- **SSE status events**: Same progress indicator for any long-running action.
+- **UI component library**: comparison_table, gap_visual, projection_chart — reused across modules.
+- **Degraded mode framework**: Every action checks if document exists, returns estimate-based or full analysis accordingly.
+
+---
+
+## CAS Upload Triggers (When to Ask for Documents)
+
+The agent doesn't dump "upload your CAS" during onboarding. It asks at **natural moments** when the value is obvious.
+
+### Trigger 1: Onboarding Wrapup (Soft Ask)
+
+After financial snapshot, when MF gap is visible:
+
+```
+🤖 "You mentioned ₹8L in mutual funds. I can give you much deeper insights
+    if you upload your CAS statement:
+
+    ✅ Exact fund-wise returns (XIRR, not just NAV change)
+    ✅ Hidden overlap between your funds
+    ✅ Sector concentration risk
+    ✅ Whether your SIPs are actually on track
+
+    Without CAS, I can only work with the ₹8L estimate.
+
+    [Upload CAS]  [Maybe Later]"
+```
+
+### Trigger 2: User Asks About the Domain (Hard Ask)
+
+```
+👤 "How are my mutual funds performing?"
+
+🤖 "I don't have your actual fund data yet — just the ₹8L estimate.
+    To tell you real performance, I need your CAS.
+
+    📄 Download it from MFCentral app (instant) or CAMS/KFintech website.
+    Takes 2 minutes. Want me to walk you through it?"
+```
+
+### Trigger 3: Agent Spots an Unanalysable Gap
+
+```
+🤖 "I notice you have ₹8L in MFs but I can't check for overlap or
+    sector over-exposure without your actual holdings. Upload your CAS
+    and I'll run a full portfolio health check."
+```
+
+### Universal Trigger Pattern (applies to all modules)
+
+Every module defines its triggers in `prompts.py`:
+
+```python
+# modules/mutual_funds/prompts.py
+TRIGGERS = {
+    "soft_ask": {
+        "when": "onboarding_complete AND has_mf_estimate AND NOT has_cas",
+        "message": "Upload CAS for deeper MF insights",
+        "value_props": ["Fund-wise XIRR", "Overlap detection", "Sector exposure", "SIP tracking"],
+    },
+    "hard_ask": {
+        "when": "user_asks_about_mf AND NOT has_cas",
+        "message": "I need your CAS to answer that accurately",
+    },
+    "gap_ask": {
+        "when": "gap_analysis_blocked_by_missing_data",
+        "message": "Can't analyse this without actual holdings",
+    },
+}
+```
+
+The agent framework checks triggers after every interaction and surfaces the right ask at the right moment.
+
+---
+
+## Updated Phase Plan
+
+| Phase | What | Effort |
+|-------|------|--------|
+| Phase 1 | Action registry + CREATE_GOAL + main.py split | 1-2 days |
+| Phase 2 | SSE status events + SEARCH_TERM_INSURANCE (MaxLife static data) + comparison cards + consent flow | 2-3 days |
+| Phase 3 | Action chaining + UPDATE_INSURANCE + MF analyser integration (thin wrapper over existing) | 2-3 days |
+| Phase 4 | Universal module framework + CAS upload triggers + ANALYSE_PORTFOLIO action | 2-3 days |
+| Phase 5 | Agent memory + proactive nudges + additional modules (loans, EPF) | 2-3 days |

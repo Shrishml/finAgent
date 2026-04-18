@@ -550,3 +550,195 @@ Tab-affecting actions (e.g., `CREATE_GOAL`) show inline confirmation in chat + a
 2. **Async actions**: Streaming + `[ACTION_STATUS]` handles both instant and slow actions naturally.
 3. **Error handling**: LLM sees the error and decides whether to retry, skip, or abort. No hard abort.
 4. **Rate limiting**: Configurable `MAX_ACTIONS_PER_QUERY` (default unlimited during development, enforce before launch).
+
+---
+
+## Agent-Driven Flow (Replaces Onboarding State Machine)
+
+**Decision date:** 2026-04-18
+**Status:** Approved, not yet implemented
+
+### Problem with Current Approach
+
+The current onboarding uses a hardcoded state machine:
+```
+keyword match ("onboarding") → rigid pillar sequence → wrapup → snapshot → done
+```
+
+This is fragile — if the LLM phrases something slightly differently, routing breaks. The wrapup phase exists only to collect age + risk appetite, and the `onboarding_complete` flag creates an artificial boundary between "collecting data" and "being useful."
+
+### New Model: No Onboarding, Just an Agent
+
+There is no onboarding. There is no "finish" concept. The agent continuously collects data and adjusts its behavior based on what it knows.
+
+```
+UI Cards (structured data + risk appetite) → Agent starts immediately
+         ↓                                          ↓
+    User keeps chatting              Agent keeps learning
+         ↓                                          ↓
+    New data arrives                 Snapshot updates
+         ↓                                          ↓
+    Agent re-adjusts                 Next conversation is smarter
+```
+
+### What Dies
+
+| Component | Why |
+|-----------|-----|
+| `_onboarding_init` | No separate onboarding mode |
+| `_handle_onboarding` | Agent handles everything |
+| `_handle_wrapup` | Risk appetite moves to UI card, age to DOB field |
+| Pillar tracking state machine | No pillars, no sequence |
+| `onboarding_complete` flag | Replaced by: "are required fields populated?" |
+| Keyword routing for onboarding | Agent reasons from context |
+| `[ONBOARDING_COMPLETE]` SSE event | No completion boundary |
+
+### What Stays
+
+| Component | Notes |
+|-----------|-------|
+| UI cards for structured input | Add risk appetite selector |
+| Goal creation via chat or cards | Unchanged |
+| Action system | Unchanged |
+| Profile data model | Add `risk_appetite` field if not present |
+
+### Risk Appetite → UI Card
+
+Moves from chat-based collection to a simple 3-option card:
+
+```
+┌─────────────────────────┐
+│  Risk Appetite          │
+│                         │
+│  ○ Conservative         │
+│    (Preserve capital)   │
+│  ○ Moderate             │
+│    (Balanced growth)    │
+│  ○ Aggressive           │
+│    (Maximum growth)     │
+└─────────────────────────┘
+```
+
+### Agent Context (System Prompt)
+
+Every conversation, the agent receives:
+
+```
+User profile: {profile_state}
+Missing fields: {missing_fields}
+Goals: {goals_summary}
+Risk appetite: {risk_appetite}
+Last snapshot: {last_snapshot}
+Changes since last snapshot: {what_changed}
+
+You are a financial advisor. Help the user based on what you know.
+If key data is missing, weave collection into the conversation naturally.
+You can generate a financial snapshot anytime the user has enough data.
+Never rush data collection — let it happen organically.
+```
+
+The agent decides what to do based on what it sees:
+
+| Agent sees | Agent does |
+|---|---|
+| Has income/expenses but no goals | "What are you saving for?" |
+| Has goals but no insurance data | Naturally suggests checking coverage |
+| Has everything, no snapshot yet | Generates snapshot |
+| Has everything, has snapshot | Helps with whatever user asks |
+| User adds new data (CAS upload, new goal) | Re-evaluates, updates snapshot if warranted |
+
+### Persistent Snapshots
+
+The snapshot is the agent's working memory — its analysis of the user's financial state. It persists across sessions and evolves over time.
+
+**Profile vs Snapshot:**
+
+| | Profile | Snapshot |
+|---|---|---|
+| What | Raw data the user provides | Agent's analysis of that data |
+| Example | Income: ₹2.85L, Goals: car in 6mo | "Saving ₹85K/mo but car goal needs ₹15K/mo SIP. No term insurance — critical gap." |
+| Who writes | User (via cards/chat) | Agent (LLM-generated) |
+| Format | Structured fields in DB | Free-text analysis |
+| Changes when | User updates data | Agent decides to re-analyze |
+
+**Storage:**
+
+```sql
+CREATE TABLE user_snapshots (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    snapshot_text TEXT NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+Only the latest snapshot is passed to the agent. History is kept for audit/debugging.
+
+**Snapshot lifecycle:**
+
+```
+Conversation 1 (just cards): Thin snapshot
+  → "Income ₹2.85L, expenses ₹2L. No goals yet. No investments visible."
+
+Conversation 3 (added goals + CAS): Rich snapshot
+  → "₹8L in MFs (XIRR 14.2%), car goal needs ₹15K/mo SIP.
+     No term insurance — critical gap for married with dependent.
+     Emergency fund covers 2.1 months (target: 6)."
+
+Conversation 7 (bought insurance): Updated snapshot
+  → "Term insurance gap: closed ✅. Remaining: emergency fund (2.1→6 months),
+     home goal needs planning (5yr horizon, current savings rate insufficient)."
+```
+
+**GENERATE_SNAPSHOT action:**
+
+```python
+SCHEMA = {
+    "name": "generate_snapshot",
+    "description": "Generate or update the user's financial snapshot based on current data",
+    "parameters": {},
+    "ui_component": None,
+    "status_message": "Analysing your financial profile",
+}
+
+async def execute(params, user_id, context):
+    # LLM generates snapshot text from profile + goals + holdings
+    # Stored in user_snapshots table
+    # Returned to chat as the agent's analysis
+```
+
+The agent calls this action when it decides a snapshot is warranted — not on a hardcoded trigger.
+
+### Conversation Loop
+
+```
+┌──────────────────────────────────────────┐
+│           Every Conversation             │
+│                                          │
+│  Inputs:                                 │
+│    - Last snapshot (agent's memory)      │
+│    - Current profile + goals + holdings  │
+│    - User's message                      │
+│                                          │
+│  Agent reasons:                          │
+│    - What changed since last snapshot?   │
+│    - Does snapshot need updating?        │
+│    - What should I help with now?        │
+│                                          │
+│  Outputs:                                │
+│    - Chat response                       │
+│    - Actions (goal cards, searches...)   │
+│    - Updated snapshot (if warranted)     │
+└──────────────────────────────────────────┘
+```
+
+### Implementation Plan
+
+| Step | What | Effort |
+|------|------|--------|
+| 1 | Add risk appetite to UI cards, add DOB field | 0.5 day |
+| 2 | Create `user_snapshots` table + `GENERATE_SNAPSHOT` action | 0.5 day |
+| 3 | Remove onboarding state machine (`_handle_onboarding`, `_handle_wrapup`, pillar tracking) | 0.5 day |
+| 4 | Rewrite orchestrator: single agent loop with profile-state-driven prompt | 1 day |
+| 5 | Test: cards → agent conversation → snapshot generation → return next day → agent remembers | 0.5 day |

@@ -192,11 +192,11 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
     if current == "wrapup" and not profile.risk_tolerance:
         # Code-side detection — don't rely solely on LLM extraction
         q = user_message.lower()
-        if any(w in q for w in ["aggressive", "high risk", "high growth"]):
+        if any(w in q for w in ["aggressive", "high risk", "high growth", "risky"]):
             profile.risk_tolerance = "aggressive"
-        elif any(w in q for w in ["moderate", "balanced", "medium"]):
+        elif any(w in q for w in ["moderate", "balanced", "medium", "mix", "some risk"]):
             profile.risk_tolerance = "moderate"
-        elif any(w in q for w in ["conservative", "safe", "low risk", "safety"]):
+        elif any(w in q for w in ["conservative", "safe", "low risk", "safety", "no risk", "stable"]):
             profile.risk_tolerance = "conservative"
     if current == "wrapup" and profile.risk_tolerance and "wrapup" not in profile.pillars_completed:
         profile.pillars_completed.append("wrapup")
@@ -205,6 +205,15 @@ async def handle_onboarding(user_message: str, user_id: int, user_name: str = ""
         profile.pillars_completed.append("wrapup")
         if not profile.risk_tolerance:
             profile.risk_tolerance = "moderate"  # default if LLM completed but code didn't detect
+    # Catch-all: if LLM responded with completion language but neither path fired,
+    # the user answered but we failed to parse — default to moderate and complete
+    if current == "wrapup" and "wrapup" not in profile.pillars_completed:
+        resp_lower = result.get("response", "").lower()
+        if any(phrase in resp_lower for phrase in ["all set", "snapshot", "profile is ready", "onboarding complete", "profile is complete"]):
+            if not profile.risk_tolerance:
+                profile.risk_tolerance = "moderate"
+            profile.pillars_completed.append("wrapup")
+            log.warning(f"[onboarding] wrapup force-completed via response heuristic (risk={profile.risk_tolerance})")
 
     # Check if all done
     if current == "wrapup" and "wrapup" in profile.pillars_completed:

@@ -56,8 +56,20 @@ class KiroCLIProvider(LLMProvider):
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
         try:
+            started = False
             async for line in proc.stdout:
-                yield line.decode()
+                text = _ANSI_RE.sub("", line.decode())
+                stripped = text.strip()
+                # skip kiro-cli decoration lines
+                if stripped.startswith(("╭", "╰", "│")) or stripped.startswith("kiro-cli"):
+                    continue
+                # skip leading blank lines, preserve paragraph breaks once content starts
+                if not stripped:
+                    if started:
+                        yield "\n"
+                    continue
+                started = True
+                yield text
         finally:
             try:
                 await asyncio.wait_for(proc.wait(), timeout=5)

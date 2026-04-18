@@ -413,6 +413,117 @@ Complete session → return next day → agent: "Last time we discussed term ins
 
 ---
 
+## Frontend Changes
+
+The frontend is a single `app.html` (1197 lines). Changes are minimal — no new dependencies, no framework, all within existing file.
+
+### Current SSE Parser (lines 660-678)
+
+```javascript
+// Everything that isn't a control event → concatenate into markdown blob
+for (const line of text.split('\n')) {
+    const d = line.slice(6);
+    if (d === '[DONE]') break;
+    if (d === '[ONBOARDING_COMPLETE]') { switchTab('goals'); continue; }
+    if (d.startsWith('[STATUS] ')) { /* show thinking dots */ continue; }
+    full += d; msgEl.innerHTML = marked.parse(full);  // ← everything = markdown
+}
+```
+
+Problem: no concept of "this is chat text" vs "this is structured UI data."
+
+### New SSE Parser
+
+Add two new event types. Action events render as DOM elements below chat text, not inside the markdown blob.
+
+```javascript
+if (d.startsWith('[ACTION_STATUS] ')) {
+    refs.status.innerHTML = `<span class="thinking-dots">${esc(d.slice(16))}
+        <span>.</span><span>.</span><span>.</span></span>`;
+    refs.status.classList.remove('hidden');
+    continue;
+}
+
+if (d.startsWith('[ACTION:')) {
+    const match = d.match(/^\[ACTION:(\w+)\]\s*(.+)$/);
+    if (match) {
+        refs.status.classList.add('hidden');
+        renderActionComponent(match[1], JSON.parse(match[2]), refs);
+    }
+    continue;
+}
+
+// Default: chat text (unchanged)
+full += d; refs.chat.innerHTML = marked.parse(full);
+```
+
+### Message DOM Structure
+
+Each message becomes three zones instead of one:
+
+```
+<div class="msg agent">
+  <div class="action-status hidden">   ← ACTION_STATUS (animated, hidden when done)
+  <div class="chat-text">              ← markdown text (same as before)
+  <div class="action-results">         ← action result cards (new)
+</div>
+```
+
+`addMsg()` returns refs to all three zones so the SSE parser can target them independently.
+
+### Action Component Renderer
+
+One dispatcher, one renderer per component type:
+
+```javascript
+function renderActionComponent(type, data, refs) {
+    const el = document.createElement('div');
+    el.className = 'action-card mt-3 rounded-lg border border-gray-700 p-3';
+    switch(type) {
+        case 'comparison_table': renderComparisonTable(el, data); break;
+        case 'goal_card':        renderGoalCard(el, data); break;
+        case 'gap_visual':       renderGapVisual(el, data); break;
+        case 'projection_chart': renderProjectionChart(el, data); break;
+        default: el.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+    refs.actions.appendChild(el);
+}
+```
+
+Each renderer is 10-15 lines of HTML templating. Fallback renders raw JSON so new actions work before their UI component exists.
+
+### Phase 4: Clickable Actions → Back to Chat
+
+Action cards with buttons (e.g., "Select this plan") send structured messages back:
+
+```javascript
+function sendActionSelect(action, value) {
+    $('chat-input').value = `__action_select__:${action}:${value}`;
+    $('chat-form').dispatchEvent(new Event('submit'));
+}
+```
+
+Backend sees `__action_select__:recommend_insurance:plan_b` → routes to agent with context.
+
+### Change Summary
+
+| What | Lines | Phase |
+|------|-------|-------|
+| SSE parser: `[ACTION_STATUS]` and `[ACTION:*]` handling | ~20 | 1 |
+| `addMsg()` structured refs (status, chat, actions) | ~15 | 1 |
+| `renderActionComponent` dispatcher | ~10 | 1 |
+| `renderGoalCard` | ~15 | 1 |
+| `renderComparisonTable` | ~15 | 2 |
+| `renderGapVisual` | ~15 | 2 |
+| `renderProjectionChart` (uses existing Chart.js) | ~20 | 3 |
+| Clickable action buttons → chat feedback | ~10 | 4 |
+| CSS for action cards | ~20 | 1 |
+| **Total** | **~140** | |
+
+Tabs (Overview, Holdings, Goals, Profile) stay untouched. Action results live inside chat messages. Tabs = dashboard view, chat = interactive advisor view.
+
+---
+
 ## Open Questions
 
 1. **Tool-calling format**: Text markers (`[ACTION: ...]`) vs structured JSON? Markers are more robust with streaming; JSON is cleaner for parsing. Start with markers, migrate if needed.

@@ -524,9 +524,29 @@ Tabs (Overview, Holdings, Goals, Profile) stay untouched. Action results live in
 
 ---
 
-## Open Questions
+## Mobile Rendering
 
-1. **Tool-calling format**: Text markers (`[ACTION: ...]`) vs structured JSON? Markers are more robust with streaming; JSON is cleaner for parsing. Start with markers, migrate if needed.
-2. **Async actions**: Some actions are instant (DB write), others slow (search/compute). Streaming + `[ACTION_STATUS]` handles both naturally.
-3. **Error handling**: If action fails mid-chain — LLM sees error and adapts, or abort? Propose: LLM sees error, decides whether to retry/skip/abort.
-4. **Rate limiting**: Max 4 actions per user message to prevent runaway loops.
+On mobile, chat is fullscreen — action results render inline within the chat flow. No tab switching needed.
+
+Cards stack vertically instead of side-by-side (CSS only):
+
+```css
+.action-results { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.action-card { min-width: 280px; flex: 1; }
+@media (max-width: 640px) {
+    .action-card { min-width: 100%; }
+}
+```
+
+Comparison tables render as stacked cards on small screens instead of horizontal tables (~10 lines in `renderComparisonTable` checking screen width).
+
+Tab-affecting actions (e.g., `CREATE_GOAL`) show inline confirmation in chat + a "View in Goals tab →" link. Tab updates silently in background.
+
+---
+
+## Design Decisions
+
+1. **Tool-calling format**: Text markers (`[ACTION: ...]`). More robust with streaming. Migrate to structured JSON later if needed.
+2. **Async actions**: Streaming + `[ACTION_STATUS]` handles both instant and slow actions naturally.
+3. **Error handling**: LLM sees the error and decides whether to retry, skip, or abort. No hard abort.
+4. **Rate limiting**: Configurable `MAX_ACTIONS_PER_QUERY` (default unlimited during development, enforce before launch).

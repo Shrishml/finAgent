@@ -683,7 +683,7 @@ $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   if (isDemo) { addMsg(q, 'user'); addMsg('Please **Sign In** to chat with AI about your own portfolio. Demo mode is view-only.', 'agent'); $('chat-input').value = ''; return; }
-  $('chat-input').value = ''; addMsg(q, 'user');
+  $('chat-input').value = ''; if (!q.startsWith('__')) addMsg(q, 'user');
   trackEvent('chat_message', { query_length: q.length });
   // Create structured message with 3 zones: status, chat text, action results
   const msgWrap = document.createElement('div'); msgWrap.className = 'flex gap-2 items-start';
@@ -891,7 +891,7 @@ async function _obNext() {
   switchTab('profile');
   // Show chat FAB and open chat — agent will reason about what to ask next
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
-  setTimeout(() => toggleChat(), 600);
+  setTimeout(() => { toggleChat(); sendChat('__onboarding_init__'); }, 600);
 }
 
 function sendOnboardingStart() {

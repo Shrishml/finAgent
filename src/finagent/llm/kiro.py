@@ -29,7 +29,7 @@ class KiroCLIProvider(LLMProvider):
     def name(self) -> str:
         return "kiro"
 
-    async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
+    async def _complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         full_prompt = self._build_prompt(prompt, system, json_mode)
         log.info(f"[kiro] calling kiro-cli (timeout={self._timeout}s, json_mode={json_mode})")
         t0 = time.time()
@@ -48,7 +48,7 @@ class KiroCLIProvider(LLMProvider):
         log.info(f"[kiro] completed in {time.time()-t0:.1f}s, response_len={len(raw)}")
         return self._extract_response(raw, json_mode)
 
-    async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
+    async def _complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
         full_prompt = self._build_prompt(prompt, system, False)
         log.info(f"[kiro] streaming kiro-cli")
         proc = await asyncio.create_subprocess_exec(

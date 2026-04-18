@@ -291,41 +291,35 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
     llm = get_provider("default")
     all_clean_text = ""
-    action_context = ""
-    MAX_ROUNDS = 3
 
-    for round_num in range(MAX_ROUNDS):
-        extra = ""
-        if action_context:
-            extra = f"\n\nPREVIOUS ACTION RESULTS (use these to inform your response, do NOT repeat the action):\n{action_context}\n\nContinue your response to the user. You may call additional tools if needed, or just summarize."
+    # Round 1: stream main response, collect actions
+    prompt = AGENT_PROMPT.format(
+        profile_json=profile_json,
+        snapshot_section=snapshot_section,
+        profile_hint=profile_hint,
+        conversation=conv_str,
+        query=query,
+        tools_prompt=get_tools_prompt(),
+    )
 
-        prompt = AGENT_PROMPT.format(
-            profile_json=profile_json,
-            snapshot_section=snapshot_section,
-            profile_hint=profile_hint,
-            conversation=conv_str,
-            query=query + extra,
-            tools_prompt=get_tools_prompt(),
-        )
+    full_response = ""
+    async for chunk in llm.complete_stream(prompt):
+        full_response += chunk
+        if "[ACTION:" not in full_response:
+            yield chunk
 
-        full_response = ""
-        async for chunk in llm.complete_stream(prompt):
-            full_response += chunk
-            if "[ACTION:" not in full_response:
-                yield chunk
+    actions_found = list(_ACTION_RE.finditer(full_response))
+    ui_components = []
 
-        actions_found = list(_ACTION_RE.finditer(full_response))
+    if not actions_found:
+        all_clean_text = full_response
+    else:
+        text_after = full_response[actions_found[-1].end():].strip()
+        all_clean_text = _ACTION_RE.sub("", full_response).strip()
 
-        if not actions_found:
-            all_clean_text += full_response
-            break
-
-        text_before = full_response[:actions_found[0].start()].strip()
-        if text_before and "[ACTION:" in full_response:
-            yield "\n"
-        all_clean_text += _ACTION_RE.sub("", full_response).strip() + " "
-
-        round_results = []
+        # Execute actions, track failures and UI components
+        failures = []
+        ui_components = []
         for match in actions_found:
             action_name = match.group(1)
             params = _parse_action_params(match.group(2))
@@ -341,30 +335,39 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
                 result = await entry["execute"](params, user_id, {"profile": profile_json})
                 if "error" in result:
                     yield f"\n⚠️ {result['error']}"
-                    round_results.append(f"{action_name}: ERROR — {result['error']}")
+                    failures.append(f"{action_name}({params}): {result['error']}")
                 else:
                     if not result.get("silent"):
                         if result.get("ui_component") and result.get("ui_data"):
                             yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
+                            ui_components.append({"type": result["ui_component"], "data": result["ui_data"]})
                         yield "[ACTION_STATUS] ✅ Done"
-                    round_results.append(f"{action_name}: SUCCESS — {result.get('message', 'done')}")
             except Exception as e:
                 log.error(f"[orchestrator] Action {action_name} failed: {e}")
                 yield f"\n⚠️ Something went wrong: {e}"
-                round_results.append(f"{action_name}: FAILED — {e}")
+                failures.append(f"{action_name}({params}): {e}")
 
-        text_after = full_response[actions_found[-1].end():].strip()
         if text_after:
             yield f"\n{text_after}"
-            all_clean_text += text_after + " "
+            all_clean_text += " " + text_after
 
-        action_context += "\n".join(round_results) + "\n"
-
-        if round_num >= MAX_ROUNDS - 1:
-            break
+        # Round 2: only if actions failed, ask LLM for brief recovery
+        if failures:
+            followup_prompt = (
+                f"You just tried to help the user but some actions failed:\n"
+                f"{chr(10).join(failures)}\n\n"
+                f"In 1-2 sentences, tell the user what went wrong and what you'll do differently. "
+                f"Do NOT repeat your earlier advice. Do NOT call any tools."
+            )
+            followup = await llm.complete(followup_prompt)
+            yield f"\n\n{followup}"
+            all_clean_text += " " + followup
 
     if user_id and user_id > 0:
-        save_message(user_id, "assistant", all_clean_text.strip(), {"type": "advisor"})
+        meta = {"type": "advisor"}
+        if ui_components:
+            meta["actions"] = ui_components
+        save_message(user_id, "assistant", all_clean_text.strip(), meta)
 
 
 def _match_fund(query: str, holdings: list) -> object | None:

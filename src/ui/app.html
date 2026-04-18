@@ -647,7 +647,15 @@ async function loadChatHistory() {
       const sa = $('suggestions-area'); if (sa) sa.remove();
       const box = $('chat-box');
       if (box.querySelectorAll('.chat-msg').length > 0) return; // already populated
-      data.messages.filter(m => m.content !== '__init__').forEach(m => addMsg(m.content, m.role === 'user' ? 'user' : 'agent'));
+      data.messages.filter(m => m.content !== '__init__').forEach(m => {
+        const msgEl = addMsg(m.content, m.role === 'user' ? 'user' : 'agent');
+        if (m.role !== 'user' && m.metadata && m.metadata.actions) {
+          const actionsEl = document.createElement('div');
+          actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
+          msgEl.after(actionsEl);
+          m.metadata.actions.forEach(a => renderActionComponent(a.type, a.data, actionsEl));
+        }
+      });
     }
   } catch(e) { console.error('History load fail', e); }
 }

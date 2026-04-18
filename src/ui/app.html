@@ -690,13 +690,13 @@ $('chat-form').addEventListener('submit', async (e) => {
   const icon = document.createElement('span'); icon.className = 'text-lg mt-0.5'; icon.textContent = '🤖';
   const msgBody = document.createElement('div'); msgBody.className = 'flex-1 min-w-0';
   const statusEl = document.createElement('div'); statusEl.className = 'action-status hidden mb-1';
-  const chatEl = document.createElement('div'); chatEl.className = 'chat-text prose prose-invert prose-sm max-w-none';
   const actionsEl = document.createElement('div'); actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
-  msgBody.append(statusEl, chatEl, actionsEl);
+  const chatEl = document.createElement('div'); chatEl.className = 'chat-text prose prose-sm prose-emerald max-w-none';
+  msgBody.append(statusEl, actionsEl, chatEl);
   msgWrap.append(icon, msgBody);
   const msgEl = addMsg('', 'agent');
   msgEl.innerHTML = ''; msgEl.appendChild(msgWrap);
-  chatEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Consulting Brain<span>.</span><span>.</span><span>.</span></span>';
+  chatEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Analyzing your finances<span>.</span><span>.</span><span>.</span></span>';
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat/stream', { method: 'POST', body: fd });

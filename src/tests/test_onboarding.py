@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.models.profile import UserProfile, PILLAR_ORDER
 from finagent.agents.onboarding import (
-    _apply_extractions, _completion_message, PILLAR_QUESTIONS, WELCOME_MSG,
+    _apply_extractions, _completion_message_fallback, PILLAR_QUESTIONS, WELCOME_MSG,
 )
 from finagent.storage.sqlite import (
     save_profile, load_profile, get_or_create_user,
@@ -60,7 +60,7 @@ class TestCompletionMessage:
             user_id=1, monthly_income=110000, monthly_expenses=62500,
             loans=[], pillars_completed=list(PILLAR_ORDER),
         )
-        msg = _completion_message(p)
+        msg = _completion_message_fallback(p)
         assert "₹1,10,000" in msg
         assert "savings rate" in msg
         assert "debt free" in msg
@@ -71,7 +71,7 @@ class TestCompletionMessage:
             pillars_completed=["income", "expenses", "assets", "goals"],
             pillars_skipped=["liabilities", "insurance"],
         )
-        msg = _completion_message(p)
+        msg = _completion_message_fallback(p)
         assert "Skipped" in msg
         assert "liabilities" in msg
 
@@ -80,7 +80,7 @@ class TestCompletionMessage:
             user_id=1, term_cover=0,
             pillars_completed=["insurance"],
         )
-        msg = _completion_message(p)
+        msg = _completion_message_fallback(p)
         assert "needs attention" in msg
 
 

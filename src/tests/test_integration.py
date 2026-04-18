@@ -17,7 +17,17 @@ def use_tmp_db(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def skip_enrichment(monkeypatch):
-    monkeypatch.setattr("finagent.main.enrich_holdings", lambda h: h)
+    monkeypatch.setattr("finagent.api.holdings.enrich_holdings", lambda h: h)
+
+
+@pytest.fixture(autouse=True)
+def mock_auth(monkeypatch):
+    monkeypatch.setattr("finagent.api.deps.get_user_id", lambda r: 1)
+    monkeypatch.setattr("finagent.api.holdings.get_user_id", lambda r: 1)
+    monkeypatch.setattr("finagent.api.chat.get_user_id", lambda r: 1)
+    monkeypatch.setattr("finagent.api.deps.require_auth", lambda r: 1)
+    monkeypatch.setattr("finagent.api.holdings.require_auth", lambda r: 1)
+    monkeypatch.setattr("finagent.api.chat.require_auth", lambda r: 1)
 
 
 @pytest.fixture

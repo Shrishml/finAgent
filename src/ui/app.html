@@ -652,7 +652,7 @@ async function loadChatHistory() {
         if (m.role !== 'user' && m.metadata && m.metadata.actions) {
           const actionsEl = document.createElement('div');
           actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
-          msgEl.appendChild(actionsEl);
+          msgEl.prepend(actionsEl);
           m.metadata.actions.forEach(a => renderActionComponent(a.type, a.data, actionsEl));
         }
       });

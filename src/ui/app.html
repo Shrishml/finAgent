@@ -692,7 +692,7 @@ $('chat-form').addEventListener('submit', async (e) => {
   const msgBody = document.createElement('div'); msgBody.className = 'flex-1 min-w-0';
   const statusEl = document.createElement('div'); statusEl.className = 'action-status hidden mb-1';
   const actionsEl = document.createElement('div'); actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
-  const chatEl = document.createElement('div'); chatEl.className = 'chat-text max-w-none';
+  const chatEl = document.createElement('div'); chatEl.className = 'chat-text max-w-none prose prose-sm prose-emerald';
   msgBody.append(statusEl, actionsEl, chatEl);
   msgWrap.append(icon, msgBody);
   const msgEl = addMsg('', 'agent');
@@ -717,7 +717,7 @@ $('chat-form').addEventListener('submit', async (e) => {
           if (m) { statusEl.classList.add('hidden'); renderActionComponent(m[1], JSON.parse(m[2]), actionsEl); }
           continue;
         }
-        full += d; chatEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
+        full += d + '\n'; chatEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }
   } catch(err) { chatEl.innerHTML = '<span class="text-red-500 font-bold uppercase text-[9px]">⚠️ Error. Try again.</span>'; }

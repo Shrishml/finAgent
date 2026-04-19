@@ -124,12 +124,15 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
 
     extractions = await extract_profile_data(query, profile)
     if not extractions:
+        log.debug("[orchestrator] extraction: no data found in message")
         return False
 
     changed = apply_extractions(profile, extractions)
     if changed:
         save_profile(profile)
         log.info(f"[orchestrator] extracted and saved: {list(extractions.keys())}")
+    else:
+        log.debug(f"[orchestrator] extraction found {list(extractions.keys())} but no changes")
 
     return changed
 
@@ -199,6 +202,9 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
 
 async def handle_query_stream(query: str, user_id: int | None = None):
     """Streaming version of the single agent loop."""
+    t0 = time.time()
+    log.debug(f"[orchestrator] stream start query={query!r} user_id={user_id}")
+
     if query == "__onboarding_init__":
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
@@ -207,16 +213,20 @@ async def handle_query_stream(query: str, user_id: int | None = None):
         from finagent.models.profile import UserProfile
         profile = UserProfile(user_id=user_id)
         save_profile(profile)
+        log.debug("[orchestrator] created new empty profile")
 
     # Continuous extraction
     profile_changed = await _maybe_extract_and_update(query, user_id, profile)
+    log.debug(f"[orchestrator] extraction done profile_changed={profile_changed} ({time.time()-t0:.1f}s)")
     await _maybe_update_snapshot(user_id, profile, profile_changed)
 
     # Route MF queries to specialized agent
     yield "[STATUS] Analyzing your question..."
     intent = await classify_intent(query)
+    log.debug(f"[orchestrator] intent={intent} ({time.time()-t0:.1f}s)")
 
     if _is_mf_query(query, intent):
+        log.debug("[orchestrator] routing to MF agent")
         holdings = load_holdings(user_id)
         if holdings:
             if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
@@ -232,6 +242,7 @@ async def handle_query_stream(query: str, user_id: int | None = None):
             return
 
     # Everything else → streaming advisor with action chaining
+    log.debug(f"[orchestrator] routing to advisor ({time.time()-t0:.1f}s)")
     async for chunk in _advisor_respond_stream(query, user_id, profile):
         yield chunk
 
@@ -296,6 +307,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
     llm = get_provider("default")
     all_clean_text = ""
+    log.debug(f"[advisor] context built: profile_hint={profile_hint!r} snapshot={'yes' if snapshot else 'no'} conv_len={len(conversation)} provider={llm.__class__.__name__}")
 
     # Round 1: stream main response, collect actions
     prompt = AGENT_PROMPT.format(
@@ -315,6 +327,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
     actions_found = list(_ACTION_RE.finditer(full_response))
     ui_components = []
+    log.debug(f"[advisor] LLM done: {len(full_response)} chars, {len(actions_found)} actions found")
 
     if not actions_found:
         all_clean_text = full_response
@@ -335,6 +348,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
             schema = entry["schema"]
             yield f"[ACTION_STATUS] {schema.get('status_message', 'Working on it')}..."
+            log.debug(f"[advisor] executing action {action_name} params={params}")
 
             try:
                 result = await entry["execute"](params, user_id, {"profile": profile_json})
@@ -374,6 +388,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
         options = [o.strip() for o in opts_match.group(1).split("|") if o.strip()]
         all_clean_text = _OPTIONS_RE.sub("", all_clean_text).strip()
         if options:
+            log.debug(f"[advisor] suggested options: {options}")
             yield f"[OPTIONS] {json.dumps(options)}"
 
     if user_id and user_id > 0:
@@ -381,6 +396,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
         if ui_components:
             meta["actions"] = ui_components
         save_message(user_id, "assistant", all_clean_text.strip(), meta)
+        log.debug(f"[advisor] saved response: {len(all_clean_text)} chars, {len(ui_components)} actions")
 
 
 def _match_fund(query: str, holdings: list) -> object | None:

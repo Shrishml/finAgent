@@ -258,7 +258,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <button onclick="toggleChat()" class="p-2 hover:bg-white/10 rounded-xl transition-all" title="Close Chat"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div id="chat-box" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar bg-gray-50/30"><div id="suggestions-area" class="py-6 space-y-8"><div class="text-center px-4"><p class="text-base font-extrabold text-gray-800 mb-2">👋 I've audited your portfolio.</p><p class="text-xs text-gray-500">Ask me anything about your funds.</p></div><div id="smart-suggestions" class="grid grid-cols-1 gap-2"></div></div></div>
-      <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><input type="text" id="chat-input" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
+      <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><textarea id="chat-input" rows="1" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none overflow-hidden" style="max-height:120px" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
     </div>
   </div>
 </div>
@@ -660,11 +660,12 @@ async function loadChatHistory() {
   } catch(e) { console.error('History load fail', e); }
 }
 
+$('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('chat-form').dispatchEvent(new Event('submit')); } });
 $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   if (isDemo) { addMsg(q, 'user'); addMsg('Please **Sign In** to chat with AI about your own portfolio. Demo mode is view-only.', 'agent'); $('chat-input').value = ''; return; }
-  $('chat-input').value = ''; if (!q.startsWith('__')) addMsg(q, 'user');
+  $('chat-input').value = ''; $('chat-input').style.height = 'auto'; if (!q.startsWith('__')) addMsg(q, 'user');
   trackEvent('chat_message', { query_length: q.length });
   // Create structured message with 3 zones: status, chat text, action results
   const msgWrap = document.createElement('div'); msgWrap.className = 'flex gap-2 items-start';

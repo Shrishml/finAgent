@@ -14,7 +14,7 @@ from finagent.config import get_config
 _LOG_DIR = Path(__file__).parent.parent / "data"
 _LOG_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     handlers=[
         logging.FileHandler(_LOG_DIR / "finagent.log"),
@@ -22,6 +22,7 @@ logging.basicConfig(
     ],
 )
 log = logging.getLogger("finagent")
+log.setLevel(logging.DEBUG)
 
 app = FastAPI(title="FinAgent", version="0.1.0")
 

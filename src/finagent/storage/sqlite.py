@@ -435,8 +435,8 @@ def load_conversation(user_id: int, limit: int = 20) -> list[dict]:
 
 
 def clear_snapshots(user_id: int):
-    with _connect() as conn:
-        conn.execute("DELETE FROM user_snapshots WHERE user_id = ?", (user_id,))
+    conn = _get_conn()
+    conn.execute("DELETE FROM user_snapshots WHERE user_id = ?", (user_id,))
 
 
 def clear_conversation(user_id: int):

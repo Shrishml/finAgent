@@ -713,7 +713,7 @@ $('chat-form').addEventListener('submit', async (e) => {
           } catch(e) {}
           continue;
         }
-        full += d + '\n'; chatEl.innerHTML = md(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
+        full += d + '\n'; chatEl.innerHTML = md(full.replace(/\[OPTIONS:.*?\]/g, '')); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }
   } catch(err) { chatEl.innerHTML = '<span class="text-red-500 font-bold uppercase text-[9px]">⚠️ Error. Try again.</span>'; }

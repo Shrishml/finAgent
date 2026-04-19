@@ -697,6 +697,22 @@ $('chat-form').addEventListener('submit', async (e) => {
           if (m) { statusEl.classList.add('hidden'); renderActionComponent(m[1], JSON.parse(m[2]), actionsEl); }
           continue;
         }
+        if (d.startsWith('[OPTIONS] ')) {
+          try {
+            const opts = JSON.parse(d.slice(10));
+            const chipWrap = document.createElement('div');
+            chipWrap.className = 'flex flex-wrap gap-2 mt-3';
+            opts.forEach(o => {
+              const btn = document.createElement('button');
+              btn.className = 'text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors';
+              btn.textContent = o;
+              btn.onclick = () => { chipWrap.remove(); sendChat(o); };
+              chipWrap.appendChild(btn);
+            });
+            msgBody.appendChild(chipWrap);
+          } catch(e) {}
+          continue;
+        }
         full += d + '\n'; chatEl.innerHTML = md(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }

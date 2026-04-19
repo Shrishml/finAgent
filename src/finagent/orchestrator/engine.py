@@ -83,10 +83,15 @@ RULES:
 - Use Indian number formatting (₹1,10,000)
 - Be specific and actionable based on their actual data
 - Reference their goals, income, and situation naturally
-- Keep responses concise — 3-6 sentences
+- For short answers (yes/no, quick tips): keep it to 2-3 sentences
+- For detailed advice or analysis: use markdown formatting — **bold** for key points, bullet lists for multiple items, ### subheadings to separate sections. Make it scannable, not a wall of text
 - If data is missing for a good answer, mention what would help (but don't block on it)
 - When the user shares financial data (income, expenses, goals, etc.), acknowledge it naturally — extraction happens automatically
-- NEVER say "your onboarding is complete" or reference any onboarding process{tools_prompt}"""
+- NEVER say "your onboarding is complete" or reference any onboarding process
+- At the end of your response, suggest 2-3 natural follow-up options the user might want. Format: [OPTIONS: option1 | option2 | option3]. Keep each option under 8 words. Skip for simple yes/no acknowledgments.{tools_prompt}"""
+
+# Regex to extract [OPTIONS: ...] from LLM output
+_OPTIONS_RE = re.compile(r'\[OPTIONS:\s*(.+?)\]')
 
 
 def _parse_action_params(params_str: str) -> dict:
@@ -362,6 +367,14 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
             followup = await llm.complete(followup_prompt)
             yield f"\n\n{followup}"
             all_clean_text += " " + followup
+
+    # Extract and emit suggested options
+    opts_match = _OPTIONS_RE.search(all_clean_text)
+    if opts_match:
+        options = [o.strip() for o in opts_match.group(1).split("|") if o.strip()]
+        all_clean_text = _OPTIONS_RE.sub("", all_clean_text).strip()
+        if options:
+            yield f"[OPTIONS] {json.dumps(options)}"
 
     if user_id and user_id > 0:
         meta = {"type": "advisor"}

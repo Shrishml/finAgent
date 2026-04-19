@@ -52,7 +52,7 @@ Portfolio Analysis:
 
 User Question: {query}
 
-Respond in clear, actionable language. Show specific numbers. If suggesting changes, explain why."""
+Respond in clear, actionable language. Show specific numbers. If suggesting changes, explain why. Use **bold** for key figures, bullet lists for comparisons, and ### headings if covering multiple topics."""
 
     async def research(self, query: str, constraints: dict | None = None) -> str:
         llm = get_provider("reasoning")

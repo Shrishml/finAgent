@@ -1,11 +1,11 @@
 #!/bin/bash
-# FinBestie update: pull latest + ensure env + restart
+# Arth update: pull latest + ensure env + restart
 # Usage: ./update.sh
 set -e
 
 APP_DIR="$HOME/finAgent"
 SRC_DIR="$APP_DIR/src"
-LOG="/tmp/finbestie.log"
+LOG="/tmp/arth.log"
 
 cd "$APP_DIR"
 
@@ -48,13 +48,13 @@ echo "📦 Installing dependencies..."
 pip install -e . -q 2>&1
 
 # 6. Start app
-echo "🚀 Starting FinBestie..."
+echo "🚀 Starting Arth..."
 nohup python -m finagent.main > "$LOG" 2>&1 &
 sleep 3
 
 # 7. Verify
 if curl -sf http://localhost:8000/auth/me > /dev/null 2>&1; then
-    echo "✅ FinBestie is running at http://localhost:8000"
+    echo "✅ Arth is running at http://localhost:8000"
 else
     echo "⚠️  Startup may have failed. Logs:"
     tail -10 "$LOG"

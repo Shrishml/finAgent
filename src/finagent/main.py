@@ -111,19 +111,19 @@ async def auth_me(request: Request):
 @app.get("/", response_class=HTMLResponse)
 async def landing():
     f = _UI_DIR / "index.html"
-    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
 @app.get("/app", response_class=HTMLResponse)
 @app.get("/demo", response_class=HTMLResponse)
 async def dashboard():
     f = _UI_DIR / "app.html"
-    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
 
 @app.get("/about", response_class=HTMLResponse)
 async def about():
     f = _UI_DIR / "about.html"
-    return f.read_text() if f.exists() else "<h1>About FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>About Arth</h1>"
 
 @app.get("/changelog")
 async def changelog():

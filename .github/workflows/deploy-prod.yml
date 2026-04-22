@@ -1,0 +1,17 @@
+name: Deploy to Prod
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to askarth.com
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.BETA_HOST }}
+          username: ${{ secrets.BETA_USER }}
+          key: ${{ secrets.BETA_SSH_KEY }}
+          script: bash /home/azureuser/finAgent/scripts/update-prod.sh

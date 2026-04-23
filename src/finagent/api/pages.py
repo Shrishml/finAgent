@@ -30,6 +30,11 @@ async def help_cas():
     f = _UI_DIR / "help-cas.html"
     return f.read_text() if f.exists() else "<h1>CAS Help</h1>"
 
+@router.get("/mockup-profile", response_class=HTMLResponse)
+async def mockup_profile():
+    f = _UI_DIR / "mockup-profile.html"
+    return f.read_text() if f.exists() else "<h1>Mockup not found</h1>"
+
 @router.get("/changelog")
 async def changelog():
     f = _UI_DIR / "changelog.json"

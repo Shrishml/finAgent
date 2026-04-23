@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinBestie</title>
+<title>Arth</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230D7377'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='52' font-weight='700' fill='white' font-family='sans-serif'%3Eअ%3C/text%3E%3Cpolyline points='22,72 40,58 55,64 78,32' stroke='%23D4A843' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='78' cy='32' r='4' fill='%23D4A843'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/theme.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -15,16 +16,21 @@
 <!-- Header -->
 <header class="bg-white border-b px-3 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
   <div class="flex items-center gap-3">
-    <span class="text-2xl">💰</span>
+    <svg class="shrink-0" width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="#0D7377"/>
+      <text x="50" y="62" text-anchor="middle" font-size="52" font-weight="700" fill="white" font-family="sans-serif">अ</text>
+      <polyline points="22,72 40,58 55,64 78,32" stroke="#D4A843" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="78" cy="32" r="4" fill="#D4A843"/>
+    </svg>
     <div>
-      <h1 class="text-lg font-bold text-gray-800">FinBestie</h1>
-      <p class="text-[10px] text-gray-400 -mt-0.5">Your money, your bestie, your rules.</p>
+      <h1 class="text-lg font-bold text-gray-800">Arth</h1>
+      <p class="text-[10px] text-gray-400 -mt-0.5">अर्थमित्र — Your Wealth Companion</p>
     </div>
   </div>
   <div class="flex items-center gap-3">
     <a href="/about" class="text-sm font-medium text-gray-500 hover:text-gray-900">About</a>
     <span id="status" class="text-sm text-gray-400 hidden"></span>
-    <button id="chat-toggle" class="bg-emerald-600 text-white rounded-full w-9 h-9 flex items-center justify-center text-base hover:bg-emerald-700 shadow-lg hidden" title="Ask your bestie">💬</button>
+    <button id="chat-toggle" class="bg-emerald-600 text-white rounded-full w-9 h-9 flex items-center justify-center text-base hover:bg-emerald-700 shadow-lg hidden" title="Ask Arth">💬</button>
     <!-- User avatar / Sign in -->
     <div id="user-menu" class="relative">
       <div id="signin-btn" class="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 rounded-full ring-2 ring-transparent hover:ring-gray-200">

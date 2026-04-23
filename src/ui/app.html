@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-<title>FinBestie</title>
+<title>Arth</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230D7377'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='52' font-weight='700' fill='white' font-family='sans-serif'%3Eअ%3C/text%3E%3Cpolyline points='22,72 40,58 55,64 78,32' stroke='%23D4A843' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='78' cy='32' r='4' fill='%23D4A843'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/theme.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -33,9 +34,14 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
 
 <header class="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between z-30 shrink-0 w-full">
   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-    <span class="text-xl sm:text-2xl">💰</span>
+    <svg onclick="location.href='/'" class="cursor-pointer shrink-0" width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="#0D7377"/>
+      <text x="50" y="62" text-anchor="middle" font-size="52" font-weight="700" fill="white" font-family="sans-serif">अ</text>
+      <polyline points="22,72 40,58 55,64 78,32" stroke="#D4A843" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="78" cy="32" r="4" fill="#D4A843"/>
+    </svg>
     <div onclick="location.href='/'" class="cursor-pointer">
-      <h1 class="text-base sm:text-lg font-bold text-gray-800 leading-tight">FinBestie</h1>
+      <h1 class="text-base sm:text-lg font-bold text-gray-800 leading-tight">Arth</h1>
       <p class="hidden sm:block text-[9px] sm:text-[10px] text-gray-400 -mt-0.5 font-medium">Your money, your rules.</p>
     </div>
   </div>

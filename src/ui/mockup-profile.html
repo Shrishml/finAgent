@@ -135,6 +135,36 @@
   <!-- Accordion Sections -->
   <div class="space-y-3" id="profile-sections">
 
+    <!-- Section: Family (MOVED TO TOP) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('family')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-lg">👨‍👩‍👧</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Family</h4><p class="text-[10px] text-gray-400">Dependents, spouse, parents</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-family" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-family" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: insurance needs calculation, 80D for parents, dependent planning</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Married couples can split investments for lower tax</p>
+            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
+          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Unlocks extra ₹50k 80D deduction if you pay their health premium</p>
+            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
+          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">No coverage = major financial risk; one hospitalization can wipe out savings</p>
+            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
     <!-- Section: Income (FILLED) -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
       <button onclick="toggleSection('income')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
@@ -149,10 +179,10 @@
       </button>
       <div id="section-income" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><input type="text" value="₹1,20,000" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><input type="text" value="₹2,40,000" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><input type="text" value="₹0" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><input type="text" placeholder="Not specified" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Used to calculate savings rate and tax bracket</p><input type="text" value="₹1,20,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Lump sum investing vs SIP decision depends on this</p><input type="text" value="₹2,40,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — affects tax slab and investable surplus</p><input type="text" value="₹0" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Dual income changes emergency fund needs and tax planning strategy</p><input type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -173,11 +203,11 @@
       <div id="section-expenses" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: savings rate analysis, budget optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent / EMI</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><input type="text" placeholder="₹ per year" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent / EMI</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">If renting, you may be eligible for HRA tax exemption</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Fixed costs that determine your minimum emergency fund</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Recurring costs that eat into investable surplus silently</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Discretionary spend — first place to optimize if savings rate is low</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Lumpy expenses need separate liquid fund allocation, not SIP money</p><input type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -198,14 +228,14 @@
       <div id="section-investments" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: true net worth, asset allocation gaps, retirement readiness</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><input type="text" placeholder="₹ (employee + employer)" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fixed Deposits (total)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Gold (SGBs, physical, ETFs)</label><input type="text" placeholder="₹ approx value" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Real Estate (market value)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Stocks (Demat value)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your largest debt asset — critical for retirement and asset allocation math</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share — already saving 24% of basic for retirement</p><input type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Tax-free returns at 7.1% — counts toward 80C limit of ₹1.5L</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Extra ₹50k deduction under 80CCD(1B) — often missed tax saving</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fixed Deposits (total)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Interest is fully taxable — may be better off in debt MFs after 3 years</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Gold (SGBs, physical, ETFs)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">SGBs give 2.5% interest + capital gains tax-free at maturity</p><input type="text" placeholder="₹ approx value" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Real Estate (market value)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Illiquid but large — skews your real asset allocation heavily</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Stocks (Demat value)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Direct equity + MF equity = total equity exposure for risk assessment</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -226,11 +256,11 @@
       <div id="section-loans" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: debt-to-income ratio, prepayment advice, loan vs invest analysis</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Outstanding</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan EMI</label><input type="text" placeholder="₹/month" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Rate %</label><input type="text" placeholder="e.g. 8.5" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Car / Personal Loan EMI</label><input type="text" placeholder="₹/month" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Credit Card Outstanding</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Outstanding</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Prepaying at 8.5% vs investing at 12% — Arth runs the exact math</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan EMI</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">EMI-to-income ratio above 40% is a red flag for lenders and your budget</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Rate %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Above 8.5%? You may benefit from refinancing or balance transfer</p><input type="text" placeholder="e.g. 8.5" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Car / Personal Loan EMI</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">High-interest debt (12-18%) should be cleared before investing</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Credit Card Outstanding</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">At 36-42% APR, this is the most expensive debt — clear first, invest later</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -251,10 +281,10 @@
       <div id="section-insurance" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: coverage gap analysis, premium optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><input type="text" placeholder="₹ sum assured" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><input type="text" placeholder="₹/year" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><input type="text" placeholder="₹ sum insured" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><input type="text" placeholder="₹/year" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rule of thumb: 10-15x annual income. Arth calculates your exact need</p><input type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps check if you're overpaying — compare against market rates</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹5L is bare minimum in metros — one surgery can cost ₹3-8L</p><input type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Deductible under 80D — up to ₹25k self + ₹50k for senior parents</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <p class="text-[10px] text-gray-400 mt-3">Have ULIP/endowment policies? Tell Arth in chat — we'll analyze surrender value vs continuing.</p>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
@@ -276,44 +306,14 @@
       <div id="section-tax" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: old vs new regime comparison, tax-saving recommendations</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label>
-            <select class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wrong regime can cost you ₹30-80k/year — Arth compares both for you</p>
+            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><input type="text" placeholder="₹" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><input type="text" placeholder="₹/year (max 1.5L)" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><input type="text" placeholder="₹/year" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-        </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
-      </div>
-    </div>
-
-    <!-- Section: Family (EMPTY) -->
-    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <button onclick="toggleSection('family')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
-        <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-lg">👨‍👩‍👧</span>
-          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Family</h4><p class="text-[10px] text-gray-400">Dependents, spouse, parents</p></div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </div>
-      </button>
-      <div id="section-family" class="hidden border-t px-5 py-5 bg-gray-50/50">
-        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: insurance needs calculation, 80D for parents, dependent planning</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label>
-            <select class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
-          </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><input type="number" placeholder="0" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label>
-            <select class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
-          </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label>
-            <select class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
-          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA exemption is calculated as % of basic — higher basic = more tax saving</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Only useful in old regime — exempt amount = min(HRA, rent-10%basic, 50%/40% basic)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Needed for HRA calculation — even paying rent to parents counts</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹1.5L limit — EPF counts here too, so you may already be maxed out</p><input type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹25k self + ₹50k senior parents = ₹75k deduction most people miss</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>

@@ -241,28 +241,42 @@
       </div>
     </div>
 
-    <!-- Section: Loans (EMPTY) -->
+    <!-- Section: Loans (CARD-BASED) -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
       <button onclick="toggleSection('loans')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
         <div class="flex items-center gap-3">
           <span class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-lg">🏦</span>
-          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Loans & Liabilities</h4><p class="text-[10px] text-gray-400">Home loan, car loan, credit cards, personal</p></div>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Loans & Liabilities</h4><p class="text-[10px] text-gray-400">Home, car, personal, education, credit cards</p></div>
         </div>
         <div class="flex items-center gap-3">
           <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-loans" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
       </button>
       <div id="section-loans" class="hidden border-t px-5 py-5 bg-gray-50/50">
-        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: debt-to-income ratio, prepayment advice, loan vs invest analysis</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Outstanding</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Prepaying at 8.5% vs investing at 12% — Arth runs the exact math</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan EMI</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">EMI-to-income ratio above 40% is a red flag for lenders and your budget</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Home Loan Rate %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Above 8.5%? You may benefit from refinancing or balance transfer</p><input type="text" placeholder="e.g. 8.5" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Car / Personal Loan EMI</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">High-interest debt (12-18%) should be cleared before investing</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Credit Card Outstanding</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">At 36-42% APR, this is the most expensive debt — clear first, invest later</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: debt-to-income ratio, prepayment vs invest analysis, refinance alerts</p>
+
+        <!-- Loan Card 1 (example filled) -->
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-lg">🏠</span>
+            <select class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option selected>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Above 9%? Consider refinancing</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Determines debt-to-income ratio</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">Remaining tenure for prepay math</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+
+        <!-- Add Loan Button -->
+        <button onclick="addLoanCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another loan</button>
+
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Loans</button></div>
       </div>
     </div>
 
@@ -360,6 +374,27 @@ function toggleSection(id) {
   const chevron = document.getElementById('chevron-'+id);
   section.classList.toggle('hidden');
   if (chevron) chevron.style.transform = section.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+function addLoanCard() {
+  const btn = document.querySelector('#section-loans button[onclick="addLoanCard()"]');
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  card.innerHTML = `
+    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
+    <div class="flex items-center gap-3 mb-3">
+      <span class="text-lg">📋</span>
+      <select class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option selected>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Above 9%? Consider refinancing</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Determines debt-to-income ratio</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">Remaining tenure for prepay math</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+    </div>`;
+  btn.parentElement.insertBefore(card, btn);
 }
 </script>
 </body>

@@ -319,12 +319,13 @@
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
               <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
             </div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label><p class="text-[9px] text-gray-400 mb-0.5">City or area — affects valuation</p><input type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
-              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+              <select onchange="updateRealEstateCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
             </div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div class="re-rental" style="display:none"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">Monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
               <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
             </div>
@@ -565,6 +566,15 @@ function updateLoanCard(select) {
   card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
   card.querySelector('.rate-tip').textContent = meta.tip;
 }
+function updateGoldCard(select) {
+  const mat = select.closest('.bg-white').querySelector('.gold-maturity');
+  mat.style.display = select.value === 'Sovereign Gold Bond (SGB)' ? '' : 'none';
+}
+function updateRealEstateCard(select) {
+  const rental = select.closest('.bg-white').querySelector('.re-rental');
+  rental.style.display = select.value === 'Rented out' ? '' : 'none';
+}
+
 const CARD_TEMPLATES = {
   loan: {
     fields: (meta) => `
@@ -599,12 +609,13 @@ const CARD_TEMPLATES = {
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
           <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
         </div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label><p class="text-[9px] text-gray-400 mb-0.5">City or area — affects valuation</p><input type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
-          <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+          <select onchange="updateRealEstateCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
         </div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div class="re-rental" style="display:none"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">Monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
           <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
         </div>
@@ -632,7 +643,7 @@ const CARD_TEMPLATES = {
 };
 
 function addCard(type, sectionId) {
-  const btn = document.querySelector(`#${sectionId} button[onclick*="addCard"]`);
+  const btn = document.querySelector(`#${sectionId} button.border-dashed`);
   const card = document.createElement('div');
   card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
   const tpl = CARD_TEMPLATES[type];

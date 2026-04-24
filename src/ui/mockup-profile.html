@@ -150,14 +150,14 @@
       <div id="section-family" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: insurance needs calculation, 80D for parents, dependent planning</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Married couples can split investments for lower tax</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax and insurance planning</p>
             <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
           </div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Unlocks extra ₹50k 80D deduction if you pay their health premium</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax deduction and insurance analysis</p>
             <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">No coverage = major financial risk; one hospitalization can wipe out savings</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth checks if your family has coverage gaps</p>
             <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
           </div>
         </div>
@@ -180,9 +180,9 @@
       <div id="section-income" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Used to calculate savings rate and tax bracket</p><input type="text" value="₹1,20,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Lump sum investing vs SIP decision depends on this</p><input type="text" value="₹2,40,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — affects tax slab and investable surplus</p><input type="text" value="₹0" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Dual income changes emergency fund needs and tax planning strategy</p><input type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total annual bonus before tax</p><input type="text" value="₹2,40,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — any regular non-salary income</p><input type="text" value="₹0" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps Arth calculate household savings capacity</p><input type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -204,40 +204,214 @@
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: savings rate analysis, budget optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Rent</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Pure housing cost — if you have a home loan instead, skip this (it's in Loans)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Fixed costs that determine your minimum emergency fund</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Recurring costs that eat into investable surplus silently</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Discretionary spend — first place to optimize if savings rate is low</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Lumpy expenses need separate liquid fund allocation, not SIP money</p><input type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly average for household essentials</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wifi, phone, OTT, electricity — all recurring bills</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Restaurants, movies, outings — approximate monthly</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Yearly total — vacations, school fees, festivals</p><input type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
-    <!-- Section: Existing Investments (EMPTY) -->
+    <!-- ASSET CLASS SECTIONS START -->
+
+    <!-- Section: EPF & PPF -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <button onclick="toggleSection('investments')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+      <button onclick="toggleSection('epf-ppf')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
         <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-lg">📦</span>
-          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Other Investments</h4><p class="text-[10px] text-gray-400">EPF, PPF, NPS, FDs, Gold, Real Estate</p></div>
+          <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-lg">🏦</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">EPF & PPF</h4><p class="text-[10px] text-gray-400">Provident fund balances and contributions</p></div>
         </div>
         <div class="flex items-center gap-3">
           <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
           <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
       </button>
-      <div id="section-investments" class="hidden border-t px-5 py-5 bg-gray-50/50">
-        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: true net worth, asset allocation gaps, retirement readiness</p>
+      <div id="section-epf-ppf" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: retirement readiness score, 80C utilization check</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload EPFO passbook PDF</button>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your largest debt asset — critical for retirement and asset allocation math</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share — already saving 24% of basic for retirement</p><input type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Tax-free returns at 7.1% — counts toward 80C limit of ₹1.5L</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Extra ₹50k deduction under 80CCD(1B) — often missed tax saving</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fixed Deposits (total)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Interest is fully taxable — may be better off in debt MFs after 3 years</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Gold (SGBs, physical, ETFs)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">SGBs give 2.5% interest + capital gains tax-free at maturity</p><input type="text" placeholder="₹ approx value" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Real Estate (market value)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Illiquid but large — skews your real asset allocation heavily</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Stocks (Demat value)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Direct equity + MF equity = total equity exposure for risk assessment</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Check your EPFO passbook or payslip</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share from your payslip</p><input type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from your PPF passbook</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Annual Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How much you put in this year (max ₹1.5L)</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: NPS -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('nps')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-lg">📊</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">NPS</h4><p class="text-[10px] text-gray-400">National Pension System balance and allocation</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-nps" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: 80CCD(1B) deduction check, retirement corpus projection</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload NPS CRA statement</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from NPS CRA statement</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your monthly NPS contribution amount</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Equity Allocation %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">% in equity (E) fund — check your CRA statement</p><input type="text" placeholder="e.g. 75%" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tier</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Tier I (locked till 60) or Tier II (flexible)</p>
+            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Tier I only</option><option>Tier I + Tier II</option></select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Fixed Deposits (CARD-BASED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('fds')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-lg">💵</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Fixed Deposits</h4><p class="text-[10px] text-gray-400">Bank FDs, tax-saver FDs, corporate deposits</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-fds" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: FD laddering analysis, tax-efficient alternatives</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload FD certificates / bank statement</button>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+            </div>
+          </div>
+        </div>
+        <button onclick="addFDCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another FD</button>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All FDs</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Real Estate (CARD-BASED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('realestate')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-lg">🏠</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Real Estate</h4><p class="text-[10px] text-gray-400">Flats, plots, houses — owned properties</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-realestate" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: true net worth, asset allocation, rental yield analysis</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
+            </div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+            </div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+            </div>
+          </div>
+        </div>
+        <button onclick="addRealEstateCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another property</button>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Properties</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Gold -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('gold')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-lg">🪙</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Gold</h4><p class="text-[10px] text-gray-400">SGBs, physical gold, Gold ETFs</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-gold" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: gold allocation %, SGB maturity tracking</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+            </div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
+        </div>
+        <button onclick="addGoldCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another gold holding</button>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Gold</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Stocks & Demat -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('stocks')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-lg">📈</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Stocks & Demat</h4><p class="text-[10px] text-gray-400">Direct equity holdings outside mutual funds</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-stocks" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: total equity exposure, LTCG/STCG estimation</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload demat holding statement</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Demat Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current value from Zerodha, Groww etc.</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Broker</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Which platform you use</p><input type="text" placeholder="e.g. Zerodha" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: ESOP / RSU -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('esop')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center text-lg">🏢</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">ESOP / RSU</h4><p class="text-[10px] text-gray-400">Employee stock options and restricted stock</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-esop" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: concentration risk check, vesting timeline, tax on exercise</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
+        </div>
+        <button onclick="addESOPCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another ESOP/RSU</button>
+        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All ESOPs</button></div>
       </div>
     </div>
 
@@ -261,15 +435,15 @@
           <button class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
           <div class="flex items-center gap-3 mb-3">
             <span class="text-lg">🏠</span>
-            <select class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option selected>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+            <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option selected>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Above 9%? Consider refinancing</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Determines debt-to-income ratio</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">Current rate from your bank statement</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">Remaining tenure for prepay math</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
           </div>
         </div>
 
@@ -295,10 +469,10 @@
       <div id="section-insurance" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: coverage gap analysis, premium optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rule of thumb: 10-15x annual income. Arth calculates your exact need</p><input type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps check if you're overpaying — compare against market rates</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹5L is bare minimum in metros — one surgery can cost ₹3-8L</p><input type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Deductible under 80D — up to ₹25k self + ₹50k for senior parents</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum assured from your policy document</p><input type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum insured from your policy</p><input type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <p class="text-[10px] text-gray-400 mt-3">Have ULIP/endowment policies? Tell Arth in chat — we'll analyze surrender value vs continuing.</p>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
@@ -320,14 +494,14 @@
       <div id="section-tax" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: old vs new regime comparison, tax-saving recommendations</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wrong regime can cost you ₹30-80k/year — Arth compares both for you</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Select current regime — Arth will compare both</p>
             <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA exemption is calculated as % of basic — higher basic = more tax saving</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Only useful in old regime — exempt amount = min(HRA, rent-10%basic, 50%/40% basic)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Needed for HRA calculation — even paying rent to parents counts</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹1.5L limit — EPF counts here too, so you may already be maxed out</p><input type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">₹25k self + ₹50k senior parents = ₹75k deduction most people miss</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">From your payslip — usually 40-50% of CTC</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA component from your payslip</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly rent — needed for HRA exemption calc</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total 80C investments this year (ELSS, PPF, LIC, EPF)</p><input type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Health insurance premiums paid this year</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
@@ -376,6 +550,20 @@ function toggleSection(id) {
   if (chevron) chevron.style.transform = section.classList.contains('hidden') ? '' : 'rotate(180deg)';
 }
 
+const LOAN_META = {
+  'Home Loan':        { icon: '🏠', tip: 'Current rate from your bank statement' },
+  'Car Loan':         { icon: '🚗', tip: 'Current rate from your bank statement' },
+  'Personal Loan':    { icon: '💳', tip: 'Check your loan agreement or bank app' },
+  'Education Loan':   { icon: '🎓', tip: 'Check your loan agreement or bank app' },
+  'Credit Card Debt': { icon: '💳', tip: 'Check your card statement for APR' },
+  'Other':            { icon: '📋', tip: 'Annual interest rate on this debt' },
+};
+function updateLoanCard(select) {
+  const card = select.closest('.bg-white');
+  const meta = LOAN_META[select.value] || LOAN_META['Other'];
+  card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
+  card.querySelector('.rate-tip').textContent = meta.tip;
+}
 function addLoanCard() {
   const btn = document.querySelector('#section-loans button[onclick="addLoanCard()"]');
   const card = document.createElement('div');
@@ -383,16 +571,84 @@ function addLoanCard() {
   card.innerHTML = `
     <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
     <div class="flex items-center gap-3 mb-3">
-      <span class="text-lg">📋</span>
-      <select class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option selected>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+      <span class="text-lg">💳</span>
+      <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option selected>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
       <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
       <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Above 9%? Consider refinancing</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Determines debt-to-income ratio</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">Check your loan agreement or bank app</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
       <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">Remaining tenure for prepay math</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+    </div>`;
+  btn.parentElement.insertBefore(card, btn);
+}
+function addFDCard() {
+  const btn = document.querySelector('#section-fds button[onclick="addFDCard()"]');
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  card.innerHTML = `
+    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
+        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+      </div>
+    </div>`;
+  btn.parentElement.insertBefore(card, btn);
+}
+function addRealEstateCard() {
+  const btn = document.querySelector('#section-realestate button[onclick="addRealEstateCard()"]');
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  card.innerHTML = `
+    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
+        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
+      </div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
+        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+      </div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
+        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+      </div>
+    </div>`;
+  btn.parentElement.insertBefore(card, btn);
+}
+function addGoldCard() {
+  const btn = document.querySelector('#section-gold button[onclick="addGoldCard()"]');
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  card.innerHTML = `
+    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
+        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+      </div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+    </div>`;
+  btn.parentElement.insertBefore(card, btn);
+}
+function addESOPCard() {
+  const btn = document.querySelector('#section-esop button[onclick="addESOPCard()"]');
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  card.innerHTML = `
+    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
     </div>`;
   btn.parentElement.insertBefore(card, btn);
 }

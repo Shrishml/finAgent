@@ -23,7 +23,7 @@ SCHEMA = {
                            "fd: bank, amount, rate, maturity, tax_saver. "
                            "realestate: type, location, current_value, purchase_price, usage, linked_loan. "
                            "gold: type, value. esop: company, vested, unvested, next_vesting. "
-                           "loan: loan_type, outstanding, rate, emi. "
+                           "loan: loan_type, principal, emi, start_date, tenure. "
                            "epf_ppf: epf_balance, ppf_balance, epf_monthly. "
                            "nps: nps_balance, nps_monthly. stocks: demat_value. "
                            "insurance: type, cover, premium. tax: regime."
@@ -41,7 +41,7 @@ REQUIRED_FIELDS = {
     "realestate": {"type", "location", "current_value"},
     "gold": {"type", "value"},
     "esop": {"company", "vested"},
-    "loan": {"loan_type", "outstanding", "rate"},
+    "loan": {"loan_type", "principal", "emi"},
     "epf_ppf": {"epf_balance"},
     "nps": {"nps_balance"},
     "stocks": {"demat_value"},

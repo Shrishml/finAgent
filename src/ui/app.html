@@ -1014,9 +1014,10 @@ const CHAT_CARD_TEMPLATES = {
   loan: { title: '🏦 Loan', fields: () => `
     <div class="grid grid-cols-2 gap-2">
       <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="loan_type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option></select></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Outstanding</label><input data-field="outstanding" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Interest Rate</label><input data-field="rate" type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Principal</label><input data-field="principal" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
       <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly EMI</label><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Start Date</label><input data-field="start_date" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tenure (years)</label><input data-field="tenure" type="text" placeholder="e.g. 20" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
     </div>` },
   epf_ppf: { title: '🏛️ EPF & PPF', fields: () => `
     <div class="grid grid-cols-2 gap-2">
@@ -1758,6 +1759,7 @@ const CARD_TEMPLATES = {
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">${meta?.rateTip||'Check your loan agreement or bank app'}</p><input data-field="rate" type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input data-field="start_date" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tenure (years)</label><p class="text-[9px] text-gray-400 mb-0.5">Total loan duration</p><input data-field="tenure" type="text" placeholder="e.g. 20" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input data-field="end_date" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
       </div>`,
   },

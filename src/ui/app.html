@@ -652,12 +652,23 @@ function renderProfileCard(d, container) {
   if (!tpl) return;
   const wrap = document.createElement('div');
   wrap.className = 'bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm';
-  let cardsHtml = '';
-  for (let i = 0; i < (d.count || 1); i++) {
-    cardsHtml += `<div class="profile-card-item bg-white rounded-xl border p-3 mb-2"><div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)} ${d.count > 1 ? '#'+(i+1) : ''}</span>${d.count > 1 ? '<button onclick="this.closest(\'.profile-card-item\').remove()" class="text-gray-300 hover:text-red-500 text-xs">✕</button>' : ''}</div>${tpl.fields()}</div>`;
-  }
-  wrap.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📝 Fill in your details</h4>${cardsHtml}<button onclick="submitProfileCards(this, '${esc(d.card_type)}')" class="w-full bg-gray-900 text-white py-2 rounded-xl text-xs font-bold mt-2 hover:bg-gray-800">Save to Profile</button>`;
+  wrap.dataset.cardType = d.card_type;
+  wrap.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📝 Fill in your details</h4>
+    <div class="profile-cards-list"><div class="profile-card-item bg-white rounded-xl border p-3 mb-2"><div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)}</span></div>${tpl.fields()}</div></div>
+    <button onclick="addChatCard(this)" class="w-full border-2 border-dashed border-amber-300 rounded-xl py-2 text-xs font-bold text-amber-600 hover:border-amber-500 mb-2">+ Add another</button>
+    <button onclick="submitProfileCards(this, '${esc(d.card_type)}')" class="w-full bg-gray-900 text-white py-2 rounded-xl text-xs font-bold hover:bg-gray-800">Save to Profile</button>`;
   container.appendChild(wrap);
+}
+function addChatCard(btn) {
+  const wrap = btn.closest('.rounded-2xl');
+  const type = wrap.dataset.cardType;
+  const tpl = CHAT_CARD_TEMPLATES[type];
+  if (!tpl) return;
+  const list = wrap.querySelector('.profile-cards-list');
+  const card = document.createElement('div');
+  card.className = 'profile-card-item bg-white rounded-xl border p-3 mb-2';
+  card.innerHTML = `<div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)}</span><button onclick="this.closest('.profile-card-item').remove()" class="text-gray-300 hover:text-red-500 text-xs">✕</button></div>${tpl.fields()}`;
+  list.appendChild(card);
 }
 
 function submitProfileCards(btn, cardType) {

@@ -14,11 +14,6 @@ SCHEMA = {
             "required": True,
             "description": "Type of card to show. One of: fd, realestate, gold, esop, loan"
         },
-        "count": {
-            "type": "integer",
-            "required": False,
-            "description": "Number of cards to show (default 1)"
-        },
         "prefill": {
             "type": "object",
             "required": False,
@@ -37,17 +32,16 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if card_type not in VALID_TYPES:
         return {"error": f"Unknown card type '{card_type}'. Use one of: {', '.join(sorted(VALID_TYPES))}"}
 
-    count = min(int(params.get("count", 1)), 5)  # cap at 5
+    count = 1
     prefill = params.get("prefill", {})
 
-    log.info(f"[action] collect_profile_data: type={card_type}, count={count}")
+    log.info(f"[action] collect_profile_data: type={card_type}")
 
     return {
         "message": f"Please fill in the details below and hit Save.",
         "ui_component": "profile_card",
         "ui_data": {
             "card_type": card_type,
-            "count": count,
             "prefill": prefill
         }
     }

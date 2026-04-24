@@ -353,10 +353,10 @@
           <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
-              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+              <select onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
             </div>
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
           </div>
         </div>
         <button onclick="addGoldCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another gold holding</button>
@@ -381,6 +381,7 @@
         <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload demat holding statement</button>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Demat Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current value from Zerodha, Groww etc.</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Invested Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total amount you invested (cost basis)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Broker</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Which platform you use</p><input type="text" placeholder="e.g. Zerodha" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
@@ -564,94 +565,87 @@ function updateLoanCard(select) {
   card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
   card.querySelector('.rate-tip').textContent = meta.tip;
 }
-function addLoanCard() {
-  const btn = document.querySelector('#section-loans button[onclick="addLoanCard()"]');
+const CARD_TEMPLATES = {
+  loan: {
+    fields: (meta) => `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-lg">${meta?.icon||'📋'}</span>
+        <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option${meta?.selected==='Personal Loan'?' selected':''}>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">${meta?.rateTip||'Check your loan agreement or bank app'}</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+  fd: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
+          <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>`,
+  },
+  realestate: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
+          <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
+        </div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
+          <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+        </div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
+          <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>`,
+  },
+  gold: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
+          <select onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+        </div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+  esop: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+};
+
+function addCard(type, sectionId) {
+  const btn = document.querySelector(`#${sectionId} button[onclick*="addCard"]`);
   const card = document.createElement('div');
   card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
-  card.innerHTML = `
-    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
-    <div class="flex items-center gap-3 mb-3">
-      <span class="text-lg">💳</span>
-      <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option selected>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
-    </div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">Check your loan agreement or bank app</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-    </div>`;
+  const tpl = CARD_TEMPLATES[type];
+  card.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>${tpl.fields(tpl.defaultMeta)}`;
   btn.parentElement.insertBefore(card, btn);
 }
-function addFDCard() {
-  const btn = document.querySelector('#section-fds button[onclick="addFDCard()"]');
-  const card = document.createElement('div');
-  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
-  card.innerHTML = `
-    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
-        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
-      </div>
-    </div>`;
-  btn.parentElement.insertBefore(card, btn);
-}
-function addRealEstateCard() {
-  const btn = document.querySelector('#section-realestate button[onclick="addRealEstateCard()"]');
-  const card = document.createElement('div');
-  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
-  card.innerHTML = `
-    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
-        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
-      </div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
-        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
-      </div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">If rented — monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
-        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
-      </div>
-    </div>`;
-  btn.parentElement.insertBefore(card, btn);
-}
-function addGoldCard() {
-  const btn = document.querySelector('#section-gold button[onclick="addGoldCard()"]');
-  const card = document.createElement('div');
-  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
-  card.innerHTML = `
-    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
-        <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
-      </div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-    </div>`;
-  btn.parentElement.insertBefore(card, btn);
-}
-function addESOPCard() {
-  const btn = document.querySelector('#section-esop button[onclick="addESOPCard()"]');
-  const card = document.createElement('div');
-  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
-  card.innerHTML = `
-    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-      <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-    </div>`;
-  btn.parentElement.insertBefore(card, btn);
-}
+
+// Convenience wrappers (used by onclick in HTML)
+function addLoanCard() { addCard('loan', 'section-loans'); }
+function addFDCard() { addCard('fd', 'section-fds'); }
+function addRealEstateCard() { addCard('realestate', 'section-realestate'); }
+function addGoldCard() { addCard('gold', 'section-gold'); }
+function addESOPCard() { addCard('esop', 'section-esop'); }
 </script>
 </body>
 </html>

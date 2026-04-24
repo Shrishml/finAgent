@@ -11,6 +11,7 @@ from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import (
     load_holdings, save_holdings, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
+    load_assets,
 )
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
@@ -41,6 +42,16 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
         "location": profile.location or None,
         "dependents": profile.dependents or None,
     }
+    # Append saved assets (FDs, loans, gold, etc.)
+    assets = load_assets(user_id) if user_id and user_id > 0 else []
+    if assets:
+        by_type = {}
+        for a in assets:
+            t = a.pop("asset_type", "other")
+            a.pop("id", None)
+            by_type.setdefault(t, []).append(a)
+        data["saved_assets"] = by_type
+
     profile_json = json.dumps({k: v for k, v in data.items() if v}, indent=2)
 
     # Identify gaps

@@ -12,18 +12,18 @@ _UI_DIR = Path(__file__).parent.parent.parent / "ui"
 @router.get("/", response_class=HTMLResponse)
 async def landing():
     f = _UI_DIR / "index.html"
-    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
 @router.get("/app", response_class=HTMLResponse)
 @router.get("/demo", response_class=HTMLResponse)
 async def dashboard():
     f = _UI_DIR / "app.html"
-    return f.read_text() if f.exists() else "<h1>FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
 @router.get("/about", response_class=HTMLResponse)
 async def about():
     f = _UI_DIR / "about.html"
-    return f.read_text() if f.exists() else "<h1>About FinBestie</h1>"
+    return f.read_text() if f.exists() else "<h1>About Arth</h1>"
 
 @router.get("/help/cas", response_class=HTMLResponse)
 async def help_cas():

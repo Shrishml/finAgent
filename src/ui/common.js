@@ -1,5 +1,5 @@
 /**
- * FinBestie - Common JavaScript
+ * Arth - Common JavaScript
  * Shared utilities and authentication logic
  */
 

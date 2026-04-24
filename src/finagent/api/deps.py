@@ -12,14 +12,14 @@ log = logging.getLogger("finagent")
 DEMO_USER_ID = -1
 
 _DEV_MODE = os.environ.get("DEV_MODE", "").lower() in ("1", "true")
-_DEV_TOKEN = "finbestie-dev"
+_DEV_TOKEN = "arth-dev"
 _DEV_USER_ID: int | None = None
 
 
 def _get_dev_user_id() -> int:
     global _DEV_USER_ID
     if _DEV_USER_ID is None:
-        _DEV_USER_ID = get_or_create_user("dev-user", "dev@finbestie.local", "Dev User", "")
+        _DEV_USER_ID = get_or_create_user("dev-user", "dev@arth.local", "Dev User", "")
         log.info(f"DEV_MODE: created dev user with id={_DEV_USER_ID}")
     return _DEV_USER_ID
 

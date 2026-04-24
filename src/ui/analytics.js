@@ -1,4 +1,4 @@
-// Google Analytics 4 — FinBestie
+// Google Analytics 4 — Arth
 // Replace G-XXXXXXXXXX with your actual Measurement ID
 const GA_ID = 'G-7GNLXM4S8B';
 

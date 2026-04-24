@@ -27,7 +27,7 @@ def _fmt_inr(n: float) -> str:
     return ",".join(reversed(parts)) + "," + last3
 
 
-EXTRACTION_PROMPT = """You are FinBestie. Extract any financial data from the user's message.
+EXTRACTION_PROMPT = """You are Arth. Extract any financial data from the user's message.
 
 CURRENT PROFILE:
 {profile_json}

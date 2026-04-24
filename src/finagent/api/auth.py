@@ -47,7 +47,7 @@ async def auth_me(request: Request):
     if not token:
         return JSONResponse({"status": "unauthenticated"}, status_code=401)
     if _DEV_MODE and token == _DEV_TOKEN:
-        return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@finbestie.local", "picture": ""}})
+        return JSONResponse({"status": "ok", "user": {"name": "Dev User", "email": "dev@arth.local", "picture": ""}})
     user = get_session_user(token)
     if not user:
         return JSONResponse({"status": "unauthenticated"}, status_code=401)

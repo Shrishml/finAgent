@@ -66,7 +66,7 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     return profile_json, hint
 
 
-AGENT_PROMPT = """You are FinBestie, a friendly Indian financial advisor. You have a continuous relationship with this user — remember their context and build on it.
+AGENT_PROMPT = """You are Arth, a friendly Indian financial advisor. You have a continuous relationship with this user — remember their context and build on it.
 
 USER PROFILE:
 {profile_json}
@@ -257,7 +257,7 @@ async def _advisor_respond(query: str, user_id: int | None, profile=None) -> str
 
     profile_json, profile_hint = _build_profile_context(profile, user_id)
     conv_str = "\n".join(
-        f"{'User' if m['role'] == 'user' else 'FinBestie'}: {m['content']}"
+        f"{'User' if m['role'] == 'user' else 'Arth'}: {m['content']}"
         for m in conversation[-10:]
     ) or "No prior conversation"
 
@@ -295,7 +295,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
     profile_json, profile_hint = _build_profile_context(profile, user_id)
     conv_str = "\n".join(
-        f"{'User' if m['role'] == 'user' else 'FinBestie'}: {m['content']}"
+        f"{'User' if m['role'] == 'user' else 'Arth'}: {m['content']}"
         for m in conversation[-10:]
     ) or "No prior conversation"
 

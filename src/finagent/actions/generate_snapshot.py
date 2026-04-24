@@ -14,7 +14,7 @@ SCHEMA = {
     "status_message": "📊 Generating your financial snapshot",
 }
 
-SNAPSHOT_PROMPT = """You are FinBestie. Generate a personalized financial snapshot based on the user's profile.
+SNAPSHOT_PROMPT = """You are Arth. Generate a personalized financial snapshot based on the user's profile.
 
 PROFILE:
 {profile_json}

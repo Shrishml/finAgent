@@ -356,7 +356,7 @@
             <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
               <select onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
             </div>
-            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div class="gold-value"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest gold-value-label">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5 gold-value-tip">Amount you invested in this SGB</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
             <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
           </div>
         </div>
@@ -566,9 +566,19 @@ function updateLoanCard(select) {
   card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
   card.querySelector('.rate-tip').textContent = meta.tip;
 }
+const GOLD_META = {
+  'Sovereign Gold Bond (SGB)': { label: 'Current Value', tip: 'Amount you invested in this SGB', ph: '₹' },
+  'Physical Gold':             { label: 'Weight (grams)', tip: 'Total grams — jewellery, coins, bars', ph: 'e.g. 50g' },
+  'Gold ETF':                  { label: 'Current Value', tip: 'Current value from your demat', ph: '₹' },
+  'Digital Gold':              { label: 'Current Value', tip: 'Value shown in your app', ph: '₹' },
+};
 function updateGoldCard(select) {
   const card = select.closest('.rounded-xl.border');
   card.querySelector('.gold-maturity').style.display = select.value === 'Sovereign Gold Bond (SGB)' ? '' : 'none';
+  const m = GOLD_META[select.value] || GOLD_META['Digital Gold'];
+  card.querySelector('.gold-value-label').textContent = m.label;
+  card.querySelector('.gold-value-tip').textContent = m.tip;
+  card.querySelector('.gold-value input').placeholder = m.ph;
 }
 function updateRealEstateCard(select) {
   const card = select.closest('.rounded-xl.border');
@@ -627,7 +637,7 @@ const CARD_TEMPLATES = {
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
           <select onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
         </div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Value / Weight</label><p class="text-[9px] text-gray-400 mb-0.5">₹ value or grams for physical</p><input type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div class="gold-value"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest gold-value-label">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5 gold-value-tip">Amount you invested in this SGB</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
         <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
       </div>`,
   },

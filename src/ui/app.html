@@ -657,7 +657,14 @@ function renderProfileCard(d, container) {
     <div class="profile-cards-list"><div class="profile-card-item bg-white rounded-xl border p-3 mb-2"><div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)}</span></div>${tpl.fields()}</div></div>
     <button onclick="addChatCard(this)" class="w-full border-2 border-dashed border-amber-300 rounded-xl py-2 text-xs font-bold text-amber-600 hover:border-amber-500 mb-2">+ Add another</button>
     <button onclick="submitProfileCards(this, '${esc(d.card_type)}')" class="w-full bg-gray-900 text-white py-2 rounded-xl text-xs font-bold hover:bg-gray-800">Save to Profile</button>`;
+  if (d.prefill) prefillCard(wrap.querySelector('.profile-card-item'), d.prefill);
   container.appendChild(wrap);
+}
+function prefillCard(card, data) {
+  Object.entries(data).forEach(([field, val]) => {
+    const el = card.querySelector(`[data-field="${field}"]`);
+    if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
+  });
 }
 function addChatCard(btn) {
   const wrap = btn.closest('.rounded-2xl');

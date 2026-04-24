@@ -666,6 +666,15 @@ function prefillCard(card, data) {
     if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
   });
 }
+function renderProfileCardSaved(d, container) {
+  const tpl = CHAT_CARD_TEMPLATES[d.card_type];
+  const label = tpl ? tpl.title : d.card_type;
+  const pills = Object.entries(d.data || {}).map(([k,v]) => `<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${esc(k)}: ${esc(v)}</span>`).join(' ');
+  const el = document.createElement('div');
+  el.className = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm';
+  el.innerHTML = `<div class="flex items-center gap-2 mb-2"><span class="text-sm">✅</span><span class="font-bold text-gray-900 text-sm">${esc(label)} saved to profile</span></div><div class="flex flex-wrap gap-1">${pills}</div>`;
+  container.appendChild(el);
+}
 function addChatCard(btn) {
   const wrap = btn.closest('.rounded-2xl');
   const type = wrap.dataset.cardType;
@@ -701,7 +710,7 @@ function submitProfileCards(btn, cardType) {
 }
 
 function renderActionComponent(type, data, container) {
-  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, profile_card: renderProfileCard };
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, profile_card: renderProfileCard, profile_card_saved: renderProfileCardSaved };
   const fn = renderers[type];
   if (fn) fn(data, container);
   else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }

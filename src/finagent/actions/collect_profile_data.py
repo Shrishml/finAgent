@@ -46,7 +46,11 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if card_type not in VALID_TYPES:
         return {"error": f"Unknown card type '{card_type}'. Use one of: {', '.join(sorted(VALID_TYPES))}"}
 
-    prefill = params.get("prefill", {})
+    prefill = params.get("prefill") or {}
+    if isinstance(prefill, str):
+        import json
+        try: prefill = json.loads(prefill)
+        except Exception: prefill = {}
     required = REQUIRED_FIELDS.get(card_type, set())
     has_all = required and required.issubset(prefill.keys())
 

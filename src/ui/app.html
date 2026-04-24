@@ -1841,9 +1841,9 @@ async function loadProfileData() {
     // Group by asset_type
     const byType = {};
     items.forEach(i => {
-      const d = typeof i.data === 'string' ? JSON.parse(i.data) : i.data;
-      const t = i.asset_type || d.asset_type;
-      (byType[t] = byType[t] || []).push(d);
+      const t = i.asset_type;
+      if (!t) return;
+      (byType[t] = byType[t] || []).push(i);
     });
     // Fill simple sections
     SIMPLE_SECTIONS.forEach(type => {

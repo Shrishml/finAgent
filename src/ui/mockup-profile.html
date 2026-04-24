@@ -561,18 +561,18 @@ const LOAN_META = {
   'Other':            { icon: '📋', tip: 'Annual interest rate on this debt' },
 };
 function updateLoanCard(select) {
-  const card = select.closest('.bg-white');
+  const card = select.closest('.rounded-xl.border');
   const meta = LOAN_META[select.value] || LOAN_META['Other'];
   card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
   card.querySelector('.rate-tip').textContent = meta.tip;
 }
 function updateGoldCard(select) {
-  const mat = select.closest('.bg-white').querySelector('.gold-maturity');
-  mat.style.display = select.value === 'Sovereign Gold Bond (SGB)' ? '' : 'none';
+  const card = select.closest('.rounded-xl.border');
+  card.querySelector('.gold-maturity').style.display = select.value === 'Sovereign Gold Bond (SGB)' ? '' : 'none';
 }
 function updateRealEstateCard(select) {
-  const rental = select.closest('.bg-white').querySelector('.re-rental');
-  rental.style.display = select.value === 'Rented out' ? '' : 'none';
+  const card = select.closest('.rounded-xl.border');
+  card.querySelector('.re-rental').style.display = select.value === 'Rented out' ? '' : 'none';
 }
 
 const CARD_TEMPLATES = {

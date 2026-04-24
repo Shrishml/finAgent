@@ -608,8 +608,82 @@ function loadPortfolioChart(period='5Y') {
   });
 }
 
+const CHAT_CARD_TEMPLATES = {
+  fd: { title: '💵 Fixed Deposit', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Bank</label><input data-field="bank" type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Amount</label><input data-field="amount" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Interest Rate</label><input data-field="rate" type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Maturity</label><input data-field="maturity" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tax-Saver?</label><select data-field="tax_saver" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>` },
+  realestate: { title: '🏠 Property', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Location</label><input data-field="location" type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Current Value</label><input data-field="current_value" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Purchase Price</label><input data-field="purchase_price" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Usage</label><select data-field="usage" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Linked Loan?</label><select data-field="linked_loan" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>` },
+  gold: { title: '🪙 Gold', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>SGB</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Value</label><input data-field="value" type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  esop: { title: '🏢 ESOP / RSU', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Company</label><input data-field="company" type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Vested Value</label><input data-field="vested" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Unvested Value</label><input data-field="unvested" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Next Vesting</label><input data-field="next_vesting" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  loan: { title: '🏦 Loan', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="loan_type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Outstanding</label><input data-field="outstanding" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Interest Rate</label><input data-field="rate" type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly EMI</label><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+};
+
+function renderProfileCard(d, container) {
+  const tpl = CHAT_CARD_TEMPLATES[d.card_type];
+  if (!tpl) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm';
+  let cardsHtml = '';
+  for (let i = 0; i < (d.count || 1); i++) {
+    cardsHtml += `<div class="profile-card-item bg-white rounded-xl border p-3 mb-2"><div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)} ${d.count > 1 ? '#'+(i+1) : ''}</span>${d.count > 1 ? '<button onclick="this.closest(\'.profile-card-item\').remove()" class="text-gray-300 hover:text-red-500 text-xs">✕</button>' : ''}</div>${tpl.fields()}</div>`;
+  }
+  wrap.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📝 Fill in your details</h4>${cardsHtml}<button onclick="submitProfileCards(this, '${esc(d.card_type)}')" class="w-full bg-gray-900 text-white py-2 rounded-xl text-xs font-bold mt-2 hover:bg-gray-800">Save to Profile</button>`;
+  container.appendChild(wrap);
+}
+
+function submitProfileCards(btn, cardType) {
+  const wrap = btn.closest('.rounded-2xl');
+  const cards = wrap.querySelectorAll('.profile-card-item');
+  const items = [];
+  cards.forEach(card => {
+    const data = {};
+    card.querySelectorAll('[data-field]').forEach(el => { if (el.value) data[el.dataset.field] = el.value; });
+    if (Object.keys(data).length) items.push(data);
+  });
+  if (!items.length) return;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  fetch('/profile/assets', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ asset_type: cardType, items })
+  }).then(r => r.json()).then(res => {
+    if (res.ok) {
+      wrap.innerHTML = `<div class="text-center py-3"><span class="text-emerald-600 font-bold text-sm">✅ ${items.length} ${cardType}(s) saved to your profile</span></div>`;
+      sendChat(`I've saved ${items.length} ${cardType} detail(s) to my profile.`);
+    } else { btn.disabled = false; btn.textContent = 'Save to Profile'; }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Save to Profile'; });
+}
+
 function renderActionComponent(type, data, container) {
-  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable };
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, profile_card: renderProfileCard };
   const fn = renderers[type];
   if (fn) fn(data, container);
   else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }

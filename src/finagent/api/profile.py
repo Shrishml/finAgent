@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from finagent.storage.sqlite import load_profile, update_profile, load_holdings, get_latest_snapshot
+from finagent.storage.sqlite import load_profile, update_profile, load_holdings, get_latest_snapshot, save_assets, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
@@ -119,3 +119,29 @@ async def get_snapshot(request: Request):
     if not snap:
         return JSONResponse({"snapshot": None})
     return JSONResponse(snap)
+
+
+VALID_ASSET_TYPES = {"fd", "realestate", "gold", "esop", "loan"}
+
+
+@router.post("/profile/assets")
+async def save_profile_assets(request: Request):
+    user_id = get_user_id(request) or DEMO_USER_ID
+    body = await request.json()
+    asset_type = body.get("asset_type", "")
+    items = body.get("items", [])
+    if asset_type not in VALID_ASSET_TYPES:
+        return JSONResponse({"ok": False, "error": f"Invalid asset type: {asset_type}"}, status_code=400)
+    if not items:
+        return JSONResponse({"ok": False, "error": "No items provided"}, status_code=400)
+    count = save_assets(user_id, asset_type, items)
+    log.info(f"[profile] Saved {count} {asset_type} assets for user {user_id}")
+    return JSONResponse({"ok": True, "count": count})
+
+
+@router.get("/profile/assets")
+async def get_profile_assets(request: Request):
+    user_id = get_user_id(request) or DEMO_USER_ID
+    asset_type = request.query_params.get("type")
+    items = load_assets(user_id, asset_type)
+    return JSONResponse({"items": items})

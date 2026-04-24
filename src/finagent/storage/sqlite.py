@@ -106,6 +106,16 @@ def _get_conn() -> sqlite3.Connection:
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_snap_user ON user_snapshots(user_id, created_at)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            asset_type TEXT NOT NULL,
+            data TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_assets_user ON user_assets(user_id, asset_type)")
     conn.commit()
     return conn
 
@@ -455,3 +465,27 @@ def clear_profile(user_id: int):
     conn.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+
+def save_assets(user_id: int, asset_type: str, items: list[dict]) -> int:
+    import json
+    conn = _get_conn()
+    for item in items:
+        conn.execute("INSERT INTO user_assets (user_id, asset_type, data) VALUES (?, ?, ?)",
+                     (user_id, asset_type, json.dumps(item)))
+    conn.commit()
+    conn.close()
+    return len(items)
+
+
+def load_assets(user_id: int, asset_type: str = None) -> list[dict]:
+    import json
+    conn = _get_conn()
+    if asset_type:
+        rows = conn.execute("SELECT id, asset_type, data FROM user_assets WHERE user_id = ? AND asset_type = ?",
+                            (user_id, asset_type)).fetchall()
+    else:
+        rows = conn.execute("SELECT id, asset_type, data FROM user_assets WHERE user_id = ?",
+                            (user_id,)).fetchall()
+    conn.close()
+    return [{"id": r[0], "asset_type": r[1], **json.loads(r[2])} for r in rows]

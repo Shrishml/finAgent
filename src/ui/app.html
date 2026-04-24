@@ -261,17 +261,17 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: insurance needs calculation, 80D for parents, dependent planning</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax and insurance planning</p>
-            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
+            <select data-field="marital_status" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input data-field="kids" type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax deduction and insurance analysis</p>
-            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
+            <select data-field="dependent_parents" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
           </div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth checks if your family has coverage gaps</p>
-            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
+            <select data-field="parents_health_insurance" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
           </div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('family')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -289,12 +289,12 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </button>
       <div id="section-income" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Used to calculate savings rate and tax bracket</p><input type="text" value="₹1,20,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total annual bonus before tax</p><input type="text" value="₹2,40,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — any regular non-salary income</p><input type="text" value="₹0" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps Arth calculate household savings capacity</p><input type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Used to calculate savings rate and tax bracket</p><input data-field="monthly_income" type="text" value="₹1,20,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total annual bonus before tax</p><input data-field="annual_bonus" type="text" value="₹2,40,000" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — any regular non-salary income</p><input data-field="other_income" type="text" value="₹0" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps Arth calculate household savings capacity</p><input data-field="spouse_income" type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('income')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -313,13 +313,13 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       <div id="section-expenses" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: savings rate analysis, budget optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Rent</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Pure housing cost — if you have a home loan instead, skip this (it's in Loans)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly average for household essentials</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wifi, phone, OTT, electricity — all recurring bills</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Restaurants, movies, outings — approximate monthly</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Yearly total — vacations, school fees, festivals</p><input type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Rent</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Pure housing cost — if you have a home loan instead, skip this (it's in Loans)</p><input data-field="rent" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly average for household essentials</p><input data-field="groceries" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wifi, phone, OTT, electricity — all recurring bills</p><input data-field="utilities" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Restaurants, movies, outings — approximate monthly</p><input data-field="dining" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Yearly total — vacations, school fees, festivals</p><input data-field="annual_big_ticket" type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('expenses')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -341,12 +341,12 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: retirement readiness score, 80C utilization check</p>
         <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload EPFO passbook PDF</button>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Check your EPFO passbook or payslip</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share from your payslip</p><input type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from your PPF passbook</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Annual Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How much you put in this year (max ₹1.5L)</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Check your EPFO passbook or payslip</p><input data-field="epf_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share from your payslip</p><input data-field="epf_contribution" type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from your PPF passbook</p><input data-field="ppf_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Annual Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How much you put in this year (max ₹1.5L)</p><input data-field="ppf_contribution" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('epf_ppf')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -366,14 +366,14 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: 80CCD(1B) deduction check, retirement corpus projection</p>
         <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload NPS CRA statement</button>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from NPS CRA statement</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your monthly NPS contribution amount</p><input type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Equity Allocation %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">% in equity (E) fund — check your CRA statement</p><input type="text" placeholder="e.g. 75%" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from NPS CRA statement</p><input data-field="nps_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your monthly NPS contribution amount</p><input data-field="nps_contribution" type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Equity Allocation %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">% in equity (E) fund — check your CRA statement</p><input data-field="equity_pct" type="text" placeholder="e.g. 75%" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tier</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Tier I (locked till 60) or Tier II (flexible)</p>
-            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Tier I only</option><option>Tier I + Tier II</option></select>
+            <select data-field="tier" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Tier I only</option><option>Tier I + Tier II</option></select>
           </div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('nps')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -405,7 +405,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <button onclick="addFDCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another FD</button>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All FDs</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-fds','fd')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All FDs</button></div>
       </div>
     </div>
 
@@ -442,7 +442,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <button onclick="addRealEstateCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another property</button>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Properties</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-realestate','realestate')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Properties</button></div>
       </div>
     </div>
 
@@ -471,7 +471,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <button onclick="addGoldCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another gold holding</button>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Gold</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-gold','gold')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Gold</button></div>
       </div>
     </div>
 
@@ -491,11 +491,11 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: total equity exposure, LTCG/STCG estimation</p>
         <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload demat holding statement</button>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Demat Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current value from Zerodha, Groww etc.</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Invested Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total amount you invested (cost basis)</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Broker</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Which platform you use</p><input type="text" placeholder="e.g. Zerodha" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Demat Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current value from Zerodha, Groww etc.</p><input data-field="demat_value" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Invested Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total amount you invested (cost basis)</p><input data-field="invested_value" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Broker</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Which platform you use</p><input data-field="broker" type="text" placeholder="e.g. Zerodha" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('stocks')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -523,7 +523,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <button onclick="addESOPCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another ESOP/RSU</button>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All ESOPs</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-esop','esop')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All ESOPs</button></div>
       </div>
     </div>
 
@@ -562,7 +562,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <!-- Add Loan Button -->
         <button onclick="addLoanCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another loan</button>
 
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Loans</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-loans','loan')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Loans</button></div>
       </div>
     </div>
 
@@ -581,13 +581,13 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       <div id="section-insurance" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: coverage gap analysis, premium optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum assured from your policy document</p><input type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum insured from your policy</p><input type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum assured from your policy document</p><input data-field="term_cover" type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input data-field="term_premium" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum insured from your policy</p><input data-field="health_cover" type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input data-field="health_premium" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
         <p class="text-[10px] text-gray-400 mt-3">Have ULIP/endowment policies? Tell Arth in chat — we'll analyze surrender value vs continuing.</p>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('insurance')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -607,15 +607,15 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: old vs new regime comparison, tax-saving recommendations</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Select current regime — Arth will compare both</p>
-            <select class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
+            <select data-field="tax_regime" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">From your payslip — usually 40-50% of CTC</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA component from your payslip</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly rent — needed for HRA exemption calc</p><input type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total 80C investments this year (ELSS, PPF, LIC, EPF)</p><input type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Health insurance premiums paid this year</p><input type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">From your payslip — usually 40-50% of CTC</p><input data-field="basic_salary" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA component from your payslip</p><input data-field="hra_received" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly rent — needed for HRA exemption calc</p><input data-field="rent_paid" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total 80C investments this year (ELSS, PPF, LIC, EPF)</p><input data-field="section_80c" type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Health insurance premiums paid this year</p><input data-field="section_80d" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
         </div>
-        <div class="flex justify-end mt-4"><button class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('tax')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -729,6 +729,7 @@ function switchTab(tab) {
   btn.classList.add('border-emerald-600','text-emerald-600');
   btn.classList.remove('border-transparent','text-gray-400');
   window.scrollTo({top: 0, behavior: 'smooth'});
+  if (tab === 'profile' && !window._profileLoaded) loadProfileData();
 }
 
 function classifyAsset(cat) {
@@ -1798,6 +1799,114 @@ function addFDCard() { addCard('fd', 'section-fds'); }
 function addRealEstateCard() { addCard('realestate', 'section-realestate'); }
 function addGoldCard() { addCard('gold', 'section-gold'); }
 function addESOPCard() { addCard('esop', 'section-esop'); }
+
+// --- Profile Load ---
+const SIMPLE_SECTIONS = ['family','income','expenses','epf_ppf','nps','stocks','insurance','tax'];
+const CARD_SECTIONS = {fd:'section-fds', realestate:'section-realestate', gold:'section-gold', esop:'section-esop', loan:'section-loans'};
+
+async function loadProfileData() {
+  window._profileLoaded = true;
+  try {
+    const r = await fetch('/profile/assets');
+    const {items} = await r.json();
+    if (!items?.length) return;
+    // Group by asset_type
+    const byType = {};
+    items.forEach(i => {
+      const d = typeof i.data === 'string' ? JSON.parse(i.data) : i.data;
+      const t = i.asset_type || d.asset_type;
+      (byType[t] = byType[t] || []).push(d);
+    });
+    // Fill simple sections
+    SIMPLE_SECTIONS.forEach(type => {
+      if (!byType[type]?.length) return;
+      const sectionId = type === 'epf_ppf' ? 'section-epf-ppf' : `section-${type}`;
+      const section = $(sectionId);
+      if (!section) return;
+      const data = byType[type][0];
+      section.querySelectorAll('[data-field]').forEach(el => {
+        if (data[el.dataset.field] != null) {
+          el.value = data[el.dataset.field];
+          if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+    // Fill card sections
+    Object.entries(CARD_SECTIONS).forEach(([type, sectionId]) => {
+      if (!byType[type]?.length) return;
+      const section = $(sectionId);
+      if (!section) return;
+      // Remove default empty cards
+      section.querySelectorAll('.bg-white.rounded-xl.border.p-4').forEach(c => c.remove());
+      byType[type].forEach(data => {
+        // Create card via existing addCard
+        const addFn = {fd:'addFDCard', realestate:'addRealEstateCard', gold:'addGoldCard', esop:'addESOPCard', loan:'addLoanCard'}[type];
+        window[addFn]();
+        // Fill the last added card
+        const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
+        const card = cards[cards.length - 1];
+        card.querySelectorAll('input, select').forEach(el => {
+          const label = el.closest('div')?.querySelector('label');
+          if (!label) return;
+          const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          if (data[key] != null) {
+            el.value = data[key];
+            if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+    });
+  } catch(e) { console.error('Load profile failed', e); }
+}
+
+// --- Profile Section Save Functions ---
+async function saveSection(sectionType) {
+  const sectionId = sectionType === 'epf_ppf' ? 'section-epf-ppf' : `section-${sectionType}`;
+  const section = $(sectionId);
+  if (!section) return;
+  const data = {};
+  section.querySelectorAll('[data-field]').forEach(el => { if (el.value) data[el.dataset.field] = el.value; });
+  if (!Object.keys(data).length) return;
+  const btn = section.querySelector('button[onclick*="saveSection"]');
+  const origText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    const r = await fetch('/profile/assets', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ asset_type: sectionType, items: [data] }) });
+    const res = await r.json();
+    if (res.ok) {
+      if (btn) { btn.textContent = '✅ Saved'; btn.classList.replace('bg-gray-900','bg-emerald-600'); setTimeout(() => { btn.textContent = origText; btn.disabled = false; btn.classList.replace('bg-emerald-600','bg-gray-900'); }, 2000); }
+    } else { if (btn) { btn.textContent = origText; btn.disabled = false; } }
+  } catch(e) { console.error('Save failed', e); if (btn) { btn.textContent = origText; btn.disabled = false; } }
+}
+
+async function saveCardSection(sectionId, assetType) {
+  const section = $(sectionId);
+  if (!section) return;
+  const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
+  const items = [];
+  cards.forEach(card => {
+    const data = {};
+    card.querySelectorAll('input, select').forEach(el => {
+      const label = el.closest('div')?.querySelector('label');
+      if (label && el.value) {
+        const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        data[key] = el.value;
+      }
+    });
+    if (Object.keys(data).length) items.push(data);
+  });
+  if (!items.length) return;
+  const btn = section.querySelector('button[onclick*="saveCardSection"]');
+  const origText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    const r = await fetch('/profile/assets', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ asset_type: assetType, items }) });
+    const res = await r.json();
+    if (res.ok) {
+      if (btn) { btn.textContent = `✅ ${items.length} saved`; btn.classList.replace('bg-gray-900','bg-emerald-600'); setTimeout(() => { btn.textContent = origText; btn.disabled = false; btn.classList.replace('bg-emerald-600','bg-gray-900'); }, 2000); }
+    } else { if (btn) { btn.textContent = origText; btn.disabled = false; } }
+  } catch(e) { console.error('Save failed', e); if (btn) { btn.textContent = origText; btn.disabled = false; } }
+}
 
 </script>
 </body>

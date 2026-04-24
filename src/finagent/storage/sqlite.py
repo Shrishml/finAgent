@@ -470,6 +470,8 @@ def clear_profile(user_id: int):
 def save_assets(user_id: int, asset_type: str, items: list[dict]) -> int:
     import json
     conn = _get_conn()
+    conn.execute("DELETE FROM user_assets WHERE user_id = ? AND asset_type = ?",
+                 (user_id, asset_type))
     for item in items:
         conn.execute("INSERT INTO user_assets (user_id, asset_type, data) VALUES (?, ?, ?)",
                      (user_id, asset_type, json.dumps(item)))

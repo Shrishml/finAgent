@@ -121,7 +121,9 @@ async def get_snapshot(request: Request):
     return JSONResponse(snap)
 
 
-VALID_ASSET_TYPES = {"fd", "realestate", "gold", "esop", "loan"}
+VALID_ASSET_TYPES = {"fd", "realestate", "gold", "esop", "loan",
+                     "family", "income", "expenses", "epf_ppf", "nps",
+                     "stocks", "insurance", "tax"}
 
 
 @router.post("/profile/assets")

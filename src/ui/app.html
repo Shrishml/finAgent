@@ -1018,6 +1018,34 @@ const CHAT_CARD_TEMPLATES = {
       <div><label class="text-[9px] font-bold text-gray-400 uppercase">Interest Rate</label><input data-field="rate" type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
       <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly EMI</label><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
     </div>` },
+  epf_ppf: { title: '🏛️ EPF & PPF', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">EPF Balance</label><input data-field="epf_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">EPF Monthly</label><input data-field="epf_monthly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">PPF Balance</label><input data-field="ppf_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">PPF Yearly</label><input data-field="ppf_yearly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  nps: { title: '📊 NPS', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">NPS Balance</label><input data-field="nps_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly Contribution</label><input data-field="nps_monthly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  stocks: { title: '📈 Stocks & Demat', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Demat Value</label><input data-field="demat_value" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly SIP</label><input data-field="stock_sip" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  insurance: { title: '🛡️ Insurance', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Term Life</option><option>Health</option><option>ULIP</option><option>Endowment</option><option>Vehicle</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Cover Amount</label><input data-field="cover" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Annual Premium</label><input data-field="premium" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  tax: { title: '🧾 Tax', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tax Regime</label><select data-field="regime" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Old Regime</option><option>New Regime</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Annual Tax Paid</label><input data-field="tax_paid" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
 };
 
 function renderProfileCard(d, container) {
@@ -1722,7 +1750,7 @@ const CARD_TEMPLATES = {
     fields: (meta) => `
       <div class="flex items-center gap-3 mb-3">
         <span class="text-lg">${meta?.icon||'📋'}</span>
-        <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option${meta?.selected==='Personal Loan'?' selected':''}>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+        <select data-field="loan_type" onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option${meta?.selected==='Personal Loan'?' selected':''}>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
@@ -1846,6 +1874,10 @@ async function loadProfileData() {
         const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
         const card = cards[cards.length - 1];
         card.querySelectorAll('input, select').forEach(el => {
+          if (el.dataset.field) {
+            if (data[el.dataset.field] != null) { el.value = data[el.dataset.field]; if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change')); }
+            return;
+          }
           const label = el.closest('div')?.querySelector('label');
           if (!label) return;
           const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -1887,8 +1919,10 @@ async function saveCardSection(sectionId, assetType) {
   cards.forEach(card => {
     const data = {};
     card.querySelectorAll('input, select').forEach(el => {
+      if (!el.value) return;
+      if (el.dataset.field) { data[el.dataset.field] = el.value; return; }
       const label = el.closest('div')?.querySelector('label');
-      if (label && el.value) {
+      if (label) {
         const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
         data[key] = el.value;
       }

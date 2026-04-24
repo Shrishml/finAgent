@@ -14,7 +14,7 @@ SCHEMA = {
         "card_type": {
             "type": "string",
             "required": True,
-            "description": "One of: fd, realestate, gold, esop, loan"
+            "description": "One of: fd, realestate, gold, esop, loan, epf_ppf, nps, stocks, insurance, tax"
         },
         "prefill": {
             "type": "object",
@@ -23,14 +23,18 @@ SCHEMA = {
                            "fd: bank, amount, rate, maturity, tax_saver. "
                            "realestate: type, location, current_value, purchase_price, usage, linked_loan. "
                            "gold: type, value. esop: company, vested, unvested, next_vesting. "
-                           "loan: loan_type, outstanding, rate, emi."
+                           "loan: loan_type, outstanding, rate, emi. "
+                           "epf_ppf: epf_balance, ppf_balance, epf_monthly. "
+                           "nps: nps_balance, nps_monthly. stocks: demat_value. "
+                           "insurance: type, cover, premium. tax: regime."
         }
     },
     "ui_component": "profile_card",
     "status_message": "Processing..."
 }
 
-VALID_TYPES = {"fd", "realestate", "gold", "esop", "loan"}
+VALID_TYPES = {"fd", "realestate", "gold", "esop", "loan",
+               "epf_ppf", "nps", "stocks", "insurance", "tax"}
 
 REQUIRED_FIELDS = {
     "fd": {"bank", "amount", "rate"},
@@ -38,11 +42,25 @@ REQUIRED_FIELDS = {
     "gold": {"type", "value"},
     "esop": {"company", "vested"},
     "loan": {"loan_type", "outstanding", "rate"},
+    "epf_ppf": {"epf_balance"},
+    "nps": {"nps_balance"},
+    "stocks": {"demat_value"},
+    "insurance": {"type", "cover"},
+    "tax": {"regime"},
 }
 
 
+TYPE_ALIASES = {
+    "provident_fund": "epf_ppf", "pf": "epf_ppf", "epf": "epf_ppf", "ppf": "epf_ppf",
+    "stock": "stocks", "demat": "stocks", "equity": "stocks",
+    "life_insurance": "insurance", "health_insurance": "insurance",
+    "real_estate": "realestate", "property": "realestate",
+    "fixed_deposit": "fd",
+}
+
 async def execute(params: dict, user_id: int, context: dict) -> dict:
     card_type = params.get("card_type", "").lower()
+    card_type = TYPE_ALIASES.get(card_type, card_type)
     if card_type not in VALID_TYPES:
         return {"error": f"Unknown card type '{card_type}'. Use one of: {', '.join(sorted(VALID_TYPES))}"}
 

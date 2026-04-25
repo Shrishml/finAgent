@@ -49,6 +49,7 @@ Extract into these fields (only include fields with actual data):
 - ppf_balance (INR), ppf_contribution (annual PPF contribution in INR), epf_balance (INR), epf_contribution (monthly EPF contribution in INR, employee + employer)
 - nps_balance (INR), nps_contribution (monthly NPS contribution in INR)
 - mf_sips: [{{"scheme": "fund name", "monthly_sip": N, "allocation_pct": N, "category": "large_cap|mid_cap|small_cap|flexi_cap|index|debt|gold|international|other"}}]
+- fds: [{{"bank": "bank/fund name", "amount": N, "rate": N, "maturity": "YYYY-MM", "tax_saver": "yes"|"no"}}]
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -155,6 +156,26 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                 new_items.append(sip)
         save_assets(profile.user_id, "mf_declared", new_items)
         log.info(f"[extraction] saved {len(mf_sips)} declared MF SIPs")
+        changed = True
+
+    # Handle FDs → save to user_assets
+    fds = extractions.get("fds")
+    if isinstance(fds, list) and fds:
+        existing = load_assets(profile.user_id, "fd")
+        existing_banks = {e.get("bank", "").lower() for e in existing}
+        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
+        for fd in fds:
+            if not isinstance(fd, dict) or not fd.get("bank"):
+                continue
+            if fd["bank"].lower() in existing_banks:
+                for item in new_items:
+                    if item.get("bank", "").lower() == fd["bank"].lower():
+                        item.update(fd)
+                        break
+            else:
+                new_items.append(fd)
+        save_assets(profile.user_id, "fd", new_items)
+        log.info(f"[extraction] saved {len(fds)} FDs")
         changed = True
 
     field_map = {

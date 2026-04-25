@@ -76,3 +76,31 @@ class TestMixedExtraction:
         assert p.monthly_income == 75000
         assert load_assets(uid, "epf_ppf")[0]["ppf_balance"] == 300000
         assert load_assets(uid, "nps")[0]["nps_contribution"] == 3000
+
+
+class TestFdExtraction:
+    def test_fd_extracted(self):
+        import uuid
+        uid = get_or_create_user(f"test-fd-{uuid.uuid4().hex[:8]}", "fd@t.com", "T")
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"fds": [
+            {"bank": "Franklin Corporate Debt", "amount": 150000},
+            {"bank": "Flexi FD", "amount": 150000},
+        ]})
+        items = load_assets(uid, "fd")
+        assert len(items) == 2
+        assert items[0]["amount"] == 150000
+
+    def test_fd_merge_existing(self):
+        import uuid
+        uid = get_or_create_user(f"test-fd-m-{uuid.uuid4().hex[:8]}", "fd@t.com", "T")
+        save_assets(uid, "fd", [{"bank": "SBI", "amount": 500000}])
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"fds": [
+            {"bank": "SBI", "amount": 600000},  # update
+            {"bank": "HDFC", "amount": 200000},  # new
+        ]})
+        items = load_assets(uid, "fd")
+        assert len(items) == 2
+        sbi = next(i for i in items if i["bank"] == "SBI")
+        assert sbi["amount"] == 600000

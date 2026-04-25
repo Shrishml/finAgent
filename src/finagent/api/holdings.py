@@ -14,7 +14,7 @@ from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.storage.sqlite import (
     save_holdings, load_holdings, clear_holdings, save_goal, load_goals,
-    clear_goals, clear_profile, clear_conversation, clear_snapshots,
+    clear_goals, clear_profile, clear_conversation, clear_snapshots, clear_assets,
 )
 from finagent.models.goal import Goal
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
@@ -235,6 +235,7 @@ async def clear(request: Request):
     clear_holdings(user_id)
     clear_goals(user_id)
     clear_profile(user_id)
+    clear_assets(user_id)
     clear_conversation(user_id)
     clear_snapshots(user_id)
     if user_id != DEMO_USER_ID:

@@ -556,6 +556,14 @@ def clear_profile(user_id: int):
     conn.close()
 
 
+def clear_assets(user_id: int):
+    """Clear all user assets."""
+    conn = _get_conn()
+    conn.execute("DELETE FROM user_assets WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
 def save_assets(user_id: int, asset_type: str, items: list[dict]) -> int:
     import json
     conn = _get_conn()

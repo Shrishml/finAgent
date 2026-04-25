@@ -106,7 +106,7 @@ class TestAssetSaveLoad:
 class TestSimpleSections:
 
     @pytest.mark.parametrize("asset_type,data", [
-        ("family", {"marital_status": "married", "kids": 2, "dependents": 3}),
+        ("personal", {"marital_status": "married", "kids": 2, "dependents": 3}),
         ("income", {"monthly_salary": 150000, "annual_bonus": 200000}),
         ("expenses", {"rent": 25000, "groceries": 10000, "utilities": 5000}),
         ("epf_ppf", {"epf_balance": 800000, "ppf_balance": 500000}),
@@ -139,7 +139,7 @@ class TestValidation:
         assert "No items" in resp.json()["error"]
 
     def test_all_valid_types_accepted(self, client):
-        valid = ["fd", "realestate", "gold", "esop", "loan", "family",
+        valid = ["fd", "realestate", "gold", "esop", "loan", "personal",
                  "income", "expenses", "epf_ppf", "nps", "stocks", "insurance", "tax"]
         for t in valid:
             resp = client.post("/profile/assets", json={"asset_type": t, "items": [{"x": 1}]})
@@ -396,7 +396,7 @@ class TestProfileAndAssets:
         })
         profile = client.get("/profile").json()
         assert profile["profile"]["monthly_income"] == 150000
-        assets = client.get("/profile/assets").json()["items"]
+        assets = client.get("/profile/assets?type=fd").json()["items"]
         assert len(assets) == 1
 
     def test_put_profile_does_not_affect_assets(self, client):

@@ -175,7 +175,8 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     t0 = time.time()
     log.info(f"[orchestrator] start query={query!r} user_id={user_id}")
 
-    if query == "__onboarding_init__":
+    skip_extraction = query == "__onboarding_init__"
+    if skip_extraction:
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
@@ -184,8 +185,8 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
         profile = UserProfile(user_id=user_id)
         save_profile(profile)
 
-    # Continuous extraction — every message might contain financial data
-    profile_changed = await _maybe_extract_and_update(query, user_id, profile)
+    # Continuous extraction — skip for onboarding init (data already saved from cards)
+    profile_changed = False if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
     await _maybe_update_snapshot(user_id, profile, profile_changed)
 
     # Route MF-specific queries to specialized agent
@@ -216,7 +217,8 @@ async def handle_query_stream(query: str, user_id: int | None = None):
     t0 = time.time()
     log.debug(f"[orchestrator] stream start query={query!r} user_id={user_id}")
 
-    if query == "__onboarding_init__":
+    skip_extraction = query == "__onboarding_init__"
+    if skip_extraction:
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
     profile = load_profile(user_id) if user_id and user_id > 0 else None
@@ -226,8 +228,8 @@ async def handle_query_stream(query: str, user_id: int | None = None):
         save_profile(profile)
         log.debug("[orchestrator] created new empty profile")
 
-    # Continuous extraction
-    profile_changed = await _maybe_extract_and_update(query, user_id, profile)
+    # Continuous extraction — skip for onboarding init (data already saved from cards)
+    profile_changed = False if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
     log.debug(f"[orchestrator] extraction done profile_changed={profile_changed} ({time.time()-t0:.1f}s)")
     await _maybe_update_snapshot(user_id, profile, profile_changed)
 

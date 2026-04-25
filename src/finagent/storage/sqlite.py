@@ -386,6 +386,7 @@ def load_profile(user_id: int) -> UserProfile | None:
         profile.monthly_income = num(inc, "monthly_income")
         profile.annual_bonus = num(inc, "annual_bonus")
         profile.annual_rsu = num(inc, "annual_rsu")
+        profile.monthly_sip = num(inc, "monthly_sip")
         profile.spouse_income = num(inc, "spouse_income")
         profile.other_income = num(inc, "other_income")
 
@@ -426,7 +427,7 @@ def update_profile(user_id: int, updates: dict) -> UserProfile | None:
     SECTION_MAP = {
         "personal": {"name", "age", "occupation", "employer", "location", "marital_status", "kids",
                       "dependent_parents", "parents_health_insurance", "risk_tolerance", "dependents"},
-        "income": {"monthly_income", "annual_bonus", "annual_rsu", "spouse_income", "other_income"},
+        "income": {"monthly_income", "annual_bonus", "annual_rsu", "spouse_income", "other_income", "monthly_sip"},
         "expenses": {"total_monthly_expenses", "monthly_expenses", "rent", "groceries", "utilities",
                       "dining", "annual_big_ticket", "emis"},
         "insurance": {"term_cover", "term_premium", "health_cover", "health_premium", "health_employer_only"},

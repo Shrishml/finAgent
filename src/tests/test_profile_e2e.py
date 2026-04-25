@@ -504,3 +504,63 @@ class TestExtractionE2E:
         apply_extractions(p, ext)
         assert p.dependent_parents  # non-empty
         assert p.parents_health_insurance.lower() == "yes"
+
+
+# ── Extraction E2E: Real LLM ────────────────────────────────────────
+
+
+class TestExtractionE2E:
+    """Test extraction pipeline with real LLM on Reddit-style messages."""
+
+    def _setup_user(self, client):
+        client.put("/profile", json={"monthly_income": 75000, "age": 25})
+
+    def test_extract_ppf_nps_epf(self, client):
+        """PPF/NPS/EPF mentioned in chat should be extracted to assets."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "PPF: Already have 3L+ accumulated. EPF: Ongoing salary deduction. NPS: Corporate NPS, employer contributes 3k/month."
+        })
+        assert resp.status_code == 200
+
+        epf = client.get("/profile/assets?type=epf_ppf").json()["items"]
+        nps = client.get("/profile/assets?type=nps").json()["items"]
+        # At least one of these should have been extracted
+        has_ppf = any(i.get("ppf_balance") for i in epf)
+        has_nps = any(i.get("nps_contribution") or i.get("nps_balance") for i in nps)
+        assert has_ppf or has_nps, f"Neither PPF nor NPS extracted. epf={epf}, nps={nps}"
+
+    def test_extract_mf_sips(self, client):
+        """MF SIP allocations should be extracted to mf_declared."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "My monthly SIP plan is 56k: Edelweiss Mid Cap 25%, Parag Parikh Flexi Cap 10%, Nifty 50 Index 10%"
+        })
+        assert resp.status_code == 200
+
+        mfs = client.get("/profile/assets?type=mf_declared").json()["items"]
+        schemes = [i.get("scheme", "") for i in mfs]
+        assert any("Edelweiss" in s or "Mid Cap" in s for s in schemes), f"Edelweiss not extracted. mfs={mfs}"
+
+    def test_extract_fd(self, client):
+        """FD mentioned in chat should be extracted."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I have 1.5L in a Flexi FD at SBI"
+        })
+        assert resp.status_code == 200
+
+        fds = client.get("/profile/assets?type=fd").json()["items"]
+        assert len(fds) >= 1, f"No FDs extracted. fds={fds}"
+
+    def test_extract_monthly_sip_profile_field(self, client):
+        """Total monthly SIP should be saved as profile field."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I invest about 56000 per month via SIPs in mutual funds"
+        })
+        assert resp.status_code == 200
+
+        from finagent.storage.sqlite import load_profile
+        profile = load_profile(_TEST_UID)
+        assert profile.monthly_sip > 0, f"monthly_sip={profile.monthly_sip}, expected > 0"

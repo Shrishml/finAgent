@@ -335,6 +335,26 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     <!-- ASSET CLASS SECTIONS START -->
 
     <!-- Section: EPF & PPF -->
+    <!-- Section: Mutual Funds (Declared) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('mf-declared')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">📊</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Mutual Funds</h4><p class="text-[10px] text-gray-400">SIPs and fund allocations from chat</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="mf-declared-badge" class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-mf-declared" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-3">💬 Declared via chat — upload CAS statement for verified data</p>
+        <div id="mf-declared-list" class="space-y-2"></div>
+        <p id="mf-declared-total" class="text-xs font-bold text-gray-600 mt-3 pt-3 border-t"></p>
+      </div>
+    </div>
+
+    <!-- Section: EPF & PPF -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
       <button onclick="toggleSection('epf-ppf')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
         <div class="flex items-center gap-3">
@@ -1950,6 +1970,18 @@ async function loadProfileData() {
         });
       });
     });
+    // Fill declared MF SIPs
+    if (byType['mf_declared']?.length) {
+      const mfs = byType['mf_declared'];
+      const totalSip = mfs.reduce((s, m) => s + (m.monthly_sip || 0), 0);
+      $('mf-declared-badge').textContent = mfs.length + ' fund' + (mfs.length > 1 ? 's' : '');
+      $('mf-declared-badge').className = 'px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[9px] font-extrabold rounded-full';
+      $('mf-declared-list').innerHTML = mfs.map(m => `<div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border">
+        <div><p class="text-xs font-bold text-gray-800">${esc(m.scheme || 'Unknown')}</p>${m.category ? `<p class="text-[10px] text-gray-400">${esc(m.category.replace(/_/g,' '))}</p>` : ''}</div>
+        <div class="text-right">${m.monthly_sip ? `<p class="text-xs font-bold text-emerald-600">${INR(m.monthly_sip)}/mo</p>` : ''}</div>
+      </div>`).join('');
+      $('mf-declared-total').textContent = totalSip > 0 ? `Total Monthly SIP: ${INR(totalSip)}` : '';
+    }
   } catch(e) { console.error('Load profile failed', e); }
 }
 

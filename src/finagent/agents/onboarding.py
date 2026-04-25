@@ -46,8 +46,8 @@ Extract into these fields (only include fields with actual data):
 - term_cover, term_premium, health_cover, health_premium (INR), health_employer_only (bool)
 - tax_regime ("old"|"new"), section_80c_used
 - esop_company, esop_vested (INR), esop_unvested (INR), esop_next_vesting (YYYY-MM)
-- ppf_balance (INR), epf_balance (INR), epf_monthly (monthly EPF contribution in INR)
-- nps_balance (INR), nps_monthly (monthly NPS contribution in INR)
+- ppf_balance (INR), ppf_contribution (annual PPF contribution in INR), epf_balance (INR), epf_contribution (monthly EPF contribution in INR, employee + employer)
+- nps_balance (INR), nps_contribution (monthly NPS contribution in INR)
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -116,7 +116,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
             changed = True
 
     # Handle EPF/PPF fields → save to user_assets
-    epf_ppf_keys = {k: v for k, v in extractions.items() if k in ("epf_balance", "ppf_balance", "epf_monthly") and v is not None}
+    epf_ppf_keys = {k: v for k, v in extractions.items() if k in ("epf_balance", "ppf_balance", "epf_contribution", "ppf_contribution") and v is not None}
     if epf_ppf_keys:
         existing = load_assets(profile.user_id, "epf_ppf")
         current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}
@@ -126,7 +126,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         changed = True
 
     # Handle NPS fields → save to user_assets
-    nps_keys = {k: v for k, v in extractions.items() if k in ("nps_balance", "nps_monthly") and v is not None}
+    nps_keys = {k: v for k, v in extractions.items() if k in ("nps_balance", "nps_contribution") and v is not None}
     if nps_keys:
         existing = load_assets(profile.user_id, "nps")
         current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}

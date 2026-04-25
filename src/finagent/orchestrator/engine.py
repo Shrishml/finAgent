@@ -11,7 +11,7 @@ from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import (
     load_holdings, save_holdings, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
-    load_assets, load_goals,
+    load_assets, load_goals, save_goal,
 )
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
@@ -156,6 +156,24 @@ def _parse_action_params(params_str: str) -> dict:
     return params
 
 
+def _maybe_suggest_emergency_fund(user_id: int, profile):
+    """Auto-create a suggested emergency fund goal if none exists."""
+    goals = load_goals(user_id)
+    if any(g.template == "emergency" for g in goals):
+        return  # already has one (active or suggested)
+    target = round(profile.total_monthly_expenses * 6)
+    if target <= 0:
+        return
+    from finagent.models.goal import Goal
+    goal = Goal(
+        user_id=user_id, name="Emergency Fund", template="emergency",
+        target_amount=target, target_date="", status="suggested",
+        growth_rate=0,  # auto-fills from template
+    )
+    gid = save_goal(goal)
+    log.info(f"[orchestrator] auto-suggested emergency fund goal id={gid} target={target}")
+
+
 async def _maybe_extract_and_update(query: str, user_id: int | None, profile) -> bool:
     """Try to extract profile data from the user's message. Returns True if profile changed."""
     if not user_id or user_id <= 0 or not profile:
@@ -173,6 +191,9 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
     if changed:
         save_profile(profile)
         log.info(f"[orchestrator] extracted and saved: {list(extractions.keys())}")
+        # Auto-create suggested emergency fund goal when expenses become available
+        if profile.total_monthly_expenses > 0 and user_id and user_id > 0:
+            _maybe_suggest_emergency_fund(user_id, profile)
     else:
         log.debug(f"[orchestrator] extraction found {list(extractions.keys())} but no changes")
 

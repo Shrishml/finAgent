@@ -60,6 +60,14 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
             linked_value += _asset_value(match) * (al.get("pct", 100) / 100)
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
+    if not goal.target_date:
+        # No deadline (e.g. suggested emergency fund) — just show progress
+        return {
+            "current_value": round(linked_value, 2), "progress_pct": round(min(progress_pct, 100), 1),
+            "monthly_sip": 0, "projected_value": round(linked_value, 2),
+            "months_left": 0, "projected_months": None, "on_track": linked_value >= goal.target_amount,
+            "sip_gap": 0,
+        }
     td = goal.target_date if len(goal.target_date) > 7 else goal.target_date + "-01"
     target_dt = _date.fromisoformat(td)
     months_left = max(0, (target_dt.year - _date.today().year) * 12 + target_dt.month - _date.today().month)
@@ -192,7 +200,7 @@ async def get_goals(request: Request):
             "id": g.id, "name": g.name, "template": g.template,
             "target_amount": g.target_amount, "target_date": g.target_date,
             "linked_folios": g.linked_folios, "growth_rate": g.growth_rate,
-            "created_at": g.created_at,
+            "created_at": g.created_at, "status": g.status,
             **_compute_goal_progress(g, holdings, user_id),
         } for g in goals]
     })
@@ -246,4 +254,17 @@ async def remove_goal(goal_id: int, request: Request, user_id: int = Depends(req
     if not delete_goal(goal_id, user_id):
         raise HTTPException(status_code=404, detail="Goal not found")
     log.info(f"Goal deleted: id={goal_id} for user {user_id}")
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/goals/{goal_id}/accept")
+async def accept_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
+    """Accept a suggested goal — sets status to active."""
+    goals = load_goals(user_id)
+    goal = next((g for g in goals if g.id == goal_id), None)
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    goal.status = "active"
+    save_goal(goal)
+    log.info(f"Goal accepted: {goal.name} (id={goal_id})")
     return JSONResponse({"status": "ok"})

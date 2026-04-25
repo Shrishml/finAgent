@@ -1610,6 +1610,9 @@ async function deleteGoal(id) {
   if (!confirm('Delete this goal?')) return;
   try { await fetch('/goals/' + id, { method: 'DELETE' }); loadGoals(); } catch(e) { alert('Failed to delete goal'); }
 }
+async function acceptGoal(id) {
+  try { await fetch('/goals/' + id + '/accept', { method: 'POST' }); loadGoals(); } catch(e) { alert('Failed to accept goal'); }
+}
 
 async function loadGoals() {
   try {
@@ -1617,13 +1620,25 @@ async function loadGoals() {
     const goals = data.goals || [];
     if (!goals.length) { $('goals-empty').classList.remove('hidden'); $('goals-grid').innerHTML = ''; return; }
     $('goals-empty').classList.add('hidden');
+    // Sort: suggested goals first
+    goals.sort((a, b) => (a.status === 'suggested' ? -1 : 1) - (b.status === 'suggested' ? -1 : 1));
     $('goals-grid').innerHTML = goals.map(g => {
+      const isSuggested = g.status === 'suggested';
       const statusColor = g.on_track ? 'emerald' : 'amber';
       const statusText = g.on_track ? 'On Track' : 'Behind';
       const statusIcon = g.on_track ? '✅' : '⚠️';
       const tmpl = _goalTemplates[g.template] || {};
       const emoji = (tmpl.label || '🎯').split(' ')[0];
       const progressWidth = Math.min(g.progress_pct, 100);
+      if (isSuggested) return `<div class="bg-white/60 rounded-2xl border-2 border-dashed border-teal-300 p-6 shadow-sm relative">
+        <div class="absolute top-3 right-3"><span class="text-[9px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">💡 Arth recommends</span></div>
+        <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-700 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400">Target: ${INR(g.target_amount)} (6 months of expenses)</p></div></div>
+        <p class="text-xs text-gray-500 mb-4">Every financial plan starts with an emergency cushion. Link your FDs, liquid funds, or savings to track progress.</p>
+        <div class="flex gap-2">
+          <button onclick="acceptGoal(${g.id})" class="flex-1 bg-teal-600 text-white text-xs font-bold py-2 px-4 rounded-xl hover:bg-teal-700 transition-colors">✓ Accept Goal</button>
+          <button onclick="deleteGoal(${g.id})" class="text-xs font-bold text-gray-400 hover:text-red-500 py-2 px-4 rounded-xl border border-gray-200 hover:border-red-200 transition-colors">Dismiss</button>
+        </div>
+      </div>`;
       return `<div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all">
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${esc(g.target_date)}</p></div></div>

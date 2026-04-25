@@ -75,9 +75,15 @@ def _get_conn() -> sqlite3.Connection:
             target_date TEXT NOT NULL,
             linked_folios JSON DEFAULT '[]',
             growth_rate REAL DEFAULT 0.10,
+            status TEXT DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Migration: add status column to existing goals table
+    try:
+        conn.execute("ALTER TABLE goals ADD COLUMN status TEXT DEFAULT 'active'")
+    except sqlite3.OperationalError:
+        pass
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_profiles (
             user_id INTEGER PRIMARY KEY,
@@ -270,15 +276,15 @@ def save_goal(goal: Goal) -> int:
     folios_json = json.dumps(goal.linked_folios)
     if goal.id:
         conn.execute(
-            "UPDATE goals SET name=?, template=?, target_amount=?, target_date=?, linked_folios=?, growth_rate=? WHERE id=? AND user_id=?",
-            (goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.id, goal.user_id),
+            "UPDATE goals SET name=?, template=?, target_amount=?, target_date=?, linked_folios=?, growth_rate=?, status=? WHERE id=? AND user_id=?",
+            (goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status, goal.id, goal.user_id),
         )
         conn.commit()
         conn.close()
         return goal.id
     cur = conn.execute(
-        "INSERT INTO goals (user_id, name, template, target_amount, target_date, linked_folios, growth_rate) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (goal.user_id, goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate),
+        "INSERT INTO goals (user_id, name, template, target_amount, target_date, linked_folios, growth_rate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (goal.user_id, goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status),
     )
     conn.commit()
     gid = cur.lastrowid
@@ -289,11 +295,12 @@ def save_goal(goal: Goal) -> int:
 def load_goals(user_id: int) -> list[Goal]:
     """Load all goals for a user."""
     conn = _get_conn()
-    rows = conn.execute("SELECT id, user_id, name, template, target_amount, target_date, linked_folios, growth_rate, created_at FROM goals WHERE user_id=?", (user_id,)).fetchall()
+    rows = conn.execute("SELECT id, user_id, name, template, target_amount, target_date, linked_folios, growth_rate, created_at, status FROM goals WHERE user_id=?", (user_id,)).fetchall()
     conn.close()
     return [
         Goal(id=r[0], user_id=r[1], name=r[2], template=r[3], target_amount=r[4], target_date=r[5],
-             linked_folios=json.loads(r[6]) if r[6] else [], growth_rate=r[7], created_at=r[8] or "")
+             linked_folios=json.loads(r[6]) if r[6] else [], growth_rate=r[7], created_at=r[8] or "",
+             status=r[9] or "active")
         for r in rows
     ]
 

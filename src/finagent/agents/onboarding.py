@@ -46,6 +46,8 @@ Extract into these fields (only include fields with actual data):
 - term_cover, term_premium, health_cover, health_premium (INR), health_employer_only (bool)
 - tax_regime ("old"|"new"), section_80c_used
 - esop_company, esop_vested (INR), esop_unvested (INR), esop_next_vesting (YYYY-MM)
+- ppf_balance (INR), epf_balance (INR), epf_monthly (monthly EPF contribution in INR)
+- nps_balance (INR), nps_monthly (monthly NPS contribution in INR)
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -112,6 +114,26 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
             save_assets(profile.user_id, "esop", items)
             log.info(f"[extraction] saved esop data: {esop_data}")
             changed = True
+
+    # Handle EPF/PPF fields → save to user_assets
+    epf_ppf_keys = {k: v for k, v in extractions.items() if k in ("epf_balance", "ppf_balance", "epf_monthly") and v is not None}
+    if epf_ppf_keys:
+        existing = load_assets(profile.user_id, "epf_ppf")
+        current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}
+        current.update(epf_ppf_keys)
+        save_assets(profile.user_id, "epf_ppf", [current])
+        log.info(f"[extraction] saved epf_ppf data: {epf_ppf_keys}")
+        changed = True
+
+    # Handle NPS fields → save to user_assets
+    nps_keys = {k: v for k, v in extractions.items() if k in ("nps_balance", "nps_monthly") and v is not None}
+    if nps_keys:
+        existing = load_assets(profile.user_id, "nps")
+        current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}
+        current.update(nps_keys)
+        save_assets(profile.user_id, "nps", [current])
+        log.info(f"[extraction] saved nps data: {nps_keys}")
+        changed = True
 
     field_map = {
         "name", "age", "dependents", "occupation", "employer", "risk_tolerance",

@@ -76,3 +76,40 @@ class TestGoalProgressWithAssets:
         result = _compute_goal_progress(goal, [], uid)
         assert result["current_value"] == 100000
         assert result["progress_pct"] == 10.0
+
+
+class TestLinkAssetToGoalAction:
+    def test_link_fd_to_goal(self):
+        import asyncio
+        uid = _uid()
+        save_assets(uid, "fd", [{"bank": "SBI", "amount": 300000}])
+        from finagent.storage.sqlite import save_goal, load_goals
+        goal = Goal(user_id=uid, name="Emergency Fund", template="emergency",
+                    target_amount=500000, target_date="2027-01-01")
+        gid = save_goal(goal)
+
+        from finagent.actions.link_asset_to_goal import execute
+        result = asyncio.get_event_loop().run_until_complete(
+            execute({"goal_name": "emergency", "asset_type": "fd", "match": "SBI"}, uid, {}))
+        assert "✅" in result["message"]
+        assert "300,000" in result["message"]
+
+        updated = next(g for g in load_goals(uid) if g.id == gid)
+        assert any(lf.get("asset_type") == "fd" for lf in updated.linked_folios)
+
+    def test_duplicate_link_rejected(self):
+        import asyncio
+        uid = _uid()
+        save_assets(uid, "nps", [{"nps_balance": 100000}])
+        from finagent.storage.sqlite import save_goal, load_assets as la
+        items = la(uid, "nps")
+        aid = items[0].get("id", 0)
+        goal = Goal(user_id=uid, name="Retirement", template="retirement",
+                    target_amount=10000000, target_date="2050-01-01",
+                    linked_folios=[{"asset_type": "nps", "asset_id": aid, "pct": 100}])
+        save_goal(goal)
+
+        from finagent.actions.link_asset_to_goal import execute
+        result = asyncio.get_event_loop().run_until_complete(
+            execute({"goal_name": "retirement", "asset_type": "nps"}, uid, {}))
+        assert "already linked" in result["message"]

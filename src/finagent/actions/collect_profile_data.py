@@ -26,6 +26,7 @@ SCHEMA = {
                            "loan: loan_type, principal, emi, start_date, tenure. "
                            "epf_ppf: epf_balance, ppf_balance, epf_contribution, ppf_contribution. "
                            "nps: nps_balance, nps_contribution. stocks: demat_value. "
+                           "mf_declared: scheme, monthly_sip, category. "
                            "insurance: type, cover, premium. tax: regime."
         }
     },
@@ -34,7 +35,7 @@ SCHEMA = {
 }
 
 VALID_TYPES = {"fd", "realestate", "gold", "esop", "loan",
-               "epf_ppf", "nps", "stocks", "insurance", "tax"}
+               "epf_ppf", "nps", "stocks", "insurance", "tax", "mf_declared"}
 
 REQUIRED_FIELDS = {
     "fd": {"bank", "amount", "rate"},
@@ -47,6 +48,7 @@ REQUIRED_FIELDS = {
     "stocks": {"demat_value"},
     "insurance": {"type", "cover"},
     "tax": {"regime"},
+    "mf_declared": {"scheme"},
 }
 
 
@@ -56,6 +58,7 @@ TYPE_ALIASES = {
     "life_insurance": "insurance", "health_insurance": "insurance",
     "real_estate": "realestate", "property": "realestate",
     "fixed_deposit": "fd",
+    "mutual_fund": "mf_declared", "mf": "mf_declared", "sip": "mf_declared",
 }
 
 async def execute(params: dict, user_id: int, context: dict) -> dict:

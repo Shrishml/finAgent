@@ -48,6 +48,7 @@ Extract into these fields (only include fields with actual data):
 - esop_company, esop_vested (INR), esop_unvested (INR), esop_next_vesting (YYYY-MM)
 - ppf_balance (INR), ppf_contribution (annual PPF contribution in INR), epf_balance (INR), epf_contribution (monthly EPF contribution in INR, employee + employer)
 - nps_balance (INR), nps_contribution (monthly NPS contribution in INR)
+- mf_sips: [{{"scheme": "fund name", "monthly_sip": N, "category": "large_cap|mid_cap|small_cap|flexi_cap|index|debt|gold|international|other"}}]
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -133,6 +134,27 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         current.update(nps_keys)
         save_assets(profile.user_id, "nps", [current])
         log.info(f"[extraction] saved nps data: {nps_keys}")
+        changed = True
+
+    # Handle declared MF SIPs → save to user_assets
+    mf_sips = extractions.get("mf_sips")
+    if isinstance(mf_sips, list) and mf_sips:
+        existing = load_assets(profile.user_id, "mf_declared")
+        existing_schemes = {e.get("scheme", "").lower() for e in existing}
+        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
+        for sip in mf_sips:
+            if not isinstance(sip, dict) or not sip.get("scheme"):
+                continue
+            if sip["scheme"].lower() in existing_schemes:
+                # Update existing
+                for item in new_items:
+                    if item.get("scheme", "").lower() == sip["scheme"].lower():
+                        item.update(sip)
+                        break
+            else:
+                new_items.append(sip)
+        save_assets(profile.user_id, "mf_declared", new_items)
+        log.info(f"[extraction] saved {len(mf_sips)} declared MF SIPs")
         changed = True
 
     field_map = {

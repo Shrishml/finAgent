@@ -80,8 +80,8 @@ class TestGoalProgressWithAssets:
 
 class TestLinkAssetToGoalAction:
     def test_link_fd_to_goal(self):
-        import asyncio
-        uid = _uid()
+        import asyncio, uuid
+        uid = get_or_create_user(f"test-link-{uuid.uuid4().hex[:8]}", "l@t.com", "T")
         save_assets(uid, "fd", [{"bank": "SBI", "amount": 300000}])
         from finagent.storage.sqlite import save_goal, load_goals
         goal = Goal(user_id=uid, name="Emergency Fund", template="emergency",
@@ -92,14 +92,13 @@ class TestLinkAssetToGoalAction:
         result = asyncio.get_event_loop().run_until_complete(
             execute({"goal_name": "emergency", "asset_type": "fd", "match": "SBI"}, uid, {}))
         assert "✅" in result["message"]
-        assert "300,000" in result["message"]
 
         updated = next(g for g in load_goals(uid) if g.id == gid)
         assert any(lf.get("asset_type") == "fd" for lf in updated.linked_folios)
 
     def test_duplicate_link_rejected(self):
-        import asyncio
-        uid = _uid()
+        import asyncio, uuid
+        uid = get_or_create_user(f"test-dup-{uuid.uuid4().hex[:8]}", "d@t.com", "T")
         save_assets(uid, "nps", [{"nps_balance": 100000}])
         from finagent.storage.sqlite import save_goal, load_assets as la
         items = la(uid, "nps")

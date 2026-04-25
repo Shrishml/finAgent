@@ -109,4 +109,10 @@ async def get_profile_assets(request: Request):
     user_id = get_user_id(request) or DEMO_USER_ID
     asset_type = request.query_params.get("type")
     items = load_assets(user_id, asset_type)
+    # Migrate legacy field names
+    _RENAMES = {"epf_monthly": "epf_contribution", "nps_monthly": "nps_contribution"}
+    for item in items:
+        for old, new in _RENAMES.items():
+            if old in item and new not in item:
+                item[new] = item.pop(old)
     return JSONResponse({"items": items})

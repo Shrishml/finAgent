@@ -24,8 +24,8 @@ SCHEMA = {
                            "realestate: type, location, current_value, purchase_price, usage, linked_loan. "
                            "gold: type, value. esop: company, vested, unvested, next_vesting. "
                            "loan: loan_type, principal, emi, start_date, tenure. "
-                           "epf_ppf: epf_balance, ppf_balance, epf_monthly. "
-                           "nps: nps_balance, nps_monthly. stocks: demat_value. "
+                           "epf_ppf: epf_balance, ppf_balance, epf_contribution, ppf_contribution. "
+                           "nps: nps_balance, nps_contribution. stocks: demat_value. "
                            "insurance: type, cover, premium. tax: regime."
         }
     },

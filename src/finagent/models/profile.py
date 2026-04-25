@@ -25,6 +25,7 @@ class UserProfile:
     spouse_income: float = 0
     other_income: float = 0
     annual_rsu: float = 0
+    monthly_sip: float = 0
 
     # Expenses (asset_type='expenses')
     total_monthly_expenses: float = 0

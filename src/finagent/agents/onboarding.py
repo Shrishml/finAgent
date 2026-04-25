@@ -41,6 +41,7 @@ Extract into these fields (only include fields with actual data):
 - risk_tolerance ("Conservative"|"Moderate"|"Aggressive")
 - monthly_income, annual_bonus, spouse_income, other_income (numbers in INR)
 - annual_rsu (annual RSU/stock vesting value in INR — this is recurring compensation, not a one-time asset)
+- monthly_sip (total monthly SIP investment amount in INR)
 - total_monthly_expenses, rent, groceries, utilities, dining, annual_big_ticket, emis (numbers in INR)
 - loans: [{{"type": "home|car|education|personal|credit_card", "principal": N, "rate": N, "emi": N, "remaining_months": N}}]
 - term_cover, term_premium, health_cover, health_premium (INR), health_employer_only (bool)
@@ -183,7 +184,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         "location", "marital_status", "kids",
         "dependent_parents", "parents_health_insurance",
         "monthly_income", "annual_bonus", "spouse_income", "other_income",
-        "annual_rsu",
+        "annual_rsu", "monthly_sip",
         "total_monthly_expenses", "rent", "groceries", "utilities", "dining",
         "annual_big_ticket", "emis",
         "term_cover", "term_premium", "health_cover", "health_premium",

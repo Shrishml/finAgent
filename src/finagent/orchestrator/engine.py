@@ -28,31 +28,50 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     if not profile:
         return "{}", "No profile data yet. Ask the user about their financial situation."
 
+    # Compute derived fields
+    income = profile.monthly_income
+    expenses = profile.total_monthly_expenses or profile.monthly_expenses
+    emis = profile.emis
+    total_outflow = expenses + emis
+    surplus = income - total_outflow if income else 0
+
     data = {
-        "monthly_income": profile.monthly_income,
-        "monthly_expenses": profile.monthly_expenses,
-        "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else None,
-        "loans": profile.loans or None,
-        "term_cover": profile.term_cover or None,
-        "health_cover": profile.health_cover or None,
+        "name": profile.name or None,
         "age": profile.age or None,
-        "risk_tolerance": profile.risk_tolerance or None,
-        "goals": profile.goals_mentioned or None,
         "occupation": profile.occupation or None,
         "location": profile.location or None,
-        "dependents": profile.dependents or None,
+        "marital_status": profile.marital_status or None,
+        "kids": profile.kids or None,
+        "risk_tolerance": profile.risk_tolerance or None,
+        "monthly_income": income or None,
+        "monthly_expenses": expenses or None,
+        "monthly_emis": emis or None,
+        "monthly_surplus": surplus if income else None,
+        "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else None,
+        "annual_bonus": profile.annual_bonus or None,
+        "annual_rsu": profile.annual_rsu or None,
+        "spouse_income": profile.spouse_income or None,
+        "other_income": profile.other_income or None,
+        "term_cover": profile.term_cover or None,
+        "health_cover": profile.health_cover or None,
+        "loans": profile.loans or None,
+        "goals": profile.goals_mentioned or None,
     }
-    # Append saved assets (FDs, loans, gold, etc.)
+    # Append structured assets (FDs, ESOP, gold, etc.) — skip flat sections already above
+    FLAT_TYPES = {"personal", "income", "expenses", "meta"}
     assets = load_assets(user_id) if user_id and user_id > 0 else []
     if assets:
         by_type = {}
         for a in assets:
             t = a.pop("asset_type", "other")
             a.pop("id", None)
+            if t in FLAT_TYPES:
+                continue
             by_type.setdefault(t, []).append(a)
-        data["saved_assets"] = by_type
+        if by_type:
+            data["assets"] = by_type
 
-    profile_json = json.dumps({k: v for k, v in data.items() if v}, indent=2)
+    profile_json = json.dumps({k: v for k, v in data.items() if v}, separators=(',', ':'))
 
     # Identify gaps
     missing = []

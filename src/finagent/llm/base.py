@@ -12,18 +12,18 @@ class LLMProvider(ABC):
     async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         """Send prompt, get response. json_mode forces JSON output."""
         log.debug(f"[llm:{self.name}] >>> CALL complete (json_mode={json_mode})")
-        log.debug(f"[llm:{self.name}] system={system[:200].replace(chr(10),' ')}{'...' if len(system)>200 else ''}")
-        log.debug(f"[llm:{self.name}] prompt={prompt[:500].replace(chr(10),' ')}{'...' if len(prompt)>500 else ''}")
+        log.debug(f"[llm:{self.name}] system={system.replace(chr(10),' ')}")
+        log.debug(f"[llm:{self.name}] prompt={prompt.replace(chr(10),' ')}")
         t0 = time.time()
         result = await self._complete(prompt, system, json_mode)
-        log.debug(f"[llm:{self.name}] <<< RESPONSE ({time.time()-t0:.1f}s, {len(result)} chars): {result[:300].replace(chr(10),' ')}{'...' if len(result)>300 else ''}")
+        log.debug(f"[llm:{self.name}] <<< RESPONSE ({time.time()-t0:.1f}s, {len(result)} chars): {result.replace(chr(10),' ')}")
         return result
 
     async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
         """Streaming response for chat UI."""
         log.debug(f"[llm:{self.name}] >>> STREAM complete")
-        log.debug(f"[llm:{self.name}] system={system[:200].replace(chr(10),' ')}{'...' if len(system)>200 else ''}")
-        log.debug(f"[llm:{self.name}] prompt={prompt[:500].replace(chr(10),' ')}{'...' if len(prompt)>500 else ''}")
+        log.debug(f"[llm:{self.name}] system={system.replace(chr(10),' ')}")
+        log.debug(f"[llm:{self.name}] prompt={prompt.replace(chr(10),' ')}")
         async for chunk in self._complete_stream(prompt, system):
             yield chunk
 

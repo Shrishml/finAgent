@@ -112,3 +112,120 @@ class TestLinkAssetToGoalAction:
         result = asyncio.get_event_loop().run_until_complete(
             execute({"goal_name": "retirement", "asset_type": "nps"}, uid, {}))
         assert "already linked" in result["message"]
+
+    def test_link_mf_from_holdings(self):
+        """Link a CAS-uploaded MF holding to a goal via folio key."""
+        import asyncio, uuid
+        from finagent.models.mf import MFHolding
+        from finagent.storage.sqlite import save_goal, save_holdings, load_goals
+        uid = get_or_create_user(f"test-mf-{uuid.uuid4().hex[:8]}", "mf@t.com", "T")
+        h = MFHolding(scheme_name="Parag Parikh Flexi Cap Fund Direct Growth",
+                      folio="12345", amc="PPFAS", current_value=200000)
+        save_holdings([h], uid)
+        goal = Goal(user_id=uid, name="House Purchase", template="house",
+                    target_amount=5000000, target_date="2030-01-01")
+        gid = save_goal(goal)
+
+        from finagent.actions.link_asset_to_goal import execute
+        result = asyncio.get_event_loop().run_until_complete(
+            execute({"goal_name": "house", "asset_type": "mf", "match": "parag parikh"}, uid, {}))
+        assert "✅" in result["message"]
+        assert "Parag Parikh" in result["message"]
+
+        updated = next(g for g in load_goals(uid) if g.id == gid)
+        assert any(lf.get("folio", "").startswith("12345/") for lf in updated.linked_folios)
+
+    def test_link_mf_from_declared(self):
+        """Link a chat-declared MF to a goal via asset linking."""
+        import asyncio, uuid
+        from finagent.storage.sqlite import save_goal, load_goals
+        uid = get_or_create_user(f"test-mfd-{uuid.uuid4().hex[:8]}", "mfd@t.com", "T")
+        save_assets(uid, "mf_declared", [{"scheme": "HDFC Conservative Hybrid", "current_value": 150000}])
+        goal = Goal(user_id=uid, name="Marriage Fund", template="marriage",
+                    target_amount=1500000, target_date="2028-01-01")
+        gid = save_goal(goal)
+
+        from finagent.actions.link_asset_to_goal import execute
+        result = asyncio.get_event_loop().run_until_complete(
+            execute({"goal_name": "marriage", "asset_type": "mf", "match": "hdfc conservative"}, uid, {}))
+        assert "✅" in result["message"]
+
+        updated = next(g for g in load_goals(uid) if g.id == gid)
+        assert any(lf.get("asset_type") == "mf_declared" for lf in updated.linked_folios)
+
+    def test_link_mf_no_holdings(self):
+        """MF link fails gracefully when no holdings exist."""
+        import asyncio, uuid
+        from finagent.storage.sqlite import save_goal
+        uid = get_or_create_user(f"test-mfn-{uuid.uuid4().hex[:8]}", "mfn@t.com", "T")
+        goal = Goal(user_id=uid, name="Travel", template="travel",
+                    target_amount=200000, target_date="2027-01-01")
+        save_goal(goal)
+
+        from finagent.actions.link_asset_to_goal import execute
+        result = asyncio.get_event_loop().run_until_complete(
+            execute({"goal_name": "travel", "asset_type": "mf", "match": "SBI Bluechip"}, uid, {}))
+        assert "error" in result
+
+
+class TestSuggestedEmergencyFund:
+    def test_auto_creates_when_expenses_available(self):
+        import uuid
+        from finagent.storage.sqlite import load_goals
+        from finagent.orchestrator.engine import _maybe_suggest_emergency_fund
+        from finagent.models.profile import UserProfile
+        uid = get_or_create_user(f"test-ef-{uuid.uuid4().hex[:8]}", "ef@t.com", "T")
+        profile = UserProfile(user_id=uid, total_monthly_expenses=60000)
+        _maybe_suggest_emergency_fund(uid, profile)
+        goals = load_goals(uid)
+        ef = next((g for g in goals if g.template == "emergency"), None)
+        assert ef is not None
+        assert ef.status == "suggested"
+        assert ef.target_amount == 360000  # 6 × 60000
+
+    def test_no_duplicate_if_exists(self):
+        import uuid
+        from finagent.storage.sqlite import save_goal, load_goals
+        from finagent.orchestrator.engine import _maybe_suggest_emergency_fund
+        from finagent.models.profile import UserProfile
+        uid = get_or_create_user(f"test-efd-{uuid.uuid4().hex[:8]}", "efd@t.com", "T")
+        save_goal(Goal(user_id=uid, name="Emergency Fund", template="emergency",
+                       target_amount=300000, target_date="2027-01-01"))
+        profile = UserProfile(user_id=uid, total_monthly_expenses=60000)
+        _maybe_suggest_emergency_fund(uid, profile)
+        ef_goals = [g for g in load_goals(uid) if g.template == "emergency"]
+        assert len(ef_goals) == 1
+
+    def test_goal_status_active_by_default(self):
+        import uuid
+        from finagent.storage.sqlite import save_goal, load_goals
+        uid = get_or_create_user(f"test-sta-{uuid.uuid4().hex[:8]}", "sta@t.com", "T")
+        goal = Goal(user_id=uid, name="House", template="house",
+                    target_amount=5000000, target_date="2030-01-01")
+        gid = save_goal(goal)
+        loaded = next(g for g in load_goals(uid) if g.id == gid)
+        assert loaded.status == "active"
+
+    def test_accept_changes_status(self):
+        import uuid
+        from finagent.storage.sqlite import save_goal, load_goals
+        uid = get_or_create_user(f"test-acc-{uuid.uuid4().hex[:8]}", "acc@t.com", "T")
+        goal = Goal(user_id=uid, name="Emergency Fund", template="emergency",
+                    target_amount=360000, target_date="", status="suggested")
+        gid = save_goal(goal)
+        loaded = next(g for g in load_goals(uid) if g.id == gid)
+        loaded.status = "active"
+        save_goal(loaded)
+        reloaded = next(g for g in load_goals(uid) if g.id == gid)
+        assert reloaded.status == "active"
+
+    def test_empty_target_date_progress(self):
+        """Suggested emergency fund with no target_date doesn't crash."""
+        import uuid
+        uid = get_or_create_user(f"test-etd-{uuid.uuid4().hex[:8]}", "etd@t.com", "T")
+        goal = Goal(user_id=uid, name="Emergency Fund", template="emergency",
+                    target_amount=360000, target_date="", status="suggested")
+        result = _compute_goal_progress(goal, [], uid)
+        assert result["current_value"] == 0
+        assert result["progress_pct"] == 0
+        assert result["on_track"] is False

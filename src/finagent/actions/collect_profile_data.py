@@ -57,7 +57,7 @@ TYPE_ALIASES = {
     "stock": "stocks", "demat": "stocks", "equity": "stocks",
     "life_insurance": "insurance", "health_insurance": "insurance",
     "real_estate": "realestate", "property": "realestate",
-    "fixed_deposit": "fd",
+    "fixed_deposit": "fd", "savings": "fd", "emergency_fund": "fd", "liquid_fund": "fd",
     "mutual_fund": "mf_declared", "mf": "mf_declared", "sip": "mf_declared",
 }
 

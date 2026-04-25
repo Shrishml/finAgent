@@ -59,7 +59,7 @@ async def extract_profile_data(user_message: str, profile: UserProfile) -> dict:
     full = asdict(profile)
     for k in ("user_id", "pillars_completed", "pillars_skipped", "onboarding_complete", "financial_snapshot"):
         full.pop(k, None)
-    profile_json = json.dumps({k: v for k, v in full.items() if v}, indent=2)
+    profile_json = json.dumps({k: v for k, v in full.items() if v}, separators=(',', ':'))
 
     llm = get_provider("default")
     try:

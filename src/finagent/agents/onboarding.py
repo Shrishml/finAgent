@@ -37,6 +37,7 @@ USER SAID: "{user_message}"
 
 Extract into these fields (only include fields with actual data):
 - monthly_income, annual_bonus, spouse_income, other_income (numbers in INR)
+- annual_rsu (annual RSU/stock vesting value in INR — this is recurring compensation, not a one-time asset)
 - monthly_expenses, rent, emis (numbers in INR)
 - loans: [{{"type": "home|car|education|personal|credit_card", "principal": N, "rate": N, "emi": N, "remaining_months": N}}]
 - term_cover, health_cover (sum assured in INR), health_employer_only (bool)
@@ -112,6 +113,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
 
     field_map = {
         "monthly_income", "annual_bonus", "spouse_income", "other_income",
+        "annual_rsu",
         "monthly_expenses", "rent", "emis",
         "term_cover", "health_cover", "health_employer_only",
         "age", "dependents", "occupation", "employer", "risk_tolerance",

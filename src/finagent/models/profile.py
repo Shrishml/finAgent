@@ -24,6 +24,7 @@ class UserProfile:
     annual_bonus: float = 0
     spouse_income: float = 0
     other_income: float = 0
+    annual_rsu: float = 0
 
     # Expenses (asset_type='expenses')
     total_monthly_expenses: float = 0
@@ -59,7 +60,7 @@ class UserProfile:
     @property
     def savings_rate(self) -> float | None:
         inc = self.monthly_income
-        exp = self.total_monthly_expenses or self.monthly_expenses
+        exp = (self.total_monthly_expenses or self.monthly_expenses) + self.emis
         if inc <= 0:
             return None
         return (inc - exp) / inc

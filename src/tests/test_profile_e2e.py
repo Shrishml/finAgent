@@ -283,6 +283,109 @@ class TestProfileContext:
 # ── Profile + Assets Combined ───────────────────────────────────────
 
 
+class TestGoalDedup:
+    """Test goal creation, update, and dedup via existing_goals in context."""
+
+    def test_create_goal_saves_to_db(self, client):
+        """create_goal action saves goal and returns ui_data."""
+        from finagent.actions.create_goal import execute as create_goal
+        import asyncio
+
+        result = asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Buy a house", "target_amount": 5000000, "target_date": "2030-01-01"}, _TEST_UID, {})
+        )
+        assert "error" not in result
+        assert result["ui_data"]["template"] == "house"
+        assert result["ui_data"]["goal_id"] > 0
+
+    def test_existing_goals_in_context(self, client):
+        """After creating a goal, existing_goals appears in profile context."""
+        from finagent.actions.create_goal import execute as create_goal
+        from finagent.storage.sqlite import load_profile, save_profile
+        from finagent.models.profile import UserProfile
+        from finagent.orchestrator.engine import _build_profile_context
+        import asyncio, json
+
+        profile = UserProfile(user_id=_TEST_UID)
+        save_profile(profile)
+
+        asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Retirement", "target_amount": 10000000, "target_date": "2050-01-01"}, _TEST_UID, {})
+        )
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert "existing_goals" in ctx
+        assert len(ctx["existing_goals"]) == 1
+        assert ctx["existing_goals"][0]["name"] == "Retirement"
+        assert ctx["existing_goals"][0]["template"] == "retirement"
+        assert ctx["existing_goals"][0]["target_amount"] == 10000000
+
+    def test_update_goal_changes_amount(self, client):
+        """update_goal modifies existing goal without creating duplicate."""
+        from finagent.actions.create_goal import execute as create_goal
+        from finagent.actions.update_goal import execute as update_goal
+        from finagent.storage.sqlite import load_goals
+        import asyncio
+
+        result = asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Car", "target_amount": 1000000, "target_date": "2028-01-01"}, _TEST_UID, {})
+        )
+        goal_id = result["ui_data"]["goal_id"]
+
+        result2 = asyncio.get_event_loop().run_until_complete(
+            update_goal({"goal_id": goal_id, "target_amount": 1500000}, _TEST_UID, {})
+        )
+        assert "error" not in result2
+        assert result2["ui_data"]["target_amount"] == 1500000
+
+        goals = load_goals(_TEST_UID)
+        assert len(goals) == 1  # no duplicate
+        assert goals[0].target_amount == 1500000
+
+    def test_update_goal_not_found(self, client):
+        """update_goal returns error for non-existent goal_id."""
+        from finagent.actions.update_goal import execute as update_goal
+        import asyncio
+
+        result = asyncio.get_event_loop().run_until_complete(
+            update_goal({"goal_id": 9999, "target_amount": 500000}, _TEST_UID, {})
+        )
+        assert "error" in result
+        assert "not found" in result["error"]
+
+    def test_multiple_goals_distinct_in_context(self, client):
+        """Two different goals both appear in existing_goals."""
+        from finagent.actions.create_goal import execute as create_goal
+        from finagent.storage.sqlite import load_profile, save_profile
+        from finagent.models.profile import UserProfile
+        from finagent.orchestrator.engine import _build_profile_context
+        import asyncio, json
+
+        profile = UserProfile(user_id=_TEST_UID)
+        save_profile(profile)
+
+        asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "House", "target_amount": 5000000, "target_date": "2030-01-01"}, _TEST_UID, {})
+        )
+        asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Emergency fund", "target_amount": 300000, "target_date": "2026-12-01"}, _TEST_UID, {})
+        )
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert len(ctx["existing_goals"]) == 2
+        templates = {g["template"] for g in ctx["existing_goals"]}
+        assert templates == {"house", "emergency"}
+
+
+# ── Profile + Assets Combined ───────────────────────────────────────
+
+
 class TestProfileAndAssets:
 
     def test_profile_fields_and_assets_coexist(self, client):

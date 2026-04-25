@@ -199,6 +199,87 @@ class TestAgentContext:
         assert len(resp.json()["response"]) > 50  # non-trivial response
 
 
+# ── Profile Context for Agent ────────────────────────────────────────
+
+
+class TestProfileContext:
+    """Test _build_profile_context: surplus, savings_rate, clean JSON."""
+
+    def test_surplus_includes_emis(self, client):
+        """monthly_surplus = income - expenses - emis."""
+        client.post("/profile/assets", json={"asset_type": "personal", "items": [{"name": "Test", "age": 30}]})
+        client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 285000}]})
+        client.post("/profile/assets", json={"asset_type": "expenses", "items": [{"total_monthly_expenses": 80000, "emis": 20000}]})
+
+        from finagent.storage.sqlite import load_profile
+        from finagent.orchestrator.engine import _build_profile_context
+        import json
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert ctx["monthly_income"] == 285000
+        assert ctx["monthly_expenses"] == 80000
+        assert ctx["monthly_emis"] == 20000
+        assert ctx["monthly_surplus"] == 185000  # 285000 - 80000 - 20000
+        assert ctx["savings_rate"] == "65%"  # (285000 - 80000 - 20000) / 285000 = 64.9%
+
+    def test_no_duplicate_flat_sections_in_assets(self, client):
+        """personal/income/expenses/meta should NOT appear in assets key."""
+        client.post("/profile/assets", json={"asset_type": "personal", "items": [{"name": "Test", "age": 30}]})
+        client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 100000}]})
+        client.post("/profile/assets", json={"asset_type": "meta", "items": [{"onboarding_complete": True}]})
+        client.post("/profile/assets", json={"asset_type": "fd", "items": [{"bank": "SBI", "amount": 500000}]})
+
+        from finagent.storage.sqlite import load_profile
+        from finagent.orchestrator.engine import _build_profile_context
+        import json
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert "assets" in ctx
+        assert "personal" not in ctx["assets"]
+        assert "income" not in ctx["assets"]
+        assert "expenses" not in ctx["assets"]
+        assert "meta" not in ctx["assets"]
+        assert "fd" in ctx["assets"]
+
+    def test_surplus_zero_when_no_income(self, client):
+        """No income → no surplus field in context."""
+        client.post("/profile/assets", json={"asset_type": "expenses", "items": [{"total_monthly_expenses": 50000}]})
+
+        from finagent.storage.sqlite import load_profile
+        from finagent.orchestrator.engine import _build_profile_context
+        import json
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert "monthly_surplus" not in ctx
+        assert "savings_rate" not in ctx
+
+    def test_esop_appears_in_assets(self, client):
+        """ESOP data should appear under assets.esop."""
+        client.post("/profile/assets", json={"asset_type": "esop", "items": [{"company": "Amazon", "vested": 3000000}]})
+
+        from finagent.storage.sqlite import load_profile
+        from finagent.orchestrator.engine import _build_profile_context
+        import json
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert "assets" in ctx
+        assert "esop" in ctx["assets"]
+        assert ctx["assets"]["esop"][0]["company"] == "Amazon"
+        assert ctx["assets"]["esop"][0]["vested"] == 3000000
+
+
 # ── Profile + Assets Combined ───────────────────────────────────────
 
 

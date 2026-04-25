@@ -11,7 +11,7 @@ from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import (
     load_holdings, save_holdings, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
-    load_assets,
+    load_assets, load_goals,
 )
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
@@ -71,6 +71,15 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
         if by_type:
             data["assets"] = by_type
 
+    # Inject saved goals so LLM sees existing goals before creating new ones
+    goals = load_goals(user_id) if user_id and user_id > 0 else []
+    if goals:
+        data["existing_goals"] = [
+            {"id": g.id, "name": g.name, "template": g.template,
+             "target_amount": g.target_amount, "target_date": g.target_date}
+            for g in goals
+        ]
+
     profile_json = json.dumps({k: v for k, v in data.items() if v}, separators=(',', ':'))
 
     # Identify gaps
@@ -118,6 +127,7 @@ RULES:
 - If data is missing for a good answer, mention what would help (but don't block on it)
 - When the user shares financial data (income, expenses, goals, etc.), acknowledge it naturally — extraction happens automatically
 - Annual RSU/stock vesting amounts are saved automatically as income. Use collect_profile_data(esop) only for ESOP *holdings* (company, vested value, unvested value) — not for annual vesting amounts
+- Before creating a goal, check existing_goals in the profile. If a goal with the same template or similar name exists, use update_goal(goal_id=...) to update it instead of creating a duplicate
 - NEVER say "your onboarding is complete" or reference any onboarding process
 - At the end of your response, suggest 2-3 natural follow-up options the user might want. Format: [OPTIONS: option1 | option2 | option3]. Keep each option under 8 words. Skip for simple yes/no acknowledgments.{tools_prompt}"""
 

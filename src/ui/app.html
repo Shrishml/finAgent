@@ -245,33 +245,40 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <div class="space-y-3" id="profile-sections">
   <div class="space-y-3" id="profile-sections">
 
-    <!-- Section: Family (MOVED TO TOP) -->
+    <!-- Section: Personal -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <button onclick="toggleSection('family')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+      <button onclick="toggleSection('personal')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
         <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-lg">👨‍👩‍👧</span>
-          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Family</h4><p class="text-[10px] text-gray-400">Dependents, spouse, parents</p></div>
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-lg">👤</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Personal</h4><p class="text-[10px] text-gray-400">About you, family, risk appetite</p></div>
         </div>
         <div class="flex items-center gap-3">
           <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
-          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-family" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-personal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
       </button>
-      <div id="section-family" class="hidden border-t px-5 py-5 bg-gray-50/50">
-        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: insurance needs calculation, 80D for parents, dependent planning</p>
+      <div id="section-personal" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: personalized advice, insurance needs, tax planning</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax and insurance planning</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Name</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How Arth addresses you</p><input data-field="name" type="text" placeholder="Your name" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Age</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps set the right investment horizon</p><input data-field="age" type="number" placeholder="28" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Occupation</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Salaried, freelancer, business — affects tax & insurance advice</p><input data-field="occupation" type="text" placeholder="Software Engineer" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">City</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Cost of living varies — helps set realistic benchmarks</p><input data-field="location" type="text" placeholder="Bangalore" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">For tax and insurance planning</p>
             <select data-field="marital_status" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
           </div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input data-field="kids" type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth uses this for tax deduction and insurance analysis</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">For tax deduction and insurance analysis</p>
             <select data-field="dependent_parents" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
           </div>
-          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Arth checks if your family has coverage gaps</p>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Checks if your family has coverage gaps</p>
             <select data-field="parents_health_insurance" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
           </div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Risk Appetite</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Conservative = FDs & debt funds · Moderate = mix · Aggressive = mostly equity</p>
+            <select data-field="risk_tolerance" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Conservative</option><option>Moderate</option><option>Aggressive</option></select>
+          </div>
         </div>
-        <div class="flex justify-end mt-4"><button onclick="saveSection('family')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('personal')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
       </div>
     </div>
 
@@ -313,6 +320,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       <div id="section-expenses" class="hidden border-t px-5 py-5 bg-gray-50/50">
         <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: savings rate analysis, budget optimization</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Monthly Expenses</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Approximate total — break down below if you know the details</p><input data-field="total_monthly_expenses" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Rent</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Pure housing cost — if you have a home loan instead, skip this (it's in Loans)</p><input data-field="rent" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly average for household essentials</p><input data-field="groceries" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
           <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wifi, phone, OTT, electricity — all recurring bills</p><input data-field="utilities" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
@@ -1304,19 +1312,19 @@ const _obSteps = [
     {key:'age',label:'Age',type:'number',placeholder:'28',hint:'Your age helps us set the right investment horizon'},
     {key:'occupation',label:'Occupation',type:'text',placeholder:'Software Engineer',hint:'Salaried, freelancer, business — affects tax & insurance advice'},
     {key:'location',label:'City',type:'text',placeholder:'Bangalore',hint:'Cost of living varies — helps set realistic expense benchmarks'},
-    {key:'marital_status',label:'Marital Status',type:'select',options:['','single','married'],hint:''},
-    {key:'kids',label:'Number of Kids',type:'select',options:['0','1','2','3+'],showIf:'married',hint:''},
+    {key:'marital_status',label:'Marital Status',type:'select',options:['','Single','Married'],hint:''},
+    {key:'kids',label:'Number of Kids',type:'select',options:['0','1','2','3+'],showIf:'Married',hint:''},
   ]},
   { title: '💰 Monthly Money Flow', subtitle: 'What comes in and what goes out each month', fields: [
     {key:'monthly_income',label:'In-Hand Salary',type:'inr',placeholder:'75,000',hint:'After tax & deductions — the amount that hits your bank'},
-    {key:'monthly_expenses',label:'Fixed Expenses',type:'inr',placeholder:'40,000',hint:'Rent, groceries, bills, subscriptions — everything except EMIs'},
+    {key:'total_monthly_expenses',label:'Fixed Expenses',type:'inr',placeholder:'40,000',hint:'Rent, groceries, bills, subscriptions — everything except EMIs'},
     {key:'emis',label:'Total EMIs',type:'inr',placeholder:'0',hint:'All loan EMIs combined — home, car, personal, education'},
     {key:'total_investments',label:'Monthly Investments / SIPs',type:'inr',placeholder:'10,000',hint:'Mutual funds, PPF, RD, stocks — anything you invest regularly'},
   ]},
   { title: '🛡️ Your Safety Net', subtitle: 'Insurance & risk — the boring stuff that saves you', fields: [
     {key:'term_cover',label:'Term Life Cover',type:'inr',placeholder:'0',hint:'Total cover amount (not premium) — e.g. ₹1 Cr. Put 0 if none'},
     {key:'health_cover',label:'Health Insurance Cover',type:'inr',placeholder:'0',hint:'Personal policy cover amount — exclude employer\'s group cover'},
-    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','conservative','moderate','aggressive'],hint:'Conservative = FDs & debt funds · Moderate = mix of equity & debt · Aggressive = mostly equity'},
+    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','Conservative','Moderate','Aggressive'],hint:'Conservative = FDs & debt funds · Moderate = mix of equity & debt · Aggressive = mostly equity'},
   ]},
 ];
 
@@ -1380,7 +1388,7 @@ function _obCollect() {
     if (v) _obData[f.key] = (f.type === 'number' || f.type === 'inr') ? parseFloat(v.replace(/,/g, '')) : v;
   });
   // Compute dependents from marital_status + kids
-  const married = _obData.marital_status === 'married';
+  const married = _obData.marital_status === 'Married';
   const kids = married ? parseInt(_obData.kids || '0') : 0;
   _obData.dependents = (married ? 1 : 0) + (kids >= 3 ? 3 : kids);
   _obData.kids = kids;
@@ -1391,10 +1399,17 @@ function _obPrev() { _obCollect(); _obStep--; _renderObStep(); }
 async function _obNext() {
   _obCollect();
   if (_obStep < 3) { _obStep++; _renderObStep(); return; }
-  // Final step — save to backend with onboarding complete
-  const payload = { ..._obData, onboarding_complete: true, pillars_completed: ['income','expenses','assets','liabilities','insurance'] };
+  // Final step — save to user_assets (single storage)
+  const d = _obData;
+  const _post = (t, data) => fetch('/profile/assets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({asset_type:t, items:[data]}) });
   try {
-    await fetch('/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    await Promise.all([
+      _post('personal', { age: d.age, occupation: d.occupation, location: d.location, marital_status: d.marital_status, kids: d.kids||0, risk_tolerance: d.risk_tolerance }),
+      _post('income', { monthly_income: d.monthly_income }),
+      d.total_monthly_expenses ? _post('expenses', { total_monthly_expenses: d.total_monthly_expenses, emis: d.emis||0 }) : null,
+      d.term_cover || d.health_cover ? _post('insurance', { term_cover: d.term_cover||0, health_cover: d.health_cover||0 }) : null,
+      _post('meta', { onboarding_complete: true }),
+    ].filter(Boolean));
   } catch(e) { console.error('Profile save failed', e); }
   // Restore normal tabs, switch to Profile tab
   document.querySelectorAll('.tab-btn').forEach(b => b.style.display = '');
@@ -1831,7 +1846,7 @@ function addGoldCard() { addCard('gold', 'section-gold'); }
 function addESOPCard() { addCard('esop', 'section-esop'); }
 
 // --- Profile Load ---
-const SIMPLE_SECTIONS = ['family','income','expenses','epf_ppf','nps','stocks','insurance','tax'];
+const SIMPLE_SECTIONS = ['personal','income','expenses','epf_ppf','nps','stocks','insurance','tax'];
 const CARD_SECTIONS = {fd:'section-fds', realestate:'section-realestate', gold:'section-gold', esop:'section-esop', loan:'section-loans'};
 
 async function loadProfileData() {

@@ -1,76 +1,69 @@
-"""User financial profile for advisor onboarding."""
+"""User financial profile — reconstructed from user_assets (single storage)."""
 from dataclasses import dataclass, field
-
-PILLAR_ORDER = ["income", "expenses", "assets", "liabilities", "insurance", "goals"]
 
 
 @dataclass
 class UserProfile:
-    """Complete financial profile built through conversational onboarding."""
+    """Complete financial profile built from user_assets table."""
     user_id: int
 
-    # Pillar 1: Income
+    # Personal (asset_type='personal')
+    name: str = ""
+    age: int = 0
+    occupation: str = ""
+    employer: str = ""
+    location: str = ""
+    marital_status: str = ""       # Single | Married
+    kids: int = 0
+    dependent_parents: str = ""
+    parents_health_insurance: str = ""
+    risk_tolerance: str = ""       # Conservative | Moderate | Aggressive
+
+    # Income (asset_type='income')
     monthly_income: float = 0
     annual_bonus: float = 0
     spouse_income: float = 0
     other_income: float = 0
 
-    # Pillar 2: Expenses
-    monthly_expenses: float = 0
+    # Expenses (asset_type='expenses')
+    total_monthly_expenses: float = 0
     rent: float = 0
+    groceries: float = 0
+    utilities: float = 0
+    dining: float = 0
+    annual_big_ticket: float = 0
     emis: float = 0
 
-    # Pillar 3: Assets
-    total_investments: float = 0  # rough estimate from onboarding
-
-    # Pillar 4: Liabilities
-    loans: list[dict] = field(default_factory=list)
-    # [{"type": "home", "principal": 4000000, "rate": 8.5, "emi": 35000, "remaining_months": 180}]
-
-    # Pillar 5: Insurance
+    # Insurance (asset_type='insurance')
     term_cover: float = 0
+    term_premium: float = 0
     health_cover: float = 0
-    health_employer_only: bool = True
+    health_premium: float = 0
 
-    # Pillar 6: Goals
+    # Onboarding state (asset_type='meta')
+    onboarding_complete: bool = False
+
+    # Legacy compat
+    monthly_expenses: float = 0  # alias for total_monthly_expenses
+    total_investments: float = 0
+    loans: list[dict] = field(default_factory=list)
     goals_mentioned: list[str] = field(default_factory=list)
-
-    # Demographics
-    age: int = 0
+    health_employer_only: bool = True
     dependents: int = 0
-    occupation: str = ""
-    employer: str = ""
-    location: str = ""  # city
-    marital_status: str = ""  # single | married
-    kids: int = 0
-    risk_tolerance: str = ""  # conservative | moderate | aggressive
-
-    # Tax
-    tax_regime: str = ""  # old | new
+    tax_regime: str = ""
     section_80c_used: float = 0
-
-    # Onboarding state
     pillars_completed: list[str] = field(default_factory=list)
     pillars_skipped: list[str] = field(default_factory=list)
-    onboarding_complete: bool = False
-    financial_snapshot: str = ""  # LLM-generated personalized snapshot at onboarding completion
-
-    @property
-    def current_pillar(self) -> str | None:
-        """Next pillar to complete in strict order."""
-        for p in PILLAR_ORDER:
-            if p not in self.pillars_completed and p not in self.pillars_skipped:
-                return p
-        return None
+    financial_snapshot: str = ""
 
     @property
     def savings_rate(self) -> float | None:
-        """Monthly savings as percentage of income."""
-        if self.monthly_income <= 0:
+        inc = self.monthly_income
+        exp = self.total_monthly_expenses or self.monthly_expenses
+        if inc <= 0:
             return None
-        return (self.monthly_income - self.monthly_expenses) / self.monthly_income
+        return (inc - exp) / inc
 
     @property
     def total_emi(self) -> float:
-        """Sum of all loan EMIs."""
         return sum(l.get("emi", 0) for l in self.loans)

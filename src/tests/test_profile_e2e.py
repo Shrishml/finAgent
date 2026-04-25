@@ -405,3 +405,102 @@ class TestProfileAndAssets:
         assets = client.get("/profile/assets?type=fd").json()["items"]
         assert len(assets) == 1
         assert assets[0]["bank"] == "SBI"
+
+
+# ── Extraction E2E (real LLM) ───────────────────────────────────────
+
+import asyncio
+from finagent.models.profile import UserProfile
+from finagent.agents.onboarding import extract_profile_data, apply_extractions
+
+
+def _run(coro):
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
+class TestExtractionE2E:
+    """Real LLM extraction tests. Each test sends a natural language message
+    and verifies the correct profile fields are extracted and applied."""
+
+    def test_basic_income_and_age(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data("I'm 28 years old, earning 1.5 LPA monthly take-home is about 95k", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert p.age == 28
+        assert p.monthly_income == 95000 or p.monthly_income == 150000  # either monthly or annual interpretation
+
+    def test_expense_breakdown(self):
+        p = UserProfile(user_id=_TEST_UID, monthly_income=100000)
+        ext = _run(extract_profile_data(
+            "My monthly expenses: rent 25k, groceries around 8k, utilities 3k, dining out 5k. Total about 41k.", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert p.rent == 25000
+        assert p.groceries == 8000
+        assert p.utilities == 3000
+        assert p.dining == 5000
+
+    def test_insurance_with_premiums(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data(
+            "I have 1Cr term insurance paying 12k/year premium, and 10L health cover at 18k/year premium", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert p.term_cover == 10000000
+        assert p.term_premium == 12000
+        assert p.health_cover == 1000000
+        assert p.health_premium == 18000
+
+    def test_risk_tolerance(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data("I have a high risk appetite, 20+ year horizon", p))
+        apply_extractions(p, ext)
+        assert p.risk_tolerance.lower() in ("aggressive", "high")
+
+    def test_loan_extraction(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data(
+            "I have a home loan of 40L at 8.5% interest, EMI is 35k with 18 years remaining", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert len(p.loans) >= 1
+        loan = p.loans[0]
+        assert loan["type"] == "home"
+        assert loan["emi"] == 35000
+
+    def test_personal_details(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data(
+            "I'm Rahul, 30, married with 1 kid, working as a software engineer at Google in Bangalore", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert p.name == "Rahul"
+        assert p.age == 30
+        assert p.marital_status.lower() == "married"
+        assert p.kids == 1
+        assert "engineer" in p.occupation.lower() or "software" in p.occupation.lower()
+        assert "google" in p.employer.lower()
+        assert "bangalore" in p.location.lower() or "bengaluru" in p.location.lower()
+
+    def test_no_extraction_from_question(self):
+        p = UserProfile(user_id=_TEST_UID, monthly_income=100000)
+        ext = _run(extract_profile_data("Should I invest in ELSS or PPF for tax saving?", p))
+        changed = apply_extractions(p, ext)
+        assert not changed  # pure question, no data to extract
+
+    def test_lakh_crore_conversion(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data("Term cover is 1.5 Cr, health cover 25L", p))
+        changed = apply_extractions(p, ext)
+        assert changed
+        assert p.term_cover == 15000000
+        assert p.health_cover == 2500000
+
+    def test_dependent_parents(self):
+        p = UserProfile(user_id=_TEST_UID)
+        ext = _run(extract_profile_data(
+            "I have 2 dependent parents, their health insurance is covered by me", p))
+        apply_extractions(p, ext)
+        assert p.dependent_parents  # non-empty
+        assert p.parents_health_insurance.lower() == "yes"

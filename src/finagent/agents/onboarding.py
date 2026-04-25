@@ -36,12 +36,14 @@ CURRENT PROFILE:
 USER SAID: "{user_message}"
 
 Extract into these fields (only include fields with actual data):
+- name, age, occupation, employer, location, marital_status, kids, dependents
+- dependent_parents (e.g. "2 parents"), parents_health_insurance ("yes"|"no")
+- risk_tolerance ("Conservative"|"Moderate"|"Aggressive")
 - monthly_income, annual_bonus, spouse_income, other_income (numbers in INR)
 - annual_rsu (annual RSU/stock vesting value in INR — this is recurring compensation, not a one-time asset)
-- monthly_expenses, rent, emis (numbers in INR)
+- total_monthly_expenses, rent, groceries, utilities, dining, annual_big_ticket, emis (numbers in INR)
 - loans: [{{"type": "home|car|education|personal|credit_card", "principal": N, "rate": N, "emi": N, "remaining_months": N}}]
-- term_cover, health_cover (sum assured in INR), health_employer_only (bool)
-- age, dependents, occupation, employer, location, marital_status, kids, risk_tolerance
+- term_cover, term_premium, health_cover, health_premium (INR), health_employer_only (bool)
 - tax_regime ("old"|"new"), section_80c_used
 - esop_company, esop_vested (INR), esop_unvested (INR), esop_next_vesting (YYYY-MM)
 
@@ -112,20 +114,25 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
             changed = True
 
     field_map = {
+        "name", "age", "dependents", "occupation", "employer", "risk_tolerance",
+        "location", "marital_status", "kids",
+        "dependent_parents", "parents_health_insurance",
         "monthly_income", "annual_bonus", "spouse_income", "other_income",
         "annual_rsu",
-        "monthly_expenses", "rent", "emis",
-        "term_cover", "health_cover", "health_employer_only",
-        "age", "dependents", "occupation", "employer", "risk_tolerance",
-        "location", "marital_status", "kids",
+        "total_monthly_expenses", "rent", "groceries", "utilities", "dining",
+        "annual_big_ticket", "emis",
+        "term_cover", "term_premium", "health_cover", "health_premium",
+        "health_employer_only",
         "tax_regime", "section_80c_used",
     }
+    str_fields = {"name", "occupation", "employer", "risk_tolerance", "tax_regime",
+                  "location", "marital_status", "dependent_parents", "parents_health_insurance"}
     for key, value in extractions.items():
         if key == "loans" and isinstance(value, list):
             profile.loans = value
             changed = True
         elif key in field_map and value is not None:
-            if isinstance(value, str) and key not in ("occupation", "employer", "risk_tolerance", "tax_regime", "location", "marital_status"):
+            if isinstance(value, str) and key not in str_fields:
                 try:
                     value = float(value.replace(",", ""))
                 except ValueError:

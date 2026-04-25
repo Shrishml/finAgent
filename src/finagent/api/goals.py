@@ -6,23 +6,42 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from finagent.models.goal import Goal, GOAL_TEMPLATES
-from finagent.storage.sqlite import save_goal, load_goals, delete_goal, load_holdings
+from finagent.storage.sqlite import save_goal, load_goals, delete_goal, load_holdings, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
 router = APIRouter(tags=["goals"])
 
 
-def _compute_goal_progress(goal: Goal, holdings: list) -> dict:
+ASSET_VALUE_FIELDS = {
+    "fd": "amount", "gold": "value", "esop": "vested",
+    "realestate": "current_value", "nps": "nps_balance",
+}
+
+def _asset_value(item: dict) -> float:
+    """Extract monetary value from a user_asset item."""
+    at = item.get("asset_type", "")
+    if at == "epf_ppf":
+        return float(item.get("epf_balance", 0) or 0) + float(item.get("ppf_balance", 0) or 0)
+    field = ASSET_VALUE_FIELDS.get(at)
+    return float(item.get(field, 0) or 0) if field else 0
+
+
+def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
     """Compute progress, monthly SIP, and projection for a goal."""
     linked_value = 0.0
     monthly_sip = 0.0
     alloc_map = {}
+    asset_links = []
     for lf in goal.linked_folios:
-        if isinstance(lf, dict):
+        if isinstance(lf, dict) and "asset_type" in lf:
+            asset_links.append(lf)
+        elif isinstance(lf, dict):
             alloc_map[lf["folio"]] = lf.get("pct", 100) / 100
         else:
             alloc_map[lf] = 1.0
+
+    # MF holdings
     for h in holdings:
         key = f"{h.folio}/{h.scheme_name}"
         if key not in alloc_map:
@@ -32,6 +51,13 @@ def _compute_goal_progress(goal: Goal, holdings: list) -> dict:
         cutoff = _date.today() - timedelta(days=180)
         recent_investments = sum(t.amount for t in h.transactions if t.amount > 0 and t.date >= cutoff)
         monthly_sip += (recent_investments / 6) * weight
+
+    # Linked assets (FDs, gold, EPF/PPF, NPS, etc.)
+    for al in asset_links:
+        items = load_assets(user_id, al["asset_type"])
+        match = next((i for i in items if i.get("id") == al.get("asset_id")), items[0] if items else None)
+        if match:
+            linked_value += _asset_value(match) * (al.get("pct", 100) / 100)
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
     td = goal.target_date if len(goal.target_date) > 7 else goal.target_date + "-01"
@@ -79,18 +105,55 @@ def _validate_allocations(user_id: int, linked_folios: list, exclude_goal_id: in
         if g.id == exclude_goal_id:
             continue
         for lf in g.linked_folios:
-            if isinstance(lf, dict):
+            if isinstance(lf, dict) and "asset_type" in lf:
+                key = f"asset:{lf['asset_type']}:{lf.get('asset_id', 0)}"
+                alloc[key] = alloc.get(key, 0) + lf.get("pct", 100)
+            elif isinstance(lf, dict):
                 alloc[lf["folio"]] = alloc.get(lf["folio"], 0) + lf.get("pct", 100)
             else:
                 alloc[lf] = alloc.get(lf, 0) + 100
     for lf in linked_folios:
-        if isinstance(lf, dict):
+        if isinstance(lf, dict) and "asset_type" in lf:
+            key = f"asset:{lf['asset_type']}:{lf.get('asset_id', 0)}"
+            pct = lf.get("pct", 100)
+        elif isinstance(lf, dict):
             key, pct = lf["folio"], lf.get("pct", 100)
         else:
             key, pct = lf, 100
         total = alloc.get(key, 0) + pct
         if total > 100:
-            raise HTTPException(status_code=400, detail=f"Fund '{key}' would be {total}% allocated (max 100%)")
+            raise HTTPException(status_code=400, detail=f"'{key}' would be {total}% allocated (max 100%)")
+
+
+LINKABLE_TYPES = {"fd", "gold", "esop", "epf_ppf", "nps", "realestate"}
+ASSET_LABELS = {"fd": "Fixed Deposit", "gold": "Gold", "esop": "ESOP/RSU",
+                "epf_ppf": "EPF/PPF", "nps": "NPS", "realestate": "Real Estate"}
+
+
+@router.get("/goals/linkable-assets")
+async def linkable_assets(request: Request):
+    user_id = get_user_id(request) or DEMO_USER_ID
+    result = []
+    for at in LINKABLE_TYPES:
+        items = load_assets(user_id, at)
+        for item in items:
+            val = _asset_value(item)
+            if val <= 0:
+                continue
+            # Build a display name
+            if at == "fd":
+                label = f"FD — {item.get('bank', 'Unknown')}"
+            elif at == "gold":
+                label = f"Gold — {item.get('type', 'Physical')}"
+            elif at == "esop":
+                label = f"ESOP — {item.get('company', 'Unknown')}"
+            elif at == "realestate":
+                label = f"Property — {item.get('location', 'Unknown')}"
+            else:
+                label = ASSET_LABELS.get(at, at)
+            result.append({"asset_type": at, "asset_id": item.get("id", 0),
+                           "label": label, "value": val})
+    return JSONResponse({"assets": result})
 
 
 @router.get("/goals/templates")
@@ -109,7 +172,10 @@ async def goal_allocations(request: Request):
         if g.id == exclude_id:
             continue
         for lf in g.linked_folios:
-            if isinstance(lf, dict):
+            if isinstance(lf, dict) and "asset_type" in lf:
+                key = f"asset:{lf['asset_type']}:{lf.get('asset_id', 0)}"
+                alloc[key] = alloc.get(key, 0) + lf.get("pct", 100)
+            elif isinstance(lf, dict):
                 alloc[lf["folio"]] = alloc.get(lf["folio"], 0) + lf.get("pct", 100)
             else:
                 alloc[lf] = alloc.get(lf, 0) + 100
@@ -127,7 +193,7 @@ async def get_goals(request: Request):
             "target_amount": g.target_amount, "target_date": g.target_date,
             "linked_folios": g.linked_folios, "growth_rate": g.growth_rate,
             "created_at": g.created_at,
-            **_compute_goal_progress(g, holdings),
+            **_compute_goal_progress(g, holdings, user_id),
         } for g in goals]
     })
 

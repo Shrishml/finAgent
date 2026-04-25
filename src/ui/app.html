@@ -1494,16 +1494,24 @@ function selectTemplate(key) {
 }
 
 function renderHoldingsCheckboxes(selectedFolios) {
-  // selectedFolios: [{folio, pct}] or ["folio"] (old format)
+  // selectedFolios: [{folio, pct}] or [{asset_type, asset_id, pct}] or ["folio"]
   const selMap = {};
+  const selAssets = {};
   (selectedFolios || []).forEach(lf => {
-    if (typeof lf === 'object') selMap[lf.folio] = lf.pct || 100;
+    if (typeof lf === 'object' && lf.asset_type) {
+      selAssets[lf.asset_type + ':' + (lf.asset_id||0)] = lf.pct || 100;
+    } else if (typeof lf === 'object') selMap[lf.folio] = lf.pct || 100;
     else selMap[lf] = 100;
   });
   const excludeParam = _editingGoalId ? '?exclude=' + _editingGoalId : '';
-  fetch('/goals/allocations' + excludeParam).then(safeJson).then(data => {
-    const alloc = data.allocations || {};
-    $('goal-holdings-list').innerHTML = _holdings.map(h => {
+  Promise.all([
+    fetch('/goals/allocations' + excludeParam).then(safeJson),
+    fetch('/goals/linkable-assets').then(safeJson)
+  ]).then(([allocData, assetData]) => {
+    const alloc = allocData.allocations || {};
+    const assets = assetData.assets || [];
+    // MF holdings
+    let html = _holdings.map(h => {
       const key = h.folio + '/' + h.scheme;
       const used = alloc[key] || 0;
       const avail = 100 - used;
@@ -1516,10 +1524,36 @@ function renderHoldingsCheckboxes(selectedFolios) {
         <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}${used > 0 ? ' · <span class="text-amber-500">'+used+'% used</span>' : ''}</div></div>
         <div class="flex items-center gap-1 shrink-0"><input type="number" min="1" max="${avail}" value="${Math.min(pct, avail)}" data-folio="${esc(key)}" class="goal-pct-input w-14 text-center border rounded-lg px-1 py-1 text-xs font-bold" ${!checked ? 'disabled' : ''}><span class="text-[10px] text-gray-400">%</span></div>
       </div>`;
-    }).join('') || '<p class="text-xs text-gray-400">No holdings to link.</p>';
+    }).join('');
+    // Assets (FDs, Gold, EPF/PPF, NPS, etc.)
+    if (assets.length) {
+      html += '<p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-2">Other Assets</p>';
+      html += assets.map(a => {
+        const akey = 'asset:' + a.asset_type + ':' + (a.asset_id||0);
+        const used = alloc[akey] || 0;
+        const avail = 100 - used;
+        const checked = (a.asset_type + ':' + (a.asset_id||0)) in selAssets;
+        const pct = selAssets[a.asset_type + ':' + (a.asset_id||0)] || Math.min(100, avail);
+        if (avail <= 0 && !checked) return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl opacity-50">
+          <input type="checkbox" disabled class="w-4 h-4 rounded"><div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-400 truncate">${esc(a.label)}</div><div class="text-[10px] text-red-400">100% allocated</div></div></div>`;
+        return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <input type="checkbox" value="${esc(akey)}" class="goal-asset-cb w-4 h-4 text-teal-600 rounded" data-asset-type="${a.asset_type}" data-asset-id="${a.asset_id||0}" ${checked ? 'checked' : ''}>
+          <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(a.label)}</div><div class="text-[10px] text-gray-400">${INR(a.value)}${used > 0 ? ' · <span class="text-amber-500">'+used+'% used</span>' : ''}</div></div>
+          <div class="flex items-center gap-1 shrink-0"><input type="number" min="1" max="${avail}" value="${Math.min(pct, avail)}" data-asset-key="${esc(akey)}" class="goal-asset-pct w-14 text-center border rounded-lg px-1 py-1 text-xs font-bold" ${!checked ? 'disabled' : ''}><span class="text-[10px] text-gray-400">%</span></div>
+        </div>`;
+      }).join('');
+    }
+    $('goal-holdings-list').innerHTML = html || '<p class="text-xs text-gray-400">No holdings or assets to link.</p>';
+    // Enable/disable pct inputs on checkbox toggle
     $('goal-holdings-list').querySelectorAll('.goal-holding-cb').forEach(cb => {
       cb.addEventListener('change', () => {
         const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
+        if (pi) pi.disabled = !cb.checked;
+      });
+    });
+    $('goal-holdings-list').querySelectorAll('.goal-asset-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const pi = $('goal-holdings-list').querySelector('[data-asset-key="'+cb.value+'"]');
         if (pi) pi.disabled = !cb.checked;
       });
     });
@@ -1536,7 +1570,11 @@ async function submitGoal() {
     const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
     return { folio: cb.value, pct: parseInt(pi?.value || 100) };
   });
-  const body = { name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: folios };
+  const assetLinks = [...document.querySelectorAll('.goal-asset-cb:checked')].map(cb => {
+    const pi = $('goal-holdings-list').querySelector('[data-asset-key="'+cb.value+'"]');
+    return { asset_type: cb.dataset.assetType, asset_id: parseInt(cb.dataset.assetId), pct: parseInt(pi?.value || 100) };
+  });
+  const body = { name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: [...folios, ...assetLinks] };
   try {
     const url = _editingGoalId ? '/goals/' + _editingGoalId : '/goals';
     const method = _editingGoalId ? 'PUT' : 'POST';
@@ -1584,7 +1622,7 @@ async function loadGoals() {
           <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Projected</p><p class="text-sm font-bold text-gray-800 mt-1">${INR_SHORT(g.projected_value)}</p></div>
           <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'ETA' : 'SIP Gap'}</p><p class="text-sm font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-1">${g.on_track ? (g.projected_months ? g.projected_months + ' mo' : '—') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p></div>
         </div>
-        ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 mt-4 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 mt-4 font-bold">No holdings linked</p>'}
+        ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 mt-4 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''}/asset${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 mt-4 font-bold">No holdings linked</p>'}
       </div>`;
     }).join('');
   } catch(e) { console.error('Failed to load goals', e); }

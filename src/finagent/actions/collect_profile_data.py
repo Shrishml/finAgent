@@ -8,8 +8,8 @@ SCHEMA = {
     "name": "collect_profile_data",
     "description": "Collect structured profile data from the user. If you have ALL details from the "
                    "conversation, pass them in prefill and they'll be saved directly. If partial, "
-                   "shows an editable form card for the user to complete. "
-                   "Use when user mentions assets, loans, or financial details.",
+                   "a UI card is shown for the user to fill — keep your response SHORT (1-2 sentences "
+                   "prompting user to complete the card). Don't give advice until card is saved.",
     "parameters": {
         "card_type": {
             "type": "string",

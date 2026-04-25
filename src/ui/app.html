@@ -1621,10 +1621,13 @@ loadGoalTemplates();
 
 // Indian comma formatting for amount input (12,34,567)
 document.addEventListener('input', e => {
-  if (e.target.id !== 'goal-amount') return;
-  const raw = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '');
-  if (!raw) { e.target.value = ''; return; }
-  e.target.value = parseInt(raw).toLocaleString('en-IN');
+  const el = e.target;
+  if (el.tagName !== 'INPUT') return;
+  // Format any field with ₹ placeholder as Indian number
+  const ph = (el.placeholder || '').trim();
+  if (ph.startsWith('₹') || el.id === 'goal-amount') {
+    _fmtInrLive(el);
+  }
 });
 
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
@@ -1873,7 +1876,9 @@ async function loadProfileData() {
       const data = byType[type][0];
       section.querySelectorAll('[data-field]').forEach(el => {
         if (data[el.dataset.field] != null) {
-          el.value = data[el.dataset.field];
+          const v = data[el.dataset.field];
+          const ph = (el.placeholder || '').trim();
+          el.value = (ph.startsWith('₹') && typeof v === 'number') ? _fmtInr(v) : v;
           if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
         }
       });
@@ -1894,7 +1899,7 @@ async function loadProfileData() {
         const card = cards[cards.length - 1];
         card.querySelectorAll('input, select').forEach(el => {
           if (el.dataset.field) {
-            if (data[el.dataset.field] != null) { el.value = data[el.dataset.field]; if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change')); }
+            if (data[el.dataset.field] != null) { const v = data[el.dataset.field]; const ph = (el.placeholder||'').trim(); el.value = (ph.startsWith('₹') && !isNaN(v)) ? _fmtInr(v) : v; if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change')); }
             return;
           }
           const label = el.closest('div')?.querySelector('label');
@@ -1916,7 +1921,11 @@ async function saveSection(sectionType) {
   const section = $(sectionId);
   if (!section) return;
   const data = {};
-  section.querySelectorAll('[data-field]').forEach(el => { if (el.value) data[el.dataset.field] = el.value; });
+  section.querySelectorAll('[data-field]').forEach(el => {
+    if (!el.value) return;
+    const ph = (el.placeholder||'').trim();
+    data[el.dataset.field] = ph.startsWith('₹') ? parseFloat(el.value.replace(/,/g,'')) || el.value : el.value;
+  });
   if (!Object.keys(data).length) return;
   const btn = section.querySelector('button[onclick*="saveSection"]');
   const origText = btn?.textContent;
@@ -1939,7 +1948,7 @@ async function saveCardSection(sectionId, assetType) {
     const data = {};
     card.querySelectorAll('input, select').forEach(el => {
       if (!el.value) return;
-      if (el.dataset.field) { data[el.dataset.field] = el.value; return; }
+      if (el.dataset.field) { const ph=(el.placeholder||'').trim(); data[el.dataset.field] = ph.startsWith('₹') ? parseFloat(el.value.replace(/,/g,'')) || el.value : el.value; return; }
       const label = el.closest('div')?.querySelector('label');
       if (label) {
         const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');

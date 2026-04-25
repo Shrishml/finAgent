@@ -1303,12 +1303,13 @@ function startOnboarding(user) {
       </div>
       <div id="ob-card"></div>
     </div>`;
-  _obData = {}; _obStep = 1; _renderObStep();
+  _obData = {name: user.name || ''}; _obStep = 1; _renderObStep();
 }
 
 let _obData = {}, _obStep = 1;
 const _obSteps = [
   { title: '👤 About You', subtitle: 'Helps us personalize advice for your life stage', fields: [
+    {key:'name',label:'Name',type:'text',placeholder:'Your name',hint:''},
     {key:'age',label:'Age',type:'number',placeholder:'28',hint:'Your age helps us set the right investment horizon'},
     {key:'occupation',label:'Occupation',type:'text',placeholder:'Software Engineer',hint:'Salaried, freelancer, business — affects tax & insurance advice'},
     {key:'location',label:'City',type:'text',placeholder:'Bangalore',hint:'Cost of living varies — helps set realistic expense benchmarks'},
@@ -1404,7 +1405,7 @@ async function _obNext() {
   const _post = (t, data) => fetch('/profile/assets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({asset_type:t, items:[data]}) });
   try {
     await Promise.all([
-      _post('personal', { age: d.age, occupation: d.occupation, location: d.location, marital_status: d.marital_status, kids: d.kids||0, risk_tolerance: d.risk_tolerance }),
+      _post('personal', { name: d.name, age: d.age, occupation: d.occupation, location: d.location, marital_status: d.marital_status, kids: d.kids||0, risk_tolerance: d.risk_tolerance }),
       _post('income', { monthly_income: d.monthly_income }),
       d.total_monthly_expenses ? _post('expenses', { total_monthly_expenses: d.total_monthly_expenses, emis: d.emis||0 }) : null,
       d.term_cover || d.health_cover ? _post('insurance', { term_cover: d.term_cover||0, health_cover: d.health_cover||0 }) : null,

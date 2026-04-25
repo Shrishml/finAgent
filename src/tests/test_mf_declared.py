@@ -57,3 +57,19 @@ class TestMfDeclaredExtraction:
         apply_extractions(p, {"mf_sips": [{"scheme": "Test", "monthly_sip": 1000}], "age": 25})
         assert p.age == 25
         assert not hasattr(p, "mf_sips")
+
+    def test_allocation_pct_extracted(self):
+        uid = _uid()
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"mf_sips": [
+            {"scheme": "Edelweiss Mid Cap", "allocation_pct": 25, "category": "mid_cap"},
+            {"scheme": "Parag Parikh Flexi Cap", "monthly_sip": 5600, "allocation_pct": 10, "category": "flexi_cap"},
+        ]})
+        items = load_assets(uid, "mf_declared")
+        assert len(items) == 2
+        edel = next(i for i in items if "Edelweiss" in i["scheme"])
+        assert edel["allocation_pct"] == 25
+        assert edel.get("monthly_sip") is None  # only pct given
+        ppfc = next(i for i in items if "Parag" in i["scheme"])
+        assert ppfc["allocation_pct"] == 10
+        assert ppfc["monthly_sip"] == 5600  # both given

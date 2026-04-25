@@ -26,7 +26,7 @@ SCHEMA = {
                            "loan: loan_type, principal, emi, start_date, tenure. "
                            "epf_ppf: epf_balance, ppf_balance, epf_contribution, ppf_contribution. "
                            "nps: nps_balance, nps_contribution. stocks: demat_value. "
-                           "mf_declared: scheme, monthly_sip, category. "
+                           "mf_declared: scheme, monthly_sip, allocation_pct, category. "
                            "insurance: type, cover, premium. tax: regime."
         }
     },

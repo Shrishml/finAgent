@@ -48,7 +48,7 @@ Extract into these fields (only include fields with actual data):
 - esop_company, esop_vested (INR), esop_unvested (INR), esop_next_vesting (YYYY-MM)
 - ppf_balance (INR), ppf_contribution (annual PPF contribution in INR), epf_balance (INR), epf_contribution (monthly EPF contribution in INR, employee + employer)
 - nps_balance (INR), nps_contribution (monthly NPS contribution in INR)
-- mf_sips: [{{"scheme": "fund name", "monthly_sip": N, "category": "large_cap|mid_cap|small_cap|flexi_cap|index|debt|gold|international|other"}}]
+- mf_sips: [{{"scheme": "fund name", "monthly_sip": N, "allocation_pct": N, "category": "large_cap|mid_cap|small_cap|flexi_cap|index|debt|gold|international|other"}}]
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)

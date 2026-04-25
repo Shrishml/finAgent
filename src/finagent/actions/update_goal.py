@@ -29,12 +29,20 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if not goal:
         return {"error": f"Goal #{goal_id} not found"}
 
-    if "goal_name" in params and params["goal_name"]:
+    changed = []
+    if "goal_name" in params and params["goal_name"] and params["goal_name"] != goal.name:
         goal.name = params["goal_name"]
+        changed.append("name")
     if "target_amount" in params and params["target_amount"]:
-        goal.target_amount = int(params["target_amount"])
-    if "target_date" in params and params["target_date"]:
+        new_amt = int(params["target_amount"])
+        if new_amt == goal.target_amount:
+            log.warning(f"[action] update_goal called with same target_amount={new_amt} for goal '{goal.name}' — LLM may have echoed old value")
+        else:
+            goal.target_amount = new_amt
+            changed.append("target_amount")
+    if "target_date" in params and params["target_date"] and params["target_date"] != goal.target_date:
         goal.target_date = params["target_date"]
+        changed.append("target_date")
 
     save_goal(goal)
     log.info(f"[action] Goal updated: {goal.name} (id={goal_id}) for user {user_id}")

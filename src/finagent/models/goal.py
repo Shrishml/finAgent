@@ -25,6 +25,7 @@ class Goal:
     linked_folios: list = field(default_factory=list)  # [{"folio": "F1/Scheme", "pct": 60}, ...]
     growth_rate: float = 0.0  # 0 = use template default
     status: str = "active"  # "active" or "suggested"
+    description: str = ""  # human-readable calculation breakdown
     id: int | None = None
     created_at: str = ""
 

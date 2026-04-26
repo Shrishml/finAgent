@@ -205,6 +205,7 @@ async def get_goals(request: Request):
             "target_amount": g.target_amount, "target_date": g.target_date,
             "linked_folios": g.linked_folios, "growth_rate": g.growth_rate,
             "created_at": g.created_at, "status": g.status,
+            "description": g.description,
             **_compute_goal_progress(g, holdings, user_id),
         } for g in goals]
     })
@@ -310,7 +311,7 @@ async def goal_detail(goal_id: int, request: Request):
         "id": goal.id, "name": goal.name, "template": goal.template,
         "target_amount": goal.target_amount, "target_date": goal.target_date,
         "growth_rate": goal.growth_rate, "status": goal.status,
-        "created_at": goal.created_at,
+        "created_at": goal.created_at, "description": goal.description,
         "emoji": (tmpl.get("label", "🎯 ")).split(" ")[0],
         "linked_assets": linked_details,
         **progress,

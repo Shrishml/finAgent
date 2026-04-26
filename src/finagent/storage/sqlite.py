@@ -76,12 +76,18 @@ def _get_conn() -> sqlite3.Connection:
             linked_folios JSON DEFAULT '[]',
             growth_rate REAL DEFAULT 0.10,
             status TEXT DEFAULT 'active',
+            description TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     # Migration: add status column to existing goals table
     try:
         conn.execute("ALTER TABLE goals ADD COLUMN status TEXT DEFAULT 'active'")
+    except sqlite3.OperationalError:
+        pass
+    # Migration: add description column to existing goals table
+    try:
+        conn.execute("ALTER TABLE goals ADD COLUMN description TEXT DEFAULT ''")
     except sqlite3.OperationalError:
         pass
     conn.execute("""
@@ -276,15 +282,15 @@ def save_goal(goal: Goal) -> int:
     folios_json = json.dumps(goal.linked_folios)
     if goal.id:
         conn.execute(
-            "UPDATE goals SET name=?, template=?, target_amount=?, target_date=?, linked_folios=?, growth_rate=?, status=? WHERE id=? AND user_id=?",
-            (goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status, goal.id, goal.user_id),
+            "UPDATE goals SET name=?, template=?, target_amount=?, target_date=?, linked_folios=?, growth_rate=?, status=?, description=? WHERE id=? AND user_id=?",
+            (goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status, goal.description, goal.id, goal.user_id),
         )
         conn.commit()
         conn.close()
         return goal.id
     cur = conn.execute(
-        "INSERT INTO goals (user_id, name, template, target_amount, target_date, linked_folios, growth_rate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (goal.user_id, goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status),
+        "INSERT INTO goals (user_id, name, template, target_amount, target_date, linked_folios, growth_rate, status, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (goal.user_id, goal.name, goal.template, goal.target_amount, goal.target_date, folios_json, goal.growth_rate, goal.status, goal.description),
     )
     conn.commit()
     gid = cur.lastrowid
@@ -295,12 +301,12 @@ def save_goal(goal: Goal) -> int:
 def load_goals(user_id: int) -> list[Goal]:
     """Load all goals for a user."""
     conn = _get_conn()
-    rows = conn.execute("SELECT id, user_id, name, template, target_amount, target_date, linked_folios, growth_rate, created_at, status FROM goals WHERE user_id=?", (user_id,)).fetchall()
+    rows = conn.execute("SELECT id, user_id, name, template, target_amount, target_date, linked_folios, growth_rate, created_at, status, description FROM goals WHERE user_id=?", (user_id,)).fetchall()
     conn.close()
     return [
         Goal(id=r[0], user_id=r[1], name=r[2], template=r[3], target_amount=r[4], target_date=r[5],
              linked_folios=json.loads(r[6]) if r[6] else [], growth_rate=r[7], created_at=r[8] or "",
-             status=r[9] or "active")
+             status=r[9] or "active", description=r[10] or "")
         for r in rows
     ]
 
@@ -590,10 +596,10 @@ def load_assets(user_id: int, asset_type: str = None) -> list[dict]:
     import json
     conn = _get_conn()
     if asset_type:
-        rows = conn.execute("SELECT id, asset_type, data FROM user_assets WHERE user_id = ? AND asset_type = ?",
+        rows = conn.execute("SELECT id, asset_type, data, created_at FROM user_assets WHERE user_id = ? AND asset_type = ?",
                             (user_id, asset_type)).fetchall()
     else:
-        rows = conn.execute("SELECT id, asset_type, data FROM user_assets WHERE user_id = ?",
+        rows = conn.execute("SELECT id, asset_type, data, created_at FROM user_assets WHERE user_id = ?",
                             (user_id,)).fetchall()
     conn.close()
-    return [{"id": r[0], "asset_type": r[1], **json.loads(r[2])} for r in rows]
+    return [{"id": r[0], "asset_type": r[1], **json.loads(r[2]), "updated_at": r[3]} for r in rows]

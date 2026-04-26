@@ -102,61 +102,40 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </div>
     </div>
 
-    <div id="tab-overview" class="tab-content max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-16 w-full overflow-x-hidden">
-      <div id="overview-empty" class="hidden">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          <button onclick="$('upload-modal').classList.remove('hidden')" class="bg-white rounded-2xl border-2 border-dashed border-emerald-300 p-6 sm:p-8 text-center hover:border-emerald-500 hover:shadow-lg transition-all group">
-            <div class="text-4xl mb-3">📄</div>
-            <h4 class="text-sm font-bold text-gray-900 mb-1">Upload CAS Statement</h4>
-            <p class="text-xs text-gray-500">Import your mutual fund portfolio from CAMS or KFintech</p>
-          </button>
-          <button onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 text-center hover:shadow-lg transition-all group">
-            <div class="text-4xl mb-3">🎯</div>
-            <h4 class="text-sm font-bold text-gray-900 mb-1">Set Financial Goals</h4>
-            <p class="text-xs text-gray-500">Plan for your house, retirement, education & more</p>
-          </button>
-          <button onclick="toggleChat()" class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 text-center hover:shadow-lg transition-all group">
-            <div class="text-4xl mb-3">💬</div>
-            <h4 class="text-sm font-bold text-gray-900 mb-1">Chat with Advisor</h4>
-            <p class="text-xs text-gray-500">Get personalized financial guidance anytime</p>
-          </button>
+    <div id="tab-overview" class="tab-content max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-10 w-full overflow-x-hidden">
+      <!-- Net Worth Breakdown (collapsible) -->
+      <div id="ov-networth-breakdown" class="hidden">
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
+          <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Net Worth Breakdown</h4>
+          <div id="ov-nw-bars"></div>
         </div>
-      </div>
-      <div id="overview-portfolio" class="space-y-8 sm:space-y-16">
-      <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 w-full">
-          <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Performance</h3><p class="text-xs text-gray-500 mt-1">Total value vs. investment</p></div>
-          <div id="portfolio-period-btns" class="flex p-1 bg-gray-100 rounded-xl self-start overflow-x-auto max-w-full">
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1M">1M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3M">3M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="6M">6M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1Y">1Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3Y">3Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg bg-white text-gray-900 shadow-sm" data-p="5Y">5Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="MAX">MAX</button>
-          </div>
-        </div>
-        <div id="benchmark-toggles" class="flex flex-wrap gap-2 mt-3 sm:mt-0">
-          <span class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest self-center mr-1">vs</span>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="nifty50">Nifty 50</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="nifty100">Next 50</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="midcap">Midcap</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="smallcap">Smallcap</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="gold">Gold</button>
-        </div>
-        <div class="h-[300px] sm:h-[420px] relative max-w-full"><canvas id="chart-portfolio"></canvas></div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 w-full">
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full"><h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 sm:mb-8">Asset Allocation</h4><div class="h-[250px] sm:h-[320px] relative max-w-full"><canvas id="chart-asset"></canvas></div></div>
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full"><h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 sm:mb-8">Category Breakdown</h4><div class="h-[250px] sm:h-[320px] relative max-w-full"><canvas id="chart-category"></canvas></div></div>
+      <!-- Goal Progress -->
+      <div id="ov-goals-section">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="text-sm font-bold text-gray-900">Goal Progress</h4>
+          <button onclick="switchTab('goals')" class="text-[10px] font-bold text-emerald-600 hover:text-emerald-700">View all →</button>
+        </div>
+        <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
       </div>
 
-      <div id="insights-section" class="w-full">
-        <div class="flex items-center gap-3 mb-8 sm:mb-10"><h3 class="text-lg font-bold text-gray-900 tracking-tight">Portfolio Insights</h3></div>
-        <div id="good-insights-row" class="mb-10 hidden"><h4 class="text-[13px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">What's working</h4><div id="good-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
-        <div id="action-insights-row" class="hidden"><h4 class="text-[13px] font-bold text-amber-600 uppercase tracking-[0.2em] mb-4">Worth a look</h4><div id="action-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
+      <!-- Cash Flow -->
+      <div id="ov-cashflow-section" class="hidden">
+        <h4 class="text-sm font-bold text-gray-900 mb-4">Monthly Cash Flow</h4>
+        <div id="ov-cashflow" class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm"></div>
       </div>
+
+      <!-- Nudges / Action Items -->
+      <div id="ov-nudges-section" class="hidden">
+        <h4 class="text-sm font-bold text-gray-900 mb-4">Action Items</h4>
+        <div id="ov-nudges" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div id="ov-activity-section" class="hidden">
+        <h4 class="text-sm font-bold text-gray-900 mb-4">Recent Activity</h4>
+        <div id="ov-activity" class="space-y-2"></div>
       </div>
     </div>
 
@@ -809,12 +788,58 @@ function amcLogo(scheme) {
 }
 
 function renderSummary(holdings, portfolioXirr) {
+  // Legacy compat — called by showPortfolio for Holdings tab summary
   const total = holdings.reduce((s, h) => s + h.value, 0);
   const invested = holdings.reduce((s, h) => s + (h.invested || 0), 0);
   const ret = total - invested;
   const retPct = invested > 0 ? (ret / invested * 100) : 0;
   const xirrHtml = portfolioXirr != null ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">XIRR</p><p class="text-xl sm:text-2xl font-extrabold ${portfolioXirr >= 0 ? 'text-emerald-400' : 'text-red-400'}">${portfolioXirr.toFixed(1)}%</p></div>` : '';
-  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Portfolio Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Principal</p><p class="text-xl sm:text-2xl font-extrabold">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><div class="flex items-baseline gap-2"><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div></div>${xirrHtml}</div></div>`;
+  // Only update summary bar if overview hasn't loaded yet
+  if (!window._overviewLoaded) {
+    $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Invested</p><p class="text-xl sm:text-2xl font-extrabold">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div>${xirrHtml}</div></div>`;
+  }
+}
+
+// ── Overview Dashboard ──
+function renderOverviewSummaryBar(nw) {
+  window._overviewLoaded = true;
+  const bk = nw.breakdown || {};
+  const keys = Object.keys(bk);
+  const hasMF = nw.mf_invested > 0;
+  const gainHtml = hasMF ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">MF Gains</p><p class="text-xl sm:text-2xl font-extrabold ${nw.mf_gain >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(nw.mf_gain)}${INR(Math.abs(nw.mf_gain))}</p></div>` : '';
+  const countHtml = keys.length > 1 ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Asset Classes</p><p class="text-xl sm:text-2xl font-extrabold">${keys.length}</p></div>` : '';
+  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Total Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter cursor-pointer hover:text-emerald-400 transition-colors" onclick="toggleNwBreakdown()">${INR_SHORT(nw.total)}</h2><p class="text-xs text-gray-500 mt-1 cursor-pointer hover:text-white" onclick="toggleNwBreakdown()">Tap for breakdown ▾</p></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto">${gainHtml}${countHtml}</div></div>`;
+}
+
+function toggleNwBreakdown() {
+  const el = $('ov-networth-breakdown');
+  el.classList.toggle('hidden');
+}
+
+function renderNwBreakdown(bk) {
+  const total = Object.values(bk).reduce((s, v) => s + v, 0);
+  if (total <= 0) return;
+  $('ov-networth-breakdown').classList.remove('hidden');
+  $('ov-nw-bars').innerHTML = Object.entries(bk).map(([k, v]) => {
+    const pct = (v / total * 100);
+    return `<div class="flex items-center gap-3 mb-3"><span class="text-xs font-bold text-gray-700 w-40 truncate">${esc(k)}</span><div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden"><div class="h-3 rounded-full bg-emerald-500" style="width:${pct.toFixed(1)}%"></div></div><span class="text-xs font-bold text-gray-900 w-20 text-right">${INR_SHORT(v)}</span></div>`;
+  }).join('');
+}
+
+function renderGoalCards(goals) {
+  const grid = $('ov-goals-grid');
+  if (!goals.length) {
+    grid.innerHTML = `<button onclick="switchTab('goals')" class="bg-white rounded-2xl border-2 border-dashed border-emerald-300 p-6 text-center hover:border-emerald-500 hover:shadow-lg transition-all col-span-full sm:col-span-1"><div class="text-3xl mb-2">🎯</div><h4 class="text-sm font-bold text-gray-900">Set your first goal</h4><p class="text-xs text-gray-500 mt-1">Track progress toward what matters</p></button>`;
+    return;
+  }
+  const ICONS = {retirement:'🏖️',house:'🏠',education:'🎓',car:'🚗',marriage:'💍',emergency:'🛡️',travel:'✈️',custom:'🎯'};
+  grid.innerHTML = goals.map(g => {
+    const pct = Math.min(g.progress_pct, 100);
+    const icon = ICONS[g.template] || '🎯';
+    const trackColor = g.on_track ? 'bg-emerald-500' : 'bg-amber-500';
+    const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
+    return `<div onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"><div class="flex items-center gap-2 mb-3"><span class="text-lg">${icon}</span><span class="text-sm font-bold text-gray-900 truncate">${esc(g.name)}</span></div><div class="w-full bg-gray-100 rounded-full h-2 mb-2"><div class="${trackColor} h-2 rounded-full transition-all" style="width:${pct}%"></div></div><div class="flex justify-between text-[10px]"><span class="font-bold text-gray-500">${INR_SHORT(g.current_value)} / ${INR_SHORT(g.target_amount)}</span><span class="font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'}">${trackLabel}</span></div></div>`;
+  }).join('');
 }
 
 let _holdings = [];
@@ -939,87 +964,87 @@ function showPortfolio(holdings, portfolioXirr) {
   $('loading-state').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
   renderSummary(holdings, portfolioXirr);
-  renderCharts(holdings);
   _holdings = holdings;
-  sortHoldings('value'); // Initial sort by Current Value descending
-  loadInsights();
-  loadPortfolioChart('5Y');
+  sortHoldings('value');
+  // Load new overview dashboard
+  loadOverviewDashboard();
 }
 
-function loadInsights() {
-  fetch('/insights').then(safeJson).then(data => {
-    const render = (cards, id) => {
-      if (!cards.length) return;
-      $(id).classList.remove('hidden');
-      $(id === 'good-insights-row' ? 'good-cards' : 'action-cards').innerHTML = cards.map(c => `
-        <div onclick="openAndChat('${esc(c.q)}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
-          <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${esc(c.title)}</h5>
-          <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${esc(c.desc)}</p>
-          <div class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-            Discuss with AI
-            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7-7 7"/></svg>
-          </div>
-        </div>
-      `).join('');
-    };
-    render(data.good || [], 'good-insights-row');
-    render(data.action || [], 'action-insights-row');
-    const all = [...(data.good||[]), ...(data.action||[])];
-    $('smart-suggestions').innerHTML = all.slice(0,4).map(i => `<button onclick="sendChat('${esc(i.q)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(i.q)}</button>`).join('');
-  });
+function loadOverviewDashboard() {
+  fetch('/overview').then(safeJson).then(data => {
+    // 1. Summary bar — net worth
+    if (data.net_worth) renderOverviewSummaryBar(data.net_worth);
+    if (data.net_worth?.breakdown && Object.keys(data.net_worth.breakdown).length > 1) {
+      renderNwBreakdown(data.net_worth.breakdown);
+      $('ov-networth-breakdown').classList.add('hidden'); // collapsed by default
+    }
+    // 2. Goals
+    renderGoalCards(data.goals || []);
+    // 3. Cash flow
+    renderCashFlow(data.cash_flow);
+    // 4. Nudges
+    renderNudges(data.nudges || []);
+    // 5. Activity
+    renderActivity(data.activity || []);
+    // 6. Chat suggestions from nudges
+    const suggestions = (data.nudges || []).filter(n => n.chat).slice(0, 4);
+    if (suggestions.length) {
+      $('smart-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(n.chat)}</button>`).join('');
+    }
+  }).catch(e => console.error('Overview load failed:', e));
+}
+
+function renderCashFlow(cf) {
+  if (!cf || !cf.income) return;
+  $('ov-cashflow-section').classList.remove('hidden');
+  const total = cf.income;
+  const items = [
+    {label: 'Expenses', val: cf.expenses, color: 'bg-red-400'},
+    {label: 'EMIs', val: cf.emi, color: 'bg-orange-400'},
+    {label: 'Investments', val: cf.investments, color: 'bg-emerald-500'},
+    {label: 'Surplus', val: cf.surplus, color: cf.surplus >= 0 ? 'bg-blue-400' : 'bg-red-500'},
+  ].filter(i => i.val > 0);
+  $('ov-cashflow').innerHTML = `
+    <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-gray-500">Income</span><span class="text-lg font-extrabold text-gray-900">${INR(cf.income)}/mo</span></div>
+    <div class="flex w-full h-4 rounded-full overflow-hidden mb-4">${items.map(i => `<div class="${i.color}" style="width:${(i.val/total*100).toFixed(1)}%" title="${i.label}: ${INR(i.val)}"></div>`).join('')}</div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${items.map(i => `<div class="text-center"><div class="w-2 h-2 rounded-full ${i.color} mx-auto mb-1"></div><p class="text-[10px] font-bold text-gray-400 uppercase">${i.label}</p><p class="text-sm font-extrabold text-gray-900">${INR(i.val)}</p></div>`).join('')}</div>`;
+}
+
+function renderNudges(nudges) {
+  if (!nudges.length) return;
+  $('ov-nudges-section').classList.remove('hidden');
+  $('ov-nudges').innerHTML = nudges.map(n => {
+    let onclick = '';
+    if (n.tab) onclick = `onclick="switchTab('${n.tab}')"`;
+    else if (n.modal) onclick = `onclick="$('${n.modal}').classList.remove('hidden')"`;
+    else if (n.chat) onclick = `onclick="openAndChat('${esc(n.chat)}')"`;
+    return `<div ${onclick} class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0"><h5 class="text-sm font-bold text-gray-900 truncate">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p><span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">${esc(n.action)} →</span></div></div>`;
+  }).join('');
+}
+
+function renderActivity(items) {
+  if (!items.length) return;
+  $('ov-activity-section').classList.remove('hidden');
+  $('ov-activity').innerHTML = items.map(a => {
+    const d = new Date(a.timestamp);
+    const ago = _timeAgo(d);
+    return `<div class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></div><span class="text-xs text-gray-700 font-medium">${esc(a.summary)}</span><span class="text-[10px] text-gray-400 ml-auto flex-shrink-0">${ago}</span></div>`;
+  }).join('');
+}
+
+function _timeAgo(d) {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
 }
 
 function openAndChat(q) { trackEvent('insight_click', { question: q.slice(0, 50) }); if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }
 function sendChat(q) { $('chat-input').value = q; $('chat-form').dispatchEvent(new Event('submit')); }
 
-function renderCharts(holdings) {
-  Object.values(charts).forEach(c => c.destroy());
-  const assetMap = {}; holdings.forEach(h => { const a = classifyAsset(h.category); assetMap[a] = (assetMap[a]||0) + h.value; });
-  charts.asset = new Chart($('chart-asset'), { type:'doughnut', data:{labels:Object.keys(assetMap), datasets:[{data:Object.values(assetMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
-  const catMap = {}; holdings.forEach(h => { const c = classifyCap(h.category); catMap[c] = (catMap[c]||0) + h.value; });
-  charts.category = new Chart($('chart-category'), { type:'doughnut', data:{labels:Object.keys(catMap), datasets:[{data:Object.values(catMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
-}
-
-let portfolioChart = null;
-let activeBenchmarks = new Set();
-const BENCH_COLORS = {nifty50:'#6366f1', nifty100:'#f59e0b', midcap:'#ec4899', smallcap:'#8b5cf6', gold:'#eab308'};
-
-function loadPortfolioChart(period='5Y') {
-  const benchParam = activeBenchmarks.size ? '&benchmark=' + [...activeBenchmarks].join(',') : '';
-  fetch('/portfolio-history?period='+period+benchParam).then(safeJson).then(data => {
-    if(portfolioChart) portfolioChart.destroy();
-    if(!data.dates?.length) return;
-    const labels = data.dates.map(d => {
-      const dt = new Date(d);
-      return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
-    });
-    const datasets = [
-      {label:'Net Worth', data:data.values, borderColor:'#10b981', fill:true, backgroundColor:'rgba(16, 185, 129, 0.05)', pointRadius:0, borderWidth:3, tension:0.4},
-      {label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0, borderWidth:2}
-    ];
-    if(data.benchmarks) {
-      for(const [k, b] of Object.entries(data.benchmarks)) {
-        datasets.push({label:'If '+b.label, data:b.values, borderColor:BENCH_COLORS[k]||'#6366f1', borderDash:[8,4], pointRadius:0, borderWidth:2, tension:0.4, spanGaps:true});
-      }
-    }
-    portfolioChart = new Chart($('chart-portfolio'), { 
-      type:'line', 
-      data:{labels, datasets}, 
-      options:{
-        responsive:true, maintainAspectRatio:false, 
-        interaction:{intersect:false, mode:'index'}, 
-        plugins:{
-          legend:{display: datasets.length > 2, position:'bottom', labels:{boxWidth:12, font:{size:10, weight:'600'}, usePointStyle:true, padding:12}}, 
-          tooltip:{backgroundColor:'#111827', padding:12, titleFont:{size:12}, bodyFont:{size:12, weight:'bold'}, callbacks:{label:c=>c.parsed.y!=null?' '+c.dataset.label+': '+INR(c.parsed.y):''}}
-        }, 
-        scales:{
-          x:{ticks:{maxTicksLimit:6, font:{size:11, weight:'500'}, color:'#64748b', padding:8}, grid:{display:false}}, 
-          y:{ticks:{font:{size:11, weight:'500'}, color:'#64748b', callback:v=>INR_SHORT(v), padding:8}, grid:{color:'#f1f5f9'}}
-        }
-      } 
-    });
-  });
-}
+// Charts moved — renderCharts and loadPortfolioChart removed from overview.
+// Portfolio performance chart is available via Holdings tab.
 
 const CHAT_CARD_TEMPLATES = {
   fd: { title: '💵 Fixed Deposit', fields: () => `
@@ -1297,9 +1322,7 @@ async function initApp() {
           if (pData && pData.onboarding_complete) {
             $('loading-state').classList.add('hidden');
             $('dashboard').classList.remove('hidden');
-            $('summary-bar').innerHTML = `<div class="text-center py-4"><h1 class="text-2xl sm:text-3xl font-black mb-2">Welcome back${user.name ? ', ' + user.name.split(' ')[0] : ''}! 👋</h1><p class="text-gray-300 text-sm">Your financial profile is ready. Upload a CAS statement to see your portfolio.</p></div>`;
-            $('overview-empty').classList.remove('hidden');
-            $('overview-portfolio').classList.add('hidden');
+            loadOverviewDashboard();
             $('funds-empty').classList.remove('hidden');
             $('funds-table-wrap').classList.add('hidden');
           } else {
@@ -1866,20 +1889,9 @@ document.addEventListener('input', e => {
 
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
 
-let currentPeriod = '5Y';
+// Overview dashboard loaded via /overview API
 document.addEventListener('click', e => {
-  if(e.target.classList.contains('pp-btn')) {
-    document.querySelectorAll('.pp-btn').forEach(b=>{ b.classList.remove('bg-white','text-gray-900','shadow-sm'); b.classList.add('text-gray-500'); });
-    e.target.classList.add('bg-white','text-gray-900','shadow-sm'); e.target.classList.remove('text-gray-500');
-    currentPeriod = e.target.dataset.p;
-    loadPortfolioChart(currentPeriod);
-  }
-  if(e.target.classList.contains('bench-btn')) {
-    const b = e.target.dataset.b;
-    if(activeBenchmarks.has(b)) { activeBenchmarks.delete(b); e.target.classList.remove('bg-indigo-50','border-indigo-300','text-indigo-700'); e.target.classList.add('border-gray-200','text-gray-500'); }
-    else { activeBenchmarks.add(b); e.target.classList.add('bg-indigo-50','border-indigo-300','text-indigo-700'); e.target.classList.remove('border-gray-200','text-gray-500'); }
-    loadPortfolioChart(currentPeriod);
-  }
+  // Portfolio chart buttons removed — overview now uses dashboard layout
 });
 </script>
 

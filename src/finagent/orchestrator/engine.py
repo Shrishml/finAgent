@@ -15,6 +15,7 @@ from finagent.storage.sqlite import (
 )
 from finagent.connectors.amfi import enrich_holdings
 from finagent.actions import ACTION_REGISTRY, get_tools_prompt
+from finagent.freshness import get_confidence, freshness_label, get_stale_fields
 
 log = logging.getLogger("finagent")
 _mf_agent = MFAgent()
@@ -61,13 +62,21 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     # Append structured assets (FDs, ESOP, gold, etc.) — skip flat sections already above
     FLAT_TYPES = {"personal", "income", "expenses", "meta"}
     assets = load_assets(user_id) if user_id and user_id > 0 else []
+
+    # Compute freshness before mutating the list
+    stale = get_stale_fields(assets, threshold=0.5) if assets else []
+    stale_sections = [s for s in stale if s["asset_type"] != "meta"]
+
     if assets:
         by_type = {}
         for a in assets:
             t = a.pop("asset_type", "other")
             a.pop("id", None)
+            updated_at = a.pop("updated_at", None)
             if t in FLAT_TYPES:
                 continue
+            conf = get_confidence(t, updated_at)
+            a["_freshness"] = freshness_label(conf)
             by_type.setdefault(t, []).append(a)
         if by_type:
             data["assets"] = by_type
@@ -103,6 +112,10 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     else:
         hint = "Profile is complete. Focus on actionable advice."
 
+    if stale_sections:
+        stale_names = ", ".join(s["asset_type"] for s in stale_sections)
+        hint += f"\nSTALE DATA (confirm before using in advice): {stale_names}. When advising on these topics, ask the user if the data is still current."
+
     return profile_json, hint
 
 
@@ -120,6 +133,7 @@ RECENT CONVERSATION:
 USER: {query}
 
 RULES:
+- CRITICAL — Indian number parsing: ₹7,20,00,000 = 7.2 Crore = 72000000. Indian format groups as L,LL,LL,LLL from right. ALWAYS convert to plain integers before passing to any action. Double-check: if user says "X Cr", multiply by 10000000. If user says "X lakh/L", multiply by 100000. When in doubt, count the digits.
 - Use Indian number formatting (₹1,10,000)
 - Be specific and actionable based on their actual data
 - Reference their goals, income, and situation naturally
@@ -131,11 +145,37 @@ RULES:
 - When calling collect_profile_data: include ALL data mentioned by the user in prefill (don't leave out fields you heard). If data spans multiple card types (e.g. PPF + NPS), call multiple actions. Your text response MUST be 1-2 sentences only — no tables, no analysis, no advice. Just "Got it, I've captured your details" or "Please verify and save"
 - Annual RSU/stock vesting amounts are saved automatically as income. Use collect_profile_data(esop) only for ESOP *holdings* (company, vested value, unvested value) — not for annual vesting amounts
 - Before creating a goal, check existing_goals in the profile. If a goal with the same template or similar name exists, use update_goal(goal_id=...) to update it instead of creating a duplicate. IMPORTANT: when the user revises a goal's amount or date (e.g. "actually it's 1.5 Cr"), ALWAYS use update_goal with the existing goal's id — never create_goal
+- For standard goals (retirement, house, car, education, marriage), do NOT compute target_amount yourself — the calculator does it using inflation-adjusted formulas. Pass the right inputs: retirement needs age+expenses (from profile), house/car/education/marriage need current_cost+years_until. Only pass target_amount for custom/travel goals
+- When showing a calculated goal, explain the assumptions briefly (inflation rate, post-retirement years, etc.) so the user understands the number
 - NEVER say "your onboarding is complete" or reference any onboarding process
+- If STALE DATA is listed in PROFILE STATUS, confirm those values with the user before basing advice on them. Example: "Your income was ₹1.2L when we last spoke — is that still accurate?" Keep it natural, not interrogative
 - At the end of your response, suggest 2-3 natural follow-up options the user might want. Format: [OPTIONS: option1 | option2 | option3]. Keep each option under 8 words. Skip for simple yes/no acknowledgments.{tools_prompt}"""
 
 # Regex to extract [OPTIONS: ...] from LLM output
 _OPTIONS_RE = re.compile(r'\[OPTIONS:\s*(.+?)\]')
+
+# Normalize Indian-format numbers so LLM sees plain integers
+_INR_NUM_RE = re.compile(r'₹\s*([\d,]+(?:\.\d+)?)')
+
+def _normalize_indian_numbers(text: str) -> str:
+    """Convert ₹7,20,00,000 → ₹72000000 so LLM doesn't misparse Indian grouping."""
+    def _replace(m):
+        num_str = m.group(1).replace(",", "")
+        try:
+            val = int(float(num_str))
+            return f"₹{val}"
+        except ValueError:
+            return m.group(0)
+    return _INR_NUM_RE.sub(_replace, text)
+
+
+def _extraction_hint(extractions: dict) -> str:
+    """Build a hint string from numeric extractions so advisor uses exact values."""
+    nums = {k: v for k, v in extractions.items() if isinstance(v, (int, float)) and v > 0}
+    if not nums:
+        return ""
+    parts = ", ".join(f"{k}=₹{int(v)}" for k, v in nums.items())
+    return f"\nEXTRACTED NUMBERS (use these exact values, do NOT re-parse from user message): {parts}"
 
 
 def _parse_action_params(params_str: str) -> dict:
@@ -176,18 +216,18 @@ def _maybe_suggest_emergency_fund(user_id: int, profile):
     log.info(f"[orchestrator] auto-suggested emergency fund goal id={gid} target={target}")
 
 
-async def _maybe_extract_and_update(query: str, user_id: int | None, profile) -> bool:
-    """Try to extract profile data from the user's message. Returns True if profile changed."""
+async def _maybe_extract_and_update(query: str, user_id: int | None, profile) -> tuple[bool, dict]:
+    """Try to extract profile data from the user's message. Returns (changed, extractions)."""
     if not user_id or user_id <= 0 or not profile:
-        return False
+        return False, {}
     # Skip extraction for very short or clearly non-data messages
     if len(query) < 10 or query.startswith("/") or query == "__onboarding_init__":
-        return False
+        return False, {}
 
     extractions = await extract_profile_data(query, profile)
     if not extractions:
         log.debug("[orchestrator] extraction: no data found in message")
-        return False
+        return False, {}
 
     changed = apply_extractions(profile, extractions)
     if changed:
@@ -199,7 +239,7 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
     else:
         log.debug(f"[orchestrator] extraction found {list(extractions.keys())} but no changes")
 
-    return changed
+    return changed, extractions
 
 
 async def _maybe_update_snapshot(user_id: int, profile, profile_changed: bool):
@@ -240,7 +280,7 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
         save_profile(profile)
 
     # Continuous extraction — skip for onboarding init (data already saved from cards)
-    profile_changed = False if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
+    profile_changed, extractions = (False, {}) if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
     await _maybe_update_snapshot(user_id, profile, profile_changed)
 
     # Route MF-specific queries to specialized agent
@@ -263,7 +303,7 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
             return await _mf_agent.analyze(query, holdings)
 
     # Everything else → profile-aware advisor
-    return await _advisor_respond(query, user_id, profile)
+    return await _advisor_respond(query, user_id, profile, extractions)
 
 
 async def handle_query_stream(query: str, user_id: int | None = None):
@@ -283,7 +323,7 @@ async def handle_query_stream(query: str, user_id: int | None = None):
         log.debug("[orchestrator] created new empty profile")
 
     # Continuous extraction — skip for onboarding init (data already saved from cards)
-    profile_changed = False if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
+    profile_changed, extractions = (False, {}) if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
     log.debug(f"[orchestrator] extraction done profile_changed={profile_changed} ({time.time()-t0:.1f}s)")
     await _maybe_update_snapshot(user_id, profile, profile_changed)
 
@@ -310,11 +350,11 @@ async def handle_query_stream(query: str, user_id: int | None = None):
 
     # Everything else → streaming advisor with action chaining
     log.debug(f"[orchestrator] routing to advisor ({time.time()-t0:.1f}s)")
-    async for chunk in _advisor_respond_stream(query, user_id, profile):
+    async for chunk in _advisor_respond_stream(query, user_id, profile, extractions):
         yield chunk
 
 
-async def _advisor_respond(query: str, user_id: int | None, profile=None) -> str:
+async def _advisor_respond(query: str, user_id: int | None, profile=None, extractions: dict | None = None) -> str:
     """Profile-state-driven advisor."""
     from finagent.llm import get_provider
 
@@ -331,12 +371,13 @@ async def _advisor_respond(query: str, user_id: int | None, profile=None) -> str
     snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
     snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
 
+    ext_hint = _extraction_hint(extractions or {})
     prompt = AGENT_PROMPT.format(
         profile_json=profile_json,
         snapshot_section=snapshot_section,
-        profile_hint=profile_hint,
+        profile_hint=profile_hint + ext_hint,
         conversation=conv_str,
-        query=query,
+        query=_normalize_indian_numbers(query),
         tools_prompt=get_tools_prompt(),
     )
 
@@ -352,7 +393,7 @@ async def _advisor_respond(query: str, user_id: int | None, profile=None) -> str
     return response
 
 
-async def _advisor_respond_stream(query: str, user_id: int | None, profile=None):
+async def _advisor_respond_stream(query: str, user_id: int | None, profile=None, extractions: dict | None = None):
     """Streaming advisor with action chaining (max 3 rounds)."""
     from finagent.llm import get_provider
 
@@ -361,6 +402,8 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
     conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
 
     profile_json, profile_hint = _build_profile_context(profile, user_id)
+    ext_hint = _extraction_hint(extractions or {})
+    profile_hint += ext_hint
     conv_str = "\n".join(
         f"{'User' if m['role'] == 'user' else 'Arth'}: {m['content']}"
         for m in conversation[-10:]
@@ -382,7 +425,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
         snapshot_section=snapshot_section,
         profile_hint=profile_hint,
         conversation=conv_str,
-        query=query,
+        query=_normalize_indian_numbers(query),
         tools_prompt=get_tools_prompt(),
     )
 

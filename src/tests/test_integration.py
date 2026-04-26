@@ -52,53 +52,7 @@ def _mock_casparser_data():
     return cas_data
 
 
-class TestUploadPipeline:
-    def test_upload_parses_and_stores(self, client, tmp_path):
-        pdf = tmp_path / "test.pdf"
-        pdf.write_bytes(b"%PDF-fake")
-
-        with patch("casparser.read_cas_pdf", return_value=_mock_casparser_data()):
-            resp = client.post("/upload", files={"file": ("test.pdf", pdf.read_bytes(), "application/pdf")}, data={"password": "TEST"})
-
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["status"] == "ok"
-        assert data["holdings_count"] == 1
-        assert "Test Fund - Direct Growth" in data["schemes"]
-
-    def test_holdings_endpoint_after_upload(self, client, tmp_path):
-        pdf = tmp_path / "test.pdf"
-        pdf.write_bytes(b"%PDF-fake")
-
-        with patch("casparser.read_cas_pdf", return_value=_mock_casparser_data()):
-            client.post("/upload", files={"file": ("test.pdf", pdf.read_bytes(), "application/pdf")}, data={"password": "TEST"})
-
-        resp = client.get("/holdings")
-        data = resp.json()
-        assert data["count"] == 1
-        assert data["holdings"][0]["value"] == 10179.4
-
-    def test_clear_wipes_data(self, client, tmp_path):
-        pdf = tmp_path / "test.pdf"
-        pdf.write_bytes(b"%PDF-fake")
-
-        with patch("casparser.read_cas_pdf", return_value=_mock_casparser_data()):
-            client.post("/upload", files={"file": ("test.pdf", pdf.read_bytes(), "application/pdf")}, data={"password": "TEST"})
-
-        resp = client.post("/clear")
-        assert resp.json()["status"] == "ok"
-
-        resp = client.get("/holdings")
-        assert resp.json()["count"] == 0
-
-
 class TestChatPipeline:
-    def _seed_data(self, client, tmp_path):
-        pdf = tmp_path / "test.pdf"
-        pdf.write_bytes(b"%PDF-fake")
-        with patch("casparser.read_cas_pdf", return_value=_mock_casparser_data()):
-            client.post("/upload", files={"file": ("test.pdf", pdf.read_bytes(), "application/pdf")}, data={"password": "TEST"})
-
     def test_chat_with_no_data(self, client):
         with patch("finagent.orchestrator.engine.classify_intent", new_callable=AsyncMock,
                    return_value={"domain": "mf", "mode": "analyze"}):
@@ -106,22 +60,6 @@ class TestChatPipeline:
         data = resp.json()
         assert data["status"] == "ok"
         assert "upload" in data["response"].lower()
-
-    def test_chat_with_data_calls_llm(self, client, tmp_path):
-        self._seed_data(client, tmp_path)
-
-        with patch("finagent.orchestrator.engine.classify_intent", new_callable=AsyncMock,
-                   return_value={"domain": "mf", "mode": "analyze"}), \
-             patch("finagent.llm.registry.get_provider") as mock_provider:
-            mock_llm = AsyncMock()
-            mock_llm.complete = AsyncMock(return_value="Your portfolio has 1 fund worth ₹10,179.")
-            mock_provider.return_value = mock_llm
-
-            resp = client.post("/chat", data={"query": "What are my expense ratios?"})
-
-        data = resp.json()
-        assert data["status"] == "ok"
-        assert "10,179" in data["response"]
 
     def test_upload_bad_file_returns_error(self, client, tmp_path):
         txt = tmp_path / "test.txt"

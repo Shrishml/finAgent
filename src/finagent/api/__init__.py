@@ -7,6 +7,7 @@ from finagent.api.chat import router as chat_router
 from finagent.api.holdings import router as holdings_router
 from finagent.api.goals import router as goals_router
 from finagent.api.profile import router as profile_router
+from finagent.api.overview import router as overview_router
 from finagent.api.dev import router as dev_router
 
 
@@ -17,4 +18,5 @@ def register_routes(app: FastAPI):
     app.include_router(holdings_router)
     app.include_router(goals_router)
     app.include_router(profile_router)
+    app.include_router(overview_router)
     app.include_router(dev_router)

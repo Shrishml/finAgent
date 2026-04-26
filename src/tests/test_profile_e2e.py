@@ -22,6 +22,7 @@ def use_tmp_db(tmp_path, monkeypatch):
 def mock_auth(monkeypatch):
     monkeypatch.setattr("finagent.api.deps.get_user_id", lambda r: _TEST_UID)
     monkeypatch.setattr("finagent.api.profile.get_user_id", lambda r: _TEST_UID)
+    monkeypatch.setattr("finagent.api.chat.get_user_id", lambda r: _TEST_UID)
     monkeypatch.setattr("finagent.api.deps.require_auth", lambda r: _TEST_UID)
 
 
@@ -278,6 +279,20 @@ class TestProfileContext:
         assert "esop" in ctx["assets"]
         assert ctx["assets"]["esop"][0]["company"] == "Amazon"
         assert ctx["assets"]["esop"][0]["vested"] == 3000000
+
+    def test_monthly_sip_in_context(self, client):
+        """monthly_sip should appear in profile context when set."""
+        client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 100000, "monthly_sip": 25000}]})
+
+        from finagent.storage.sqlite import load_profile
+        from finagent.orchestrator.engine import _build_profile_context
+        import json
+
+        profile = load_profile(_TEST_UID)
+        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        ctx = json.loads(ctx_json)
+
+        assert ctx["monthly_sip"] == 25000
 
 
 # ── Profile + Assets Combined ───────────────────────────────────────
@@ -564,3 +579,17 @@ class TestExtractionE2E:
         from finagent.storage.sqlite import load_profile
         profile = load_profile(_TEST_UID)
         assert profile.monthly_sip > 0, f"monthly_sip={profile.monthly_sip}, expected > 0"
+
+    def test_agent_sees_monthly_sip_in_context(self, client):
+        """Agent should see monthly_sip and NOT flag surplus as fully unallocated."""
+        client.post("/profile/assets", json={"asset_type": "personal", "items": [{"age": 25}]})
+        client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 75000, "monthly_sip": 40000}]})
+        client.post("/profile/assets", json={"asset_type": "expenses", "items": [{"total_monthly_expenses": 20000}]})
+        resp = client.post("/chat", data={
+            "query": "Am I investing enough? Give me a quick review of my finances."
+        })
+        assert resp.status_code == 200
+        body = resp.json()["response"].lower()
+        # Agent should acknowledge the SIP, not say all 55k surplus is unallocated
+        assert any(t in body for t in ["sip", "40,000", "40000", "40k", "mutual fund"]), \
+            f"Agent didn't acknowledge monthly_sip=40000. Response: {body[:300]}"

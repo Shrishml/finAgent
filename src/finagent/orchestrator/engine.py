@@ -48,6 +48,7 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
         "monthly_emis": emis or None,
         "monthly_surplus": surplus if income else None,
         "savings_rate": f"{profile.savings_rate:.0%}" if profile.savings_rate else None,
+        "monthly_sip": profile.monthly_sip or None,
         "annual_bonus": profile.annual_bonus or None,
         "annual_rsu": profile.annual_rsu or None,
         "spouse_income": profile.spouse_income or None,

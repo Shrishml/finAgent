@@ -1444,13 +1444,14 @@ async function _obNext() {
       _post('meta', { onboarding_complete: true }),
     ].filter(Boolean));
   } catch(e) { console.error('Profile save failed', e); }
-  // Restore normal tabs, switch to Profile tab
+  // Restore normal tabs, switch to Goals tab
   document.querySelectorAll('.tab-btn').forEach(b => b.style.display = '');
   $('tab-overview').innerHTML = '';
   _profileLoaded = false;
-  switchTab('profile');
+  switchTab('goals');
   // Show chat FAB and open chat — agent will reason about what to ask next
   const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
+  if (window.innerWidth >= 768) localStorage.setItem('chatSidebarWidth', '50vw');
   setTimeout(() => { toggleChat(); sendChat('__onboarding_init__'); }, 600);
 }
 

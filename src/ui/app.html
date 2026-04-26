@@ -223,6 +223,16 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create your first goal</button>
       </div>
       <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+      <!-- Goal Detail Overlay -->
+      <div id="goal-detail-overlay" class="hidden fixed inset-0 bg-white z-50 overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+          <button onclick="closeGoalDetail()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 font-bold mb-6 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Back to Goals
+          </button>
+          <div id="goal-detail-content"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Profile Tab -->
@@ -1639,13 +1649,13 @@ async function loadGoals() {
           <button onclick="deleteGoal(${g.id})" class="text-xs font-bold text-gray-400 hover:text-red-500 py-2 px-4 rounded-xl border border-gray-200 hover:border-red-200 transition-colors">Dismiss</button>
         </div>
       </div>`;
-      return `<div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all">
+      return `<div onclick="openGoalDetail(${g.id})" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all cursor-pointer">
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${esc(g.target_date)}</p></div></div>
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-${statusColor}-600 bg-${statusColor}-50 px-2 py-1 rounded-lg">${statusIcon} ${statusText}</span>
-            <button onclick="editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-            <button onclick="deleteGoal(${g.id})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+            <button onclick="event.stopPropagation();editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+            <button onclick="event.stopPropagation();deleteGoal(${g.id})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
           </div>
         </div>
         <div class="mb-4">
@@ -1664,11 +1674,131 @@ async function loadGoals() {
   } catch(e) { console.error('Failed to load goals', e); }
 }
 
+// --- Goal Detail View ---
+async function openGoalDetail(id) {
+  try {
+    const g = await fetch('/goals/' + id + '/detail').then(safeJson);
+    $('goal-detail-content').innerHTML = renderGoalDetail(g);
+    $('goal-detail-overlay').classList.remove('hidden');
+    $('goal-detail-overlay').scrollTop = 0;
+  } catch(e) { console.error('Failed to load goal detail', e); }
+}
+function closeGoalDetail() { $('goal-detail-overlay').classList.add('hidden'); }
+
+const ASSET_ICONS = {fd:'🏦',gold:'🪙',esop:'📈',epf_ppf:'🏛️',nps:'🏛️',realestate:'🏠',mf_declared:'📊',mf_sips:'📊',mf:'📊'};
+
+function renderGoalDetail(g) {
+  const statusColor = g.on_track ? 'emerald' : 'amber';
+  const statusText = g.on_track ? 'On Track' : 'Behind Schedule';
+  const statusIcon = g.on_track ? '✅' : '⚠️';
+  const pct = Math.min(g.progress_pct, 100);
+  const monthsLeft = g.months_left || 0;
+  const yearsLeft = monthsLeft >= 12 ? Math.floor(monthsLeft/12) + 'y ' + (monthsLeft%12) + 'mo' : monthsLeft + ' months';
+  const totalLinkedValue = g.linked_assets.reduce((s,a) => s + a.value, 0);
+
+  // SVG progress ring (radius=70, circumference=440)
+  const circ = 440, offset = circ - (circ * pct / 100);
+
+  let html = `
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <span class="text-4xl">${g.emoji}</span>
+        <div>
+          <h2 class="text-2xl font-extrabold text-gray-900">${esc(g.name)}</h2>
+          <p class="text-sm text-gray-400 mt-1">Target: <span class="font-bold text-gray-600">${INR(g.target_amount)}</span> by <span class="font-bold text-gray-600">${g.target_date || 'No deadline'}</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold text-${statusColor}-600 bg-${statusColor}-50 px-3 py-1.5 rounded-xl">${statusIcon} ${statusText}</span>
+        <button onclick="closeGoalDetail();editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-2" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Progress Ring + Stats -->
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm mb-6">
+      <div class="flex flex-col sm:flex-row items-center gap-8">
+        <div class="relative shrink-0">
+          <svg width="160" height="160" class="-rotate-90">
+            <circle cx="80" cy="80" r="70" fill="none" stroke="#f3f4f6" stroke-width="12"/>
+            <circle cx="80" cy="80" r="70" fill="none" stroke="${g.on_track ? '#10b981' : '#f59e0b'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" class="transition-all duration-700"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-2xl font-extrabold text-gray-900">${pct.toFixed(1)}%</span>
+            <span class="text-[10px] text-gray-400 font-bold">achieved</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 flex-1 w-full">
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Value</p><p class="text-lg font-extrabold text-gray-900 mt-1">${INR(g.current_value)}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Remaining</p><p class="text-lg font-extrabold text-gray-900 mt-1">${INR(Math.max(0, g.target_amount - g.current_value))}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly SIP</p><p class="text-lg font-extrabold text-gray-900 mt-1">${g.monthly_sip > 0 ? INR(g.monthly_sip) : '—'}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time Left</p><p class="text-lg font-extrabold text-gray-900 mt-1">${monthsLeft > 0 ? yearsLeft : '—'}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projections -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Projected Value</p>
+        <p class="text-xl font-extrabold text-gray-900 mt-2">${INR_SHORT(g.projected_value)}</p>
+        <p class="text-[10px] text-gray-400 mt-1">at ${g.growth_rate ? (g.growth_rate*100).toFixed(0) + '% p.a.' : 'current rate'}</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'Estimated Completion' : 'SIP Gap'}</p>
+        <p class="text-xl font-extrabold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-2">${g.on_track ? (g.projected_months ? g.projected_months + ' months' : 'Achieved ✓') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p>
+        <p class="text-[10px] text-gray-400 mt-1">${g.on_track ? 'to reach target' : 'additional SIP needed'}</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Assets Linked</p>
+        <p class="text-xl font-extrabold text-gray-900 mt-2">${g.linked_assets.length}</p>
+        <p class="text-[10px] text-gray-400 mt-1">contributing ${INR_SHORT(totalLinkedValue)}</p>
+      </div>
+    </div>
+
+    <!-- Linked Assets -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+        <h4 class="text-sm font-bold text-gray-900">Linked Assets</h4>
+        <button onclick="closeGoalDetail();editGoal(${g.id})" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">+ Link More</button>
+      </div>`;
+
+  if (g.linked_assets.length === 0) {
+    html += `<div class="px-6 py-10 text-center"><p class="text-sm text-gray-400">No assets linked yet</p><p class="text-xs text-gray-300 mt-1">Edit this goal to link holdings and track progress</p></div>`;
+  } else {
+    html += `<div class="divide-y divide-gray-50">`;
+    g.linked_assets.forEach(a => {
+      const icon = ASSET_ICONS[a.asset_type] || '📄';
+      const share = totalLinkedValue > 0 ? (a.value / totalLinkedValue * 100).toFixed(1) : 0;
+      html += `<div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+        <span class="text-xl">${icon}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-gray-800 truncate">${esc(a.label)}</p>
+          <p class="text-[10px] text-gray-400">${a.pct}% of ${INR(a.raw_value)} allocated</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-sm font-bold text-gray-900">${INR(a.value)}</p>
+          <p class="text-[10px] text-gray-400">${share}% of goal value</p>
+        </div>
+        <div class="w-16 shrink-0">
+          <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full" style="width:${share}%"></div></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>
+
+    <!-- Created -->
+    <p class="text-[10px] text-gray-300 text-center">Created ${g.created_at ? new Date(g.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : '—'} · Growth rate: ${(g.growth_rate*100).toFixed(0)}% p.a.</p>`;
+  return html;
+}
+
 // Load goals/profile when tab is switched
 const _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
-  if (tab === 'goals') loadGoals();
+  if (tab === 'goals') { loadGoals(); closeGoalDetail(); }
   if (tab === 'profile') loadProfile();
 };
 

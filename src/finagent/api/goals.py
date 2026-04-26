@@ -257,6 +257,59 @@ async def remove_goal(goal_id: int, request: Request, user_id: int = Depends(req
     return JSONResponse({"status": "ok"})
 
 
+@router.get("/goals/{goal_id}/detail")
+async def goal_detail(goal_id: int, request: Request):
+    """Return enriched goal detail with per-asset breakdown."""
+    user_id = get_user_id(request) or DEMO_USER_ID
+    goals = load_goals(user_id)
+    goal = next((g for g in goals if g.id == goal_id), None)
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    holdings = load_holdings(user_id)
+    progress = _compute_goal_progress(goal, holdings, user_id)
+    # Build enriched linked assets list
+    linked_details = []
+    for lf in goal.linked_folios:
+        if isinstance(lf, dict) and "asset_type" in lf:
+            at, aid = lf["asset_type"], lf.get("asset_id", 0)
+            pct = lf.get("pct", 100)
+            items = load_assets(user_id, at)
+            match = next((i for i in items if i.get("id") == aid), items[0] if items else None)
+            if not match:
+                continue
+            val = _asset_value(match) * pct / 100
+            label = ASSET_LABELS.get(at, at)
+            if at == "fd": label = f"FD — {match.get('bank', 'Unknown')}"
+            elif at == "gold": label = f"Gold — {match.get('type', 'Physical')}"
+            elif at == "esop": label = f"ESOP — {match.get('company', 'Unknown')}"
+            elif at == "realestate": label = f"Property — {match.get('location', 'Unknown')}"
+            elif at == "mf_declared": label = f"MF — {match.get('scheme', 'Declared')}"
+            elif at == "mf_sips": label = f"SIP — {match.get('scheme', 'Declared')}"
+            linked_details.append({"kind": "asset", "asset_type": at, "label": label,
+                                   "pct": pct, "value": round(val, 2),
+                                   "raw_value": round(_asset_value(match), 2)})
+        else:
+            folio_key = lf["folio"] if isinstance(lf, dict) else lf
+            pct = lf.get("pct", 100) if isinstance(lf, dict) else 100
+            h = next((h for h in holdings if f"{h.folio}/{h.scheme_name}" == folio_key), None)
+            if not h:
+                continue
+            val = h.current_value * pct / 100
+            linked_details.append({"kind": "mf", "folio": folio_key,
+                                   "label": h.scheme_name, "pct": pct,
+                                   "value": round(val, 2), "raw_value": round(h.current_value, 2)})
+    tmpl = GOAL_TEMPLATES.get(goal.template, {})
+    return JSONResponse({
+        "id": goal.id, "name": goal.name, "template": goal.template,
+        "target_amount": goal.target_amount, "target_date": goal.target_date,
+        "growth_rate": goal.growth_rate, "status": goal.status,
+        "created_at": goal.created_at,
+        "emoji": (tmpl.get("label", "🎯 ")).split(" ")[0],
+        "linked_assets": linked_details,
+        **progress,
+    })
+
+
 @router.post("/goals/{goal_id}/accept")
 async def accept_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
     """Accept a suggested goal — sets status to active."""

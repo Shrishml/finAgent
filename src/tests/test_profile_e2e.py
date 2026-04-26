@@ -398,6 +398,75 @@ class TestGoalDedup:
         assert templates == {"house", "emergency"}
 
 
+class TestGoalTransparency:
+    """Calculator description flows through create_goal action and API."""
+
+    def test_create_goal_with_calculator_has_description(self, client):
+        """When calculator runs, description appears in ui_data and message."""
+        from finagent.actions.create_goal import execute as create_goal
+        import asyncio
+
+        # Set up profile with expenses and age via API (single storage)
+        client.put("/profile", json={"age": 25, "total_monthly_expenses": 20000})
+
+        result = asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Retirement"}, _TEST_UID, {})
+        )
+        assert "error" not in result
+        assert result["ui_data"]["description"], "Calculator description missing from ui_data"
+        assert "📐" in result["message"], "Breakdown not shown in chat message"
+        assert result["ui_data"]["target_amount"] > 3_00_00_000, "Calculator didn't run"
+
+    def test_create_goal_without_calculator_has_empty_description(self, client):
+        """Custom goals without calculator have empty description."""
+        from finagent.actions.create_goal import execute as create_goal
+        import asyncio
+
+        result = asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Travel to Japan", "target_amount": 300000, "target_date": "2027-06-01"}, _TEST_UID, {})
+        )
+        assert "error" not in result
+        assert result["ui_data"]["description"] == ""
+
+    def test_goal_detail_api_returns_description(self, client):
+        """GET /goals/{id}/detail includes the description field."""
+        from finagent.actions.create_goal import execute as create_goal
+        from finagent.storage.sqlite import load_goals
+        import asyncio
+
+        client.put("/profile", json={"age": 30, "total_monthly_expenses": 50000})
+
+        result = asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Retirement"}, _TEST_UID, {})
+        )
+        goal_id = result["ui_data"]["goal_id"]
+
+        # Verify via direct DB read (same process, same DB)
+        goals = load_goals(_TEST_UID)
+        goal = next(g for g in goals if g.id == goal_id)
+        assert goal.description, "Description missing from stored goal"
+        assert "inflation" in goal.description.lower()
+
+    def test_goals_list_api_returns_description(self, client):
+        """GET /goals includes description for each goal."""
+        from finagent.actions.create_goal import execute as create_goal
+        from finagent.storage.sqlite import load_goals
+        import asyncio
+
+        client.put("/profile", json={"age": 28, "total_monthly_expenses": 30000})
+
+        asyncio.get_event_loop().run_until_complete(
+            create_goal({"goal_name": "Emergency fund"}, _TEST_UID, {})
+        )
+
+        # Verify via direct DB read
+        goals = load_goals(_TEST_UID)
+        assert len(goals) >= 1
+        efund = next(g for g in goals if g.template == "emergency")
+        assert efund.description, "Description missing from stored goal"
+        assert "expenses" in efund.description.lower()
+
+
 # ── Profile + Assets Combined ───────────────────────────────────────
 
 

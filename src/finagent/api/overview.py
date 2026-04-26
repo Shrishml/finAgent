@@ -216,6 +216,59 @@ def _recent_activity(user_id: int) -> list:
     return activities
 
 
+@router.get("/overview/demo")
+async def overview_demo():
+    """Demo overview with rich dummy data for showcasing the UI."""
+    return JSONResponse({
+        "net_worth": {
+            "total": 4832500,
+            "mf_value": 2150000,
+            "mf_invested": 1680000,
+            "mf_gain": 470000,
+            "breakdown": {
+                "Mutual Funds (CAS)": 2150000,
+                "EPF & PPF": 1120000,
+                "Fixed Deposits": 500000,
+                "Gold": 380000,
+                "NPS": 350000,
+                "ESOP/RSU": 332500,
+            },
+        },
+        "goals": [
+            {"id": 1, "name": "Retirement at 50", "template": "retirement",
+             "target_amount": 65000000, "target_date": "2051-01-01",
+             "current_value": 3270000, "progress_pct": 5, "on_track": True, "months_left": 300},
+            {"id": 2, "name": "Dream Home", "template": "house",
+             "target_amount": 12000000, "target_date": "2031-06-01",
+             "current_value": 2800000, "progress_pct": 23, "on_track": False, "months_left": 62},
+            {"id": 3, "name": "Emergency Fund", "template": "emergency",
+             "target_amount": 360000, "target_date": "2027-01-01",
+             "current_value": 280000, "progress_pct": 78, "on_track": True, "months_left": 8},
+        ],
+        "cash_flow": {
+            "income": 185000, "expenses": 55000,
+            "emi": 22000, "investments": 65000, "surplus": 43000,
+        },
+        "nudges": [
+            {"icon": "💰", "title": "₹43,000/month surplus is unallocated",
+             "desc": "Consider increasing SIP or linking to your house goal",
+             "action": "Ask Arth", "chat": "I have ₹43,000 surplus monthly. What should I do with it?"},
+            {"icon": "🛡️", "title": "Emergency fund: 5 months covered",
+             "desc": "Target is 6 months — 78% there. ₹80K more to go",
+             "action": "View goal", "tab": "goals"},
+            {"icon": "⚠️", "title": "No term life insurance",
+             "desc": "At ₹1.85L/month income, a ₹2Cr term plan costs ~₹800/month",
+             "action": "Ask Arth", "chat": "Do I need term life insurance? What cover amount?"},
+            {"icon": "📅", "title": "EPF data is 3 months old",
+             "desc": "Update for more accurate net worth tracking",
+             "action": "Update profile", "tab": "profile"},
+        ],
+        "has_holdings": True,
+        "has_profile": True,
+        "user_name": "Suraj",
+    })
+
+
 @router.get("/overview")
 async def overview(request: Request):
     """Aggregated overview dashboard data."""

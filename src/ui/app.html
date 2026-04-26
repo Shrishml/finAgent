@@ -972,7 +972,8 @@ function showPortfolio(holdings, portfolioXirr) {
 }
 
 function loadOverviewDashboard() {
-  fetch('/overview').then(safeJson).then(data => {
+  const url = isDemo ? '/overview/demo' : '/overview';
+  fetch(url).then(safeJson).then(data => {
     // 1. Summary bar — net worth
     if (data.net_worth) renderOverviewSummaryBar(data.net_worth);
     if (data.net_worth?.breakdown && Object.keys(data.net_worth.breakdown).length > 1) {

@@ -1775,7 +1775,7 @@ function renderGoalDetail(g) {
         <span class="text-xl">${icon}</span>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-bold text-gray-800 truncate">${esc(a.label)}</p>
-          <p class="text-[10px] text-gray-400">${a.pct}% of ${INR(a.raw_value)} allocated</p>
+          <p class="text-[10px] text-gray-400">${a.pct}% of ${INR(a.raw_value)} allocated${a.monthly_sip ? ' · SIP ' + INR(a.monthly_sip) + '/mo' : ''}</p>
         </div>
         <div class="text-right shrink-0">
           <p class="text-sm font-bold text-gray-900">${INR(a.value)}</p>

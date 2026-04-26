@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.api.goals import _asset_value, _compute_goal_progress
 from finagent.models.goal import Goal
-from finagent.storage.sqlite import save_assets, get_or_create_user
+from finagent.storage.sqlite import save_assets, get_or_create_user, load_assets
 
 
 def _uid():
@@ -152,6 +152,23 @@ class TestLinkAssetToGoalAction:
 
         updated = next(g for g in load_goals(uid) if g.id == gid)
         assert any(lf.get("asset_type") == "mf_declared" for lf in updated.linked_folios)
+
+    def test_mf_sip_included_in_goal_progress(self):
+        """Declared MF monthly_sip should count in goal's monthly_sip total."""
+        import uuid
+        from finagent.storage.sqlite import save_goal, load_goals
+        from finagent.api.goals import _compute_goal_progress
+        uid = get_or_create_user(f"test-sip-{uuid.uuid4().hex[:8]}", "sip@t.com", "T")
+        save_assets(uid, "mf_declared", [{"scheme": "Nifty 50", "current_value": 100000, "monthly_sip": 5000}])
+        items = load_assets(uid, "mf_declared")
+        aid = items[0]["id"]
+        goal = Goal(user_id=uid, name="Wealth", template="custom",
+                    target_amount=1000000, target_date="2030-01-01",
+                    linked_folios=[{"asset_type": "mf_declared", "asset_id": aid, "pct": 100}])
+        save_goal(goal)
+        progress = _compute_goal_progress(goal, [], uid)
+        assert progress["monthly_sip"] == 5000
+        assert progress["current_value"] == 100000
 
     def test_link_mf_no_holdings(self):
         """MF link fails gracefully when no holdings exist."""

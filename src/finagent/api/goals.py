@@ -58,7 +58,10 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
         items = load_assets(user_id, al["asset_type"])
         match = next((i for i in items if i.get("id") == al.get("asset_id")), items[0] if items else None)
         if match:
-            linked_value += _asset_value(match) * (al.get("pct", 100) / 100)
+            w = al.get("pct", 100) / 100
+            linked_value += _asset_value(match) * w
+            if al["asset_type"] in ("mf_declared", "mf_sips"):
+                monthly_sip += float(match.get("monthly_sip", 0) or 0) * w
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
     if not goal.target_date:
@@ -286,9 +289,12 @@ async def goal_detail(goal_id: int, request: Request):
             elif at == "realestate": label = f"Property — {match.get('location', 'Unknown')}"
             elif at == "mf_declared": label = f"MF — {match.get('scheme', 'Declared')}"
             elif at == "mf_sips": label = f"SIP — {match.get('scheme', 'Declared')}"
-            linked_details.append({"kind": "asset", "asset_type": at, "label": label,
-                                   "pct": pct, "value": round(val, 2),
-                                   "raw_value": round(_asset_value(match), 2)})
+            detail = {"kind": "asset", "asset_type": at, "label": label,
+                      "pct": pct, "value": round(val, 2),
+                      "raw_value": round(_asset_value(match), 2)}
+            if at in ("mf_declared", "mf_sips"):
+                detail["monthly_sip"] = float(match.get("monthly_sip", 0) or 0)
+            linked_details.append(detail)
         else:
             folio_key = lf["folio"] if isinstance(lf, dict) else lf
             pct = lf.get("pct", 100) if isinstance(lf, dict) else 100

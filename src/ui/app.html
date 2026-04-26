@@ -100,8 +100,8 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
 
     <div id="tab-overview" class="tab-content w-full overflow-x-hidden">
       <!-- Net Worth -->
-      <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div id="summary-bar"></div>
+      <section class="min-h-[calc(100vh-49px)] bg-gray-900 flex flex-col justify-center w-full">
+        <div id="summary-bar" class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full"></div>
       </section>
 
       <!-- Goals -->
@@ -791,7 +791,7 @@ function renderSummary(holdings, portfolioXirr) {
   const xirrHtml = portfolioXirr != null ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">XIRR</p><p class="text-xl sm:text-2xl font-extrabold ${portfolioXirr >= 0 ? 'text-emerald-400' : 'text-red-400'}">${portfolioXirr.toFixed(1)}%</p></div>` : '';
   // Only update summary bar if overview hasn't loaded yet
   if (!window._overviewLoaded) {
-    $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-gray-900">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Invested</p><p class="text-xl sm:text-2xl font-extrabold text-gray-900">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div>${xirrHtml}</div></div>`;
+    $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-white">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Invested</p><p class="text-xl sm:text-2xl font-extrabold text-white">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div>${xirrHtml}</div></div>`;
   }
 }
 
@@ -806,16 +806,16 @@ function renderOverviewSummaryBar(nw) {
 
   // Asset rows — bigger text
   const assetRows = Object.entries(assets).map(([k,v]) =>
-    `<div class="flex justify-between py-2"><span class="text-sm text-gray-700 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-gray-900">${INR_SHORT(v)}</span></div>`
+    `<div class="flex justify-between py-2"><span class="text-sm text-gray-400 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-white">${INR_SHORT(v)}</span></div>`
   ).join('');
 
   // Liability rows
   const liabRows = Object.entries(liabilities).map(([k,v]) =>
-    `<div class="flex justify-between py-2"><span class="text-sm text-gray-700 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-red-500">−${INR_SHORT(v)}</span></div>`
+    `<div class="flex justify-between py-2"><span class="text-sm text-gray-400 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-red-400">−${INR_SHORT(v)}</span></div>`
   ).join('');
   const liabSection = Object.keys(liabilities).length ? `
-    <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
-      <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-red-500 uppercase tracking-widest">Liabilities</p><p class="text-2xl sm:text-3xl font-extrabold text-red-500">−${INR_SHORT(totalL)}</p></div>
+    <div class="bg-gray-800/60 rounded-2xl border border-gray-700 p-5 sm:p-8">
+      <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-red-400 uppercase tracking-widest">Liabilities</p><p class="text-2xl sm:text-3xl font-extrabold text-red-400">−${INR_SHORT(totalL)}</p></div>
       ${liabRows}
     </div>` : '';
 
@@ -834,17 +834,17 @@ function renderOverviewSummaryBar(nw) {
       const idealPct = ideal[k] || 0;
       const diff = curPct - idealPct;
       const color = ALLOC_COLORS[k] || 'bg-gray-400';
-      const diffColor = Math.abs(diff) < 3 ? 'text-gray-400' : (diff > 0 ? 'text-amber-600' : 'text-emerald-600');
+      const diffColor = Math.abs(diff) < 3 ? 'text-gray-500' : (diff > 0 ? 'text-amber-400' : 'text-emerald-400');
       const diffLabel = Math.abs(diff) < 3 ? '✓' : (diff > 0 ? `+${diff.toFixed(0)}%` : `${diff.toFixed(0)}%`);
       return `<div class="space-y-1.5">
-        <div class="flex items-center justify-between"><span class="text-sm font-bold text-gray-700">${esc(k)}</span><span class="text-xs font-bold ${diffColor}">${diffLabel}</span></div>
+        <div class="flex items-center justify-between"><span class="text-sm font-bold text-gray-300">${esc(k)}</span><span class="text-xs font-bold ${diffColor}">${diffLabel}</span></div>
         <div class="flex items-center gap-2">
           <span class="text-[10px] font-bold text-gray-400 w-8 text-right">${curPct.toFixed(0)}%</span>
-          <div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden"><div class="${color} h-3 rounded-full transition-all" style="width:${Math.min(curPct,100)}%"></div></div>
+          <div class="flex-1 bg-gray-700 rounded-full h-3 overflow-hidden"><div class="${color} h-3 rounded-full transition-all" style="width:${Math.min(curPct,100)}%"></div></div>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-[10px] font-bold text-gray-300 w-8 text-right">${idealPct}%</span>
-          <div class="flex-1 bg-gray-50 rounded-full h-2 overflow-hidden"><div class="${color} opacity-30 h-2 rounded-full" style="width:${Math.min(idealPct,100)}%"></div></div>
+          <span class="text-[10px] font-bold text-gray-600 w-8 text-right">${idealPct}%</span>
+          <div class="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden"><div class="${color} opacity-30 h-2 rounded-full" style="width:${Math.min(idealPct,100)}%"></div></div>
         </div>
       </div>`;
     }).join('');
@@ -855,12 +855,12 @@ function renderOverviewSummaryBar(nw) {
       const d = Math.abs(cur - (ideal[k]||0));
       if (d > bigDiff) { bigDiff = d; bigGap = k; }
     });
-    const nudge = bigGap && bigDiff >= 5 ? `<p class="text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">💡 Biggest gap: <span class="font-bold text-gray-700">${bigGap}</span> is ${((alloc[bigGap]||0)/allocTotal*100).toFixed(0)}% vs ${ideal[bigGap]||0}% recommended</p>` : '';
+    const nudge = bigGap && bigDiff >= 5 ? `<p class="text-xs text-gray-500 mt-4 pt-3 border-t border-gray-700">💡 Biggest gap: <span class="font-bold text-gray-300">${bigGap}</span> is ${((alloc[bigGap]||0)/allocTotal*100).toFixed(0)}% vs ${ideal[bigGap]||0}% recommended</p>` : '';
     allocHtml = `
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
+      <div class="bg-gray-800/60 rounded-2xl border border-gray-700 p-5 sm:p-8">
         <div class="flex items-center justify-between mb-5">
-          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Asset Allocation</h4>
-          <div class="flex items-center gap-3 text-[10px] text-gray-400"><span class="flex items-center gap-1"><span class="w-3 h-2 bg-gray-300 rounded-full inline-block"></span>Current</span><span class="flex items-center gap-1"><span class="w-3 h-1.5 bg-gray-200 rounded-full inline-block"></span>Ideal</span></div>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Asset Allocation</h4>
+          <div class="flex items-center gap-3 text-[10px] text-gray-500"><span class="flex items-center gap-1"><span class="w-3 h-2 bg-gray-500 rounded-full inline-block"></span>Current</span><span class="flex items-center gap-1"><span class="w-3 h-1.5 bg-gray-600 rounded-full inline-block"></span>Ideal</span></div>
         </div>
         <div class="space-y-4">${rows}</div>
         ${nudge}
@@ -869,12 +869,12 @@ function renderOverviewSummaryBar(nw) {
 
   $('summary-bar').innerHTML = `
     <div class="text-center mb-8">
-      <p class="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p>
-      <h2 class="text-5xl sm:text-7xl font-extrabold tracking-tighter text-gray-900">${INR_SHORT(netWorth)}</h2>
+      <p class="text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Net Worth</p>
+      <h2 class="text-5xl sm:text-7xl font-extrabold tracking-tighter text-white">${INR_SHORT(netWorth)}</h2>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
-        <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Assets</p><p class="text-2xl sm:text-3xl font-extrabold text-gray-900">${INR_SHORT(totalA)}</p></div>
+      <div class="bg-gray-800/60 rounded-2xl border border-gray-700 p-5 sm:p-8">
+        <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Assets</p><p class="text-2xl sm:text-3xl font-extrabold text-white">${INR_SHORT(totalA)}</p></div>
         ${assetRows}
       </div>
       ${liabSection || '<div></div>'}
@@ -1378,7 +1378,7 @@ function startOnboarding(user) {
   const firstName = user.name ? user.name.split(' ')[0] : '';
   $('summary-bar').innerHTML = `
     <div class="text-center py-4">
-      <h1 class="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Welcome${firstName ? ', ' + firstName : ''}! 👋</h1>
+      <h1 class="text-2xl sm:text-3xl font-black text-white mb-2">Welcome${firstName ? ', ' + firstName : ''}! 👋</h1>
       <p class="text-gray-400 text-sm">Quick profile setup — takes under a minute</p>
     </div>`;
   document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');

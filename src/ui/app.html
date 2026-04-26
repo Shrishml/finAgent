@@ -1173,7 +1173,7 @@ function renderGoalCard(d, container) {
   const emoji = (d.label || '🎯').split(' ')[0];
   const el = document.createElement('div');
   el.className = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm';
-  el.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(d.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Target: ${esc(d.target_date)}</p></div></div><div class="flex items-center justify-between"><span class="text-sm font-bold text-emerald-700">${INR(d.target_amount)}</span><span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-lg">✅ Goal Created</span></div>`;
+  el.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(d.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Target: ${esc(d.target_date)}</p></div></div><div class="flex items-center justify-between"><span class="text-sm font-bold text-emerald-700">${INR(d.target_amount)}</span><span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-lg">✅ Goal Created</span></div>` + renderBreakdown(d.description, true);
   container.appendChild(el);
   loadGoals(); // refresh goals tab
 }
@@ -1669,7 +1669,10 @@ async function loadGoals() {
           <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Projected</p><p class="text-sm font-bold text-gray-800 mt-1">${INR_SHORT(g.projected_value)}</p></div>
           <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'ETA' : 'SIP Gap'}</p><p class="text-sm font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-1">${g.on_track ? (g.projected_months ? g.projected_months + ' mo' : '—') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p></div>
         </div>
-        ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 mt-4 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''}/asset${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 mt-4 font-bold">No holdings linked</p>'}
+        <div class="flex items-center justify-between mt-4">
+          ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''}/asset${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 font-bold">No holdings linked</p>'}
+          ${g.description ? '<span class="text-[9px] text-teal-500 font-bold">📐 Calculated</span>' : ''}
+        </div>
       </div>`;
     }).join('');
   } catch(e) { console.error('Failed to load goals', e); }
@@ -1685,6 +1688,29 @@ async function openGoalDetail(id) {
   } catch(e) { console.error('Failed to load goal detail', e); }
 }
 function closeGoalDetail() { $('goal-detail-overlay').classList.add('hidden'); }
+
+function renderBreakdown(desc, compact) {
+  if (!desc) return '';
+  var lines = desc.split('\n').filter(function(l) { return l.trim() && !l.startsWith('How we'); });
+  var rows = lines.map(function(line) {
+    var clean = line.replace(/^[•·-]\s*/, '');
+    var idx = clean.indexOf(':');
+    if (idx > 0 && idx < clean.length - 1) {
+      var label = esc(clean.substring(0, idx).trim());
+      var value = esc(clean.substring(idx + 1).trim());
+      if (compact) return '<p class="text-[10px] text-gray-600">' + label + ': <b>' + value + '</b></p>';
+      return '<div class="flex justify-between items-baseline gap-4 py-1.5 border-b border-teal-100/50 last:border-0"><span class="text-xs text-gray-500">' + label + '</span><span class="text-xs font-bold text-gray-800 text-right shrink-0">' + value + '</span></div>';
+    }
+    return compact ? '<p class="text-[10px] text-gray-600">' + esc(clean) + '</p>' : '<p class="text-xs text-gray-600 py-1">' + esc(clean) + '</p>';
+  }).join('');
+  if (compact) return '<div class="mt-3 pt-3 border-t border-emerald-200"><p class="text-[10px] font-bold text-teal-700 mb-1.5">📐 Calculation breakdown</p><div class="space-y-1">' + rows + '</div></div>';
+  return '<div class="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm mb-6 overflow-hidden">' +
+    '<button onclick="this.nextElementSibling.classList.toggle(\'hidden\');this.querySelector(\'.chevron\').classList.toggle(\'rotate-90\')" class="w-full flex items-center justify-between px-6 py-4 hover:bg-teal-50/50 transition-colors">' +
+    '<div class="flex items-center gap-2"><span class="text-base">📐</span><h4 class="text-sm font-bold text-gray-900">How we calculated this</h4></div>' +
+    '<svg class="chevron w-4 h-4 text-gray-400 rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>' +
+    '</button><div class="px-6 pb-5"><div class="space-y-2">' + rows + '</div>' +
+    '<p class="text-[10px] text-teal-600 mt-3 font-bold">💡 These are editable assumptions — tell Arth in chat to recalculate with different values</p></div></div>';
+}
 
 const ASSET_ICONS = {fd:'🏦',gold:'🪙',esop:'📈',epf_ppf:'🏛️',nps:'🏛️',realestate:'🏠',mf_declared:'📊',mf_sips:'📊',mf:'📊'};
 
@@ -1756,6 +1782,9 @@ function renderGoalDetail(g) {
         <p class="text-[10px] text-gray-400 mt-1">contributing ${INR_SHORT(totalLinkedValue)}</p>
       </div>
     </div>
+
+    <!-- Calculation Breakdown -->
+    ` + renderBreakdown(g.description) + `
 
     <!-- Linked Assets -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">

@@ -804,71 +804,70 @@ function renderOverviewSummaryBar(nw) {
   const totalL = nw.total_liabilities || Object.values(liabilities).reduce((s,v)=>s+v,0);
   const netWorth = nw.total || (totalA - totalL);
 
-  // Asset rows
+  // Asset rows — bigger text
   const assetRows = Object.entries(assets).map(([k,v]) =>
-    `<div class="flex justify-between py-1.5"><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-gray-900">${INR_SHORT(v)}</span></div>`
+    `<div class="flex justify-between py-2"><span class="text-sm text-gray-700 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-gray-900">${INR_SHORT(v)}</span></div>`
   ).join('');
 
   // Liability rows
   const liabRows = Object.entries(liabilities).map(([k,v]) =>
-    `<div class="flex justify-between py-1.5"><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-red-500">-${INR_SHORT(v)}</span></div>`
+    `<div class="flex justify-between py-2"><span class="text-sm text-gray-700 font-medium">${esc(k)}</span><span class="text-sm font-extrabold text-red-500">−${INR_SHORT(v)}</span></div>`
   ).join('');
   const liabSection = Object.keys(liabilities).length ? `
-    <div class="border-t border-gray-100 mt-2 pt-2">
-      <p class="text-[9px] font-bold text-red-400 uppercase tracking-widest mb-1">Liabilities</p>
+    <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
+      <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-red-500 uppercase tracking-widest">Liabilities</p><p class="text-2xl sm:text-3xl font-extrabold text-red-500">−${INR_SHORT(totalL)}</p></div>
       ${liabRows}
-      <div class="flex justify-between pt-2 border-t border-gray-100 mt-2"><span class="text-xs font-bold text-gray-500">Total Liabilities</span><span class="text-sm font-extrabold text-red-500">-${INR_SHORT(totalL)}</span></div>
     </div>` : '';
 
-  // Allocation pie chart
+  // Allocation donut — bigger, labels on slices
   const alloc = nw.allocation || {};
   const allocEntries = Object.entries(alloc).filter(([,v]) => v > 0);
   const allocTotal = allocEntries.reduce((s,[,v]) => s+v, 0);
   const PIE_COLORS = {Equity:'#10b981',Debt:'#3b82f6',Gold:'#f59e0b','Real Estate':'#8b5cf6',Cash:'#6b7280',Other:'#ec4899'};
   let pieHtml = '';
   if (allocEntries.length > 1) {
-    const size = 140, cx = size/2, cy = size/2, r = 55;
+    const size = 260, cx = size/2, cy = size/2, r = 100, lr = 72;
     let cumPct = 0;
-    const slices = allocEntries.map(([k,v]) => {
+    let slices = '', labels = '';
+    allocEntries.forEach(([k,v]) => {
       const pct = v / allocTotal;
       const startAngle = cumPct * 2 * Math.PI - Math.PI/2;
       cumPct += pct;
       const endAngle = cumPct * 2 * Math.PI - Math.PI/2;
+      const midAngle = (startAngle + endAngle) / 2;
       const large = pct > 0.5 ? 1 : 0;
       const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
       const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
       const color = PIE_COLORS[k] || PIE_COLORS.Other;
-      return `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${color}"/>`;
-    }).join('');
-    const legend = allocEntries.map(([k,v]) => {
-      const color = PIE_COLORS[k] || PIE_COLORS.Other;
-      const pct = (v/allocTotal*100).toFixed(0);
-      return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${color}"></div><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-gray-900 ml-auto">${pct}%</span></div>`;
-    }).join('');
+      slices += `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${color}"/>`;
+      if (pct >= 0.05) {
+        const lx = cx + lr * Math.cos(midAngle), ly = cy + lr * Math.sin(midAngle);
+        labels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="11" font-weight="800">${(pct*100).toFixed(0)}%</text>`;
+        labels += `<text x="${lx.toFixed(1)}" y="${(ly+13).toFixed(1)}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="8" font-weight="600">${k}</text>`;
+      }
+    });
     pieHtml = `
-      <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
-        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Asset Allocation</h4>
-        <div class="flex items-center gap-6 sm:gap-10">
-          <svg viewBox="0 0 ${size} ${size}" class="w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0">${slices}</svg>
-          <div class="space-y-2 flex-1">${legend}</div>
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 text-center">Asset Allocation</h4>
+        <div class="flex justify-center">
+          <svg viewBox="0 0 ${size} ${size}" class="w-56 h-56 sm:w-64 sm:h-64">${slices}${labels}</svg>
         </div>
       </div>`;
   }
 
   $('summary-bar').innerHTML = `
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-      <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
-        <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Assets</p>
-        ${assetRows}
-        <div class="flex justify-between pt-2 border-t border-gray-100 mt-2"><span class="text-xs font-bold text-gray-500">Total Assets</span><span class="text-sm font-extrabold text-gray-900">${INR_SHORT(totalA)}</span></div>
-        ${liabSection}
-      </div>
-      ${pieHtml}
+    <div class="text-center mb-8">
+      <p class="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p>
+      <h2 class="text-5xl sm:text-7xl font-extrabold tracking-tighter text-gray-900">${INR_SHORT(netWorth)}</h2>
     </div>
-    <div class="mt-6 text-center">
-      <p class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p>
-      <h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-gray-900">${INR_SHORT(netWorth)}</h2>
-    </div>`;
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 shadow-sm">
+        <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Assets</p><p class="text-2xl sm:text-3xl font-extrabold text-gray-900">${INR_SHORT(totalA)}</p></div>
+        ${assetRows}
+      </div>
+      ${liabSection || '<div></div>'}
+    </div>
+    ${pieHtml}`;
 }
 
 function renderGoalCards(goals) {

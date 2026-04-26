@@ -20,8 +20,9 @@ SCHEMA = {
 VALID_TYPES = {"fd", "gold", "epf_ppf", "nps", "esop", "realestate", "mf"}
 TYPE_ALIASES = {"pf": "epf_ppf", "epf": "epf_ppf", "ppf": "epf_ppf",
                 "property": "realestate", "real_estate": "realestate",
-                "fixed_deposit": "fd", "rsu": "esop",
-                "mutual_fund": "mf", "mutual_funds": "mf", "sip": "mf"}
+                "fixed_deposit": "fd", "fixed deposit": "fd", "rsu": "esop",
+                "mutual_fund": "mf", "mutual_funds": "mf", "mutual fund": "mf",
+                "mutual funds": "mf", "sip": "mf", "real estate": "realestate"}
 
 
 async def execute(params: dict, user_id: int, context: dict) -> dict:

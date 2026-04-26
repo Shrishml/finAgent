@@ -22,6 +22,7 @@ _ASSET_LABELS = {
     "epf_ppf": "EPF & PPF", "fd": "Fixed Deposits", "gold": "Gold",
     "esop": "ESOP/RSU", "realestate": "Real Estate", "nps": "NPS",
     "mf_declared": "Mutual Funds (declared)", "mf_sips": "SIPs (declared)",
+    "loan": "Loans", "stocks": "Stocks",
 }
 
 
@@ -31,24 +32,52 @@ def _net_worth(user_id: int, holdings: list) -> dict:
     mf_invested = sum(getattr(h, 'invested', 0) or 0 for h in holdings)
 
     assets = load_assets(user_id)
-    asset_breakdown = {}
+    asset_items = {}
+    liabilities = {}
+    # Allocation buckets
+    alloc = {"Equity": 0, "Debt": 0, "Gold": 0, "Real Estate": 0, "Cash": 0}
+
     for a in assets:
         at = a.get("asset_type", "")
         val = _asset_value(a)
-        if val > 0:
-            label = _ASSET_LABELS.get(at, at)
-            asset_breakdown[label] = asset_breakdown.get(label, 0) + val
+        if val <= 0:
+            continue
+        label = _ASSET_LABELS.get(at, at)
+        # Loans are liabilities
+        if at == "loan":
+            liabilities[label] = liabilities.get(label, 0) + val
+            continue
+        asset_items[label] = asset_items.get(label, 0) + val
+        # Map to allocation buckets
+        if at in ("esop", "mf_declared", "mf_sips", "stocks"):
+            alloc["Equity"] += val
+        elif at in ("fd", "epf_ppf", "nps"):
+            alloc["Debt"] += val
+        elif at == "gold":
+            alloc["Gold"] += val
+        elif at == "realestate":
+            alloc["Real Estate"] += val
+        else:
+            alloc["Cash"] += val
 
     if mf_value > 0:
-        asset_breakdown["Mutual Funds (CAS)"] = mf_value
+        asset_items["Mutual Funds (CAS)"] = mf_value
+        alloc["Equity"] += mf_value
 
-    total = sum(asset_breakdown.values())
+    total_assets = sum(asset_items.values())
+    total_liabilities = sum(liabilities.values())
+    total = total_assets - total_liabilities
+
     return {
         "total": round(total, 2),
+        "total_assets": round(total_assets, 2),
+        "total_liabilities": round(total_liabilities, 2),
         "mf_value": round(mf_value, 2),
         "mf_invested": round(mf_invested, 2),
         "mf_gain": round(mf_value - mf_invested, 2),
-        "breakdown": {k: round(v, 2) for k, v in sorted(asset_breakdown.items(), key=lambda x: -x[1])},
+        "assets": {k: round(v, 2) for k, v in sorted(asset_items.items(), key=lambda x: -x[1])},
+        "liabilities": {k: round(v, 2) for k, v in sorted(liabilities.items(), key=lambda x: -x[1])},
+        "allocation": {k: round(v, 2) for k, v in alloc.items() if v > 0},
     }
 
 
@@ -221,17 +250,30 @@ async def overview_demo():
     """Demo overview with rich dummy data for showcasing the UI."""
     return JSONResponse({
         "net_worth": {
-            "total": 4832500,
+            "total": 4482500,
+            "total_assets": 4832500,
+            "total_liabilities": 350000,
             "mf_value": 2150000,
             "mf_invested": 1680000,
             "mf_gain": 470000,
-            "breakdown": {
-                "Mutual Funds (CAS)": 2150000,
+            "assets": {
+                "Mutual Funds": 2150000,
                 "EPF & PPF": 1120000,
                 "Fixed Deposits": 500000,
-                "Gold": 380000,
+                "Gold (SGB + Physical)": 380000,
                 "NPS": 350000,
                 "ESOP/RSU": 332500,
+            },
+            "liabilities": {
+                "Car Loan": 280000,
+                "Credit Card": 70000,
+            },
+            "allocation": {
+                "Equity": 2482500,
+                "Debt": 1620000,
+                "Gold": 380000,
+                "Real Estate": 0,
+                "Cash": 350000,
             },
         },
         "goals": [

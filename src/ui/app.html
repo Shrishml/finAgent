@@ -102,12 +102,6 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       <!-- Net Worth -->
       <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div id="summary-bar"></div>
-        <div id="ov-networth-breakdown" class="hidden mt-6">
-          <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Net Worth Breakdown</h4>
-            <div id="ov-nw-bars"></div>
-          </div>
-        </div>
       </section>
 
       <!-- Goals -->
@@ -804,27 +798,77 @@ function renderSummary(holdings, portfolioXirr) {
 // ── Overview Dashboard ──
 function renderOverviewSummaryBar(nw) {
   window._overviewLoaded = true;
-  const bk = nw.breakdown || {};
-  const keys = Object.keys(bk);
-  const hasMF = nw.mf_invested > 0;
-  const gainHtml = hasMF ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">MF Gains</p><p class="text-xl sm:text-2xl font-extrabold ${nw.mf_gain >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(nw.mf_gain)}${INR(Math.abs(nw.mf_gain))}</p></div>` : '';
-  const countHtml = keys.length > 1 ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Asset Classes</p><p class="text-xl sm:text-2xl font-extrabold text-gray-900">${keys.length}</p></div>` : '';
-  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Total Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-gray-900 cursor-pointer hover:text-emerald-600 transition-colors" onclick="toggleNwBreakdown()">${INR_SHORT(nw.total)}</h2><p class="text-xs text-gray-400 mt-1 cursor-pointer hover:text-emerald-600" onclick="toggleNwBreakdown()">Tap for breakdown ▾</p></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto">${gainHtml}${countHtml}</div></div>`;
-}
+  const assets = nw.assets || nw.breakdown || {};
+  const liabilities = nw.liabilities || {};
+  const totalA = nw.total_assets || Object.values(assets).reduce((s,v)=>s+v,0);
+  const totalL = nw.total_liabilities || Object.values(liabilities).reduce((s,v)=>s+v,0);
+  const netWorth = nw.total || (totalA - totalL);
 
-function toggleNwBreakdown() {
-  const el = $('ov-networth-breakdown');
-  el.classList.toggle('hidden');
-}
+  // Asset rows
+  const assetRows = Object.entries(assets).map(([k,v]) =>
+    `<div class="flex justify-between py-1.5"><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-gray-900">${INR_SHORT(v)}</span></div>`
+  ).join('');
 
-function renderNwBreakdown(bk) {
-  const total = Object.values(bk).reduce((s, v) => s + v, 0);
-  if (total <= 0) return;
-  $('ov-networth-breakdown').classList.remove('hidden');
-  $('ov-nw-bars').innerHTML = Object.entries(bk).map(([k, v]) => {
-    const pct = (v / total * 100);
-    return `<div class="flex items-center gap-3 mb-3"><span class="text-xs font-bold text-gray-700 w-40 truncate">${esc(k)}</span><div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden"><div class="h-3 rounded-full bg-emerald-500" style="width:${pct.toFixed(1)}%"></div></div><span class="text-xs font-bold text-gray-900 w-20 text-right">${INR_SHORT(v)}</span></div>`;
-  }).join('');
+  // Liability rows
+  const liabRows = Object.entries(liabilities).map(([k,v]) =>
+    `<div class="flex justify-between py-1.5"><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-red-500">-${INR_SHORT(v)}</span></div>`
+  ).join('');
+  const liabSection = Object.keys(liabilities).length ? `
+    <div class="border-t border-gray-100 mt-2 pt-2">
+      <p class="text-[9px] font-bold text-red-400 uppercase tracking-widest mb-1">Liabilities</p>
+      ${liabRows}
+      <div class="flex justify-between pt-2 border-t border-gray-100 mt-2"><span class="text-xs font-bold text-gray-500">Total Liabilities</span><span class="text-sm font-extrabold text-red-500">-${INR_SHORT(totalL)}</span></div>
+    </div>` : '';
+
+  // Allocation pie chart
+  const alloc = nw.allocation || {};
+  const allocEntries = Object.entries(alloc).filter(([,v]) => v > 0);
+  const allocTotal = allocEntries.reduce((s,[,v]) => s+v, 0);
+  const PIE_COLORS = {Equity:'#10b981',Debt:'#3b82f6',Gold:'#f59e0b','Real Estate':'#8b5cf6',Cash:'#6b7280',Other:'#ec4899'};
+  let pieHtml = '';
+  if (allocEntries.length > 1) {
+    const size = 140, cx = size/2, cy = size/2, r = 55;
+    let cumPct = 0;
+    const slices = allocEntries.map(([k,v]) => {
+      const pct = v / allocTotal;
+      const startAngle = cumPct * 2 * Math.PI - Math.PI/2;
+      cumPct += pct;
+      const endAngle = cumPct * 2 * Math.PI - Math.PI/2;
+      const large = pct > 0.5 ? 1 : 0;
+      const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
+      const color = PIE_COLORS[k] || PIE_COLORS.Other;
+      return `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${color}"/>`;
+    }).join('');
+    const legend = allocEntries.map(([k,v]) => {
+      const color = PIE_COLORS[k] || PIE_COLORS.Other;
+      const pct = (v/allocTotal*100).toFixed(0);
+      return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${color}"></div><span class="text-xs text-gray-600">${esc(k)}</span><span class="text-xs font-bold text-gray-900 ml-auto">${pct}%</span></div>`;
+    }).join('');
+    pieHtml = `
+      <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
+        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Asset Allocation</h4>
+        <div class="flex items-center gap-6 sm:gap-10">
+          <svg viewBox="0 0 ${size} ${size}" class="w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0">${slices}</svg>
+          <div class="space-y-2 flex-1">${legend}</div>
+        </div>
+      </div>`;
+  }
+
+  $('summary-bar').innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
+        <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Assets</p>
+        ${assetRows}
+        <div class="flex justify-between pt-2 border-t border-gray-100 mt-2"><span class="text-xs font-bold text-gray-500">Total Assets</span><span class="text-sm font-extrabold text-gray-900">${INR_SHORT(totalA)}</span></div>
+        ${liabSection}
+      </div>
+      ${pieHtml}
+    </div>
+    <div class="mt-6 text-center">
+      <p class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p>
+      <h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-gray-900">${INR_SHORT(netWorth)}</h2>
+    </div>`;
 }
 
 function renderGoalCards(goals) {
@@ -976,10 +1020,6 @@ function loadOverviewDashboard() {
   fetch(url).then(safeJson).then(data => {
     // 1. Summary bar — net worth
     if (data.net_worth) renderOverviewSummaryBar(data.net_worth);
-    if (data.net_worth?.breakdown && Object.keys(data.net_worth.breakdown).length > 1) {
-      renderNwBreakdown(data.net_worth.breakdown);
-      $('ov-networth-breakdown').classList.add('hidden'); // collapsed by default
-    }
     // 2. Goals
     renderGoalCards(data.goals || []);
     // 3. Cash flow

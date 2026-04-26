@@ -275,6 +275,13 @@ async def overview_demo():
                 "Real Estate": 0,
                 "Cash": 350000,
             },
+            "ideal_allocation": {
+                "Equity": 65,
+                "Debt": 20,
+                "Gold": 10,
+                "Real Estate": 0,
+                "Cash": 5,
+            },
         },
         "goals": [
             {"id": 1, "name": "Retirement at 50", "template": "retirement",

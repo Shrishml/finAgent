@@ -813,26 +813,30 @@ function renderOverviewSummaryBar(nw) {
     'Real Estate':'bg-indigo-50 text-indigo-600','Stocks':'bg-cyan-50 text-cyan-600',
   };
   const ASSET_ICON = {
-    'Mutual Funds':'📈','Mutual Funds (CAS)':'📈','EPF & PPF':'🏦','Fixed Deposits':'🏧',
-    'Gold':'🪙','Gold (SGB + Physical)':'🪙','NPS':'📋','ESOP/RSU':'💼',
-    'Real Estate':'🏠','Stocks':'📊',
+    'Mutual Funds':'📊','Mutual Funds (CAS)':'📊','EPF & PPF':'🏛️','Fixed Deposits':'🔒',
+    'Gold':'✨','Gold (SGB + Physical)':'✨','NPS':'🏦','ESOP/RSU':'🎫',
+    'Real Estate':'🏡','Stocks':'📈','SIPs (declared)':'🔄',
   };
+  const LIAB_ICON = {'Car Loan':'🚗','Home Loan':'🏠','Education Loan':'🎓','Personal Loan':'💳','Credit Card':'💳'};
 
-  const assetCards = Object.entries(assets).map(([k,v]) => {
+  const assetRows = Object.entries(assets).map(([k,v]) => {
     const style = ASSET_STYLE[k] || 'bg-gray-50 text-gray-600';
     const icon = ASSET_ICON[k] || '💰';
-    return `<div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 ${style} rounded-xl flex items-center justify-center text-lg flex-shrink-0">${icon}</div>
-      <div class="min-w-0 flex-1"><p class="text-xs text-gray-500 font-medium truncate">${esc(k)}</p><p class="text-sm font-extrabold text-gray-900">${INR_SHORT(v)}</p></div>
+    return `<div class="flex items-center gap-3 py-2">
+      <div class="w-8 h-8 ${style} rounded-lg flex items-center justify-center text-sm flex-shrink-0">${icon}</div>
+      <span class="text-sm text-gray-600 flex-1 truncate">${esc(k)}</span>
+      <span class="text-sm font-bold text-gray-900">${INR_SHORT(v)}</span>
     </div>`;
   }).join('');
 
-  const liabCards = Object.entries(liabilities).map(([k,v]) =>
-    `<div class="bg-white p-4 rounded-2xl border border-red-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center text-lg flex-shrink-0">📉</div>
-      <div class="min-w-0 flex-1"><p class="text-xs text-gray-500 font-medium truncate">${esc(k)}</p><p class="text-sm font-extrabold text-red-500">−${INR_SHORT(v)}</p></div>
-    </div>`
-  ).join('');
+  const liabRows = Object.entries(liabilities).map(([k,v]) => {
+    const icon = LIAB_ICON[k] || '📄';
+    return `<div class="flex items-center gap-3 py-2">
+      <div class="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center text-sm flex-shrink-0">${icon}</div>
+      <span class="text-sm text-gray-600 flex-1 truncate">${esc(k)}</span>
+      <span class="text-sm font-bold text-red-500">−${INR_SHORT(v)}</span>
+    </div>`;
+  }).join('');
 
   // Allocation comparison — current vs ideal
   const alloc = nw.allocation || {};
@@ -888,11 +892,11 @@ function renderOverviewSummaryBar(nw) {
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
       <div class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm">
         <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Assets</p><p class="text-2xl sm:text-3xl font-extrabold text-gray-900">${INR_SHORT(totalA)}</p></div>
-        <div class="grid grid-cols-1 gap-2">${assetCards}</div>
+        <div class="divide-y divide-gray-50">${assetRows}</div>
       </div>
       ${Object.keys(liabilities).length ? `<div class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm">
         <div class="flex items-center justify-between mb-4"><p class="text-xs font-bold text-red-500 uppercase tracking-widest">Liabilities</p><p class="text-2xl sm:text-3xl font-extrabold text-red-500">−${INR_SHORT(totalL)}</p></div>
-        <div class="grid grid-cols-1 gap-2">${liabCards}</div>
+        <div class="divide-y divide-gray-50">${liabRows}</div>
       </div>` : '<div></div>'}
     </div>
     ${allocHtml}`;

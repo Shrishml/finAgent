@@ -436,7 +436,6 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None)
 
         if text_after:
             yield f"\n{text_after}"
-            all_clean_text += " " + text_after
 
         # Round 2: if actions failed, let LLM retry once with corrected params
         if failures and not retried:

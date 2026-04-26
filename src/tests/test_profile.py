@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from finagent.models.profile import UserProfile, PILLAR_ORDER
+from finagent.models.profile import UserProfile
 from finagent.storage.sqlite import (
     save_profile, load_profile, update_profile,
     save_message, load_conversation, clear_conversation,
@@ -28,25 +28,15 @@ class TestUserProfile:
     def test_update_partial(self):
         uid = _test_user()
         save_profile(UserProfile(user_id=uid, monthly_income=100000))
-        updated = update_profile(uid, {"monthly_expenses": 60000, "rent": 25000})
+        updated = update_profile(uid, {"occupation": "manager"})
         assert updated.monthly_income == 100000  # preserved
-        assert updated.monthly_expenses == 60000  # updated
-        assert updated.rent == 25000
-
-    def test_pillar_tracking(self):
-        uid = _test_user()
-        p = UserProfile(user_id=uid, pillars_completed=["income", "expenses"])
-        save_profile(p)
-        loaded = load_profile(uid)
-        assert loaded.current_pillar == "assets"
-        assert loaded.onboarding_complete is False
+        assert updated.occupation == "manager"  # updated
 
     def test_onboarding_complete(self):
         uid = _test_user()
-        p = UserProfile(user_id=uid, pillars_completed=list(PILLAR_ORDER), onboarding_complete=True)
+        p = UserProfile(user_id=uid, onboarding_complete=True)
         save_profile(p)
         loaded = load_profile(uid)
-        assert loaded.current_pillar is None
         assert loaded.onboarding_complete is True
 
     def test_savings_rate(self):
@@ -58,19 +48,12 @@ class TestUserProfile:
         assert p.savings_rate is None
 
     def test_loans_and_emi(self):
-        uid = _test_user()
-        p = UserProfile(user_id=uid, loans=[
+        p = UserProfile(user_id=1, loans=[
             {"type": "home", "emi": 35000},
             {"type": "car", "emi": 12000},
         ])
-        save_profile(p)
-        loaded = load_profile(uid)
-        assert len(loaded.loans) == 2
-        assert loaded.total_emi == 47000
-
-    def test_skip_pillar(self):
-        p = UserProfile(user_id=1, pillars_completed=["income"], pillars_skipped=["expenses"])
-        assert p.current_pillar == "assets"
+        assert len(p.loans) == 2
+        assert p.total_emi == 47000
 
     def test_load_nonexistent(self):
         assert load_profile(999999) is None

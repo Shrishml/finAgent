@@ -98,42 +98,46 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </div>
     </div>
 
-    <div id="tab-overview" class="tab-content max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-10 w-full overflow-x-hidden">
-      <div id="summary-bar"></div>
-      <!-- Net Worth Breakdown (collapsible) -->
-      <div id="ov-networth-breakdown" class="hidden">
-        <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
-          <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Net Worth Breakdown</h4>
-          <div id="ov-nw-bars"></div>
+    <div id="tab-overview" class="tab-content w-full overflow-x-hidden">
+      <!-- Net Worth -->
+      <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div id="summary-bar"></div>
+        <div id="ov-networth-breakdown" class="hidden mt-6">
+          <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Net Worth Breakdown</h4>
+            <div id="ov-nw-bars"></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Goal Progress -->
-      <div id="ov-goals-section">
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="text-sm font-bold text-gray-900">Goal Progress</h4>
-          <button onclick="switchTab('goals')" class="text-[10px] font-bold text-emerald-600 hover:text-emerald-700">View all →</button>
+      <!-- Goals -->
+      <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div id="ov-goals-section">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-gray-900">Goal Progress</h4>
+            <button onclick="switchTab('goals')" class="text-[10px] font-bold text-emerald-600 hover:text-emerald-700">View all →</button>
+          </div>
+          <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
         </div>
-        <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
-      </div>
+      </section>
 
       <!-- Cash Flow -->
-      <div id="ov-cashflow-section" class="hidden">
+      <section id="ov-cashflow-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <h4 class="text-sm font-bold text-gray-900 mb-4">Monthly Cash Flow</h4>
         <div id="ov-cashflow" class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm"></div>
-      </div>
+      </section>
 
-      <!-- Nudges / Action Items -->
-      <div id="ov-nudges-section" class="hidden">
+      <!-- Nudges -->
+      <section id="ov-nudges-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <h4 class="text-sm font-bold text-gray-900 mb-4">Action Items</h4>
         <div id="ov-nudges" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-      </div>
+      </section>
 
-      <!-- Recent Activity -->
-      <div id="ov-activity-section" class="hidden">
-        <h4 class="text-sm font-bold text-gray-900 mb-4">Recent Activity</h4>
-        <div id="ov-activity" class="space-y-2"></div>
-      </div>
+      <!-- Smart Suggestions -->
+      <section id="ov-suggestions-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <h4 class="text-sm font-bold text-gray-900 mb-4">Smart Suggestions</h4>
+        <div id="ov-suggestions" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </section>
     </div>
 
     <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
@@ -981,12 +985,11 @@ function loadOverviewDashboard() {
     renderCashFlow(data.cash_flow);
     // 4. Nudges
     renderNudges(data.nudges || []);
-    // 5. Activity
-    renderActivity(data.activity || []);
     // 6. Chat suggestions from nudges
     const suggestions = (data.nudges || []).filter(n => n.chat).slice(0, 4);
     if (suggestions.length) {
-      $('smart-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(n.chat)}</button>`).join('');
+      $('ov-suggestions-section').classList.remove('hidden');
+      $('ov-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(n.chat)}</button>`).join('');
     }
   }).catch(e => console.error('Overview load failed:', e));
 }
@@ -1017,24 +1020,6 @@ function renderNudges(nudges) {
     else if (n.chat) onclick = `onclick="openAndChat('${esc(n.chat)}')"`;
     return `<div ${onclick} class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0"><h5 class="text-sm font-bold text-gray-900 truncate">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p><span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">${esc(n.action)} →</span></div></div>`;
   }).join('');
-}
-
-function renderActivity(items) {
-  if (!items.length) return;
-  $('ov-activity-section').classList.remove('hidden');
-  $('ov-activity').innerHTML = items.map(a => {
-    const d = new Date(a.timestamp);
-    const ago = _timeAgo(d);
-    return `<div class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></div><span class="text-xs text-gray-700 font-medium">${esc(a.summary)}</span><span class="text-[10px] text-gray-400 ml-auto flex-shrink-0">${ago}</span></div>`;
-  }).join('');
-}
-
-function _timeAgo(d) {
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return Math.floor(s/60) + 'm ago';
-  if (s < 86400) return Math.floor(s/3600) + 'h ago';
-  return Math.floor(s/86400) + 'd ago';
 }
 
 function openAndChat(q) { trackEvent('insight_click', { question: q.slice(0, 50) }); if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }

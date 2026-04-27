@@ -1007,23 +1007,24 @@ function renderGoalCards(goals) {
   }).join('');
   // Knowledge cards matched to user's goals
   const ARTICLES = {
-    retirement: {img:'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=400&h=240&fit=crop', title:"Why ₹1 Crore Won't Save Your Retirement", slug:'retirement-crore-myth'},
-    house: {img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=240&fit=crop', title:'Rent vs Buy: The Math Nobody Shows You', slug:'rent-vs-buy'},
-    education: {img:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=240&fit=crop', title:'That ₹20L Degree Will Cost ₹52L in 10 Years', slug:'education-inflation'},
-    emergency: {img:'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=400&h=240&fit=crop', title:"The 6-Month Rule is a Lie", slug:'emergency-fund-truth'},
-    car: {img:'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=400&h=240&fit=crop', title:'Car Loan vs SIP: One Wins by ₹3 Lakhs', slug:'car-loan-vs-sip'},
-    marriage: {img:'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=240&fit=crop', title:'The ₹25 Lakh Wedding Nobody Planned For', slug:'wedding-planning'},
-    travel: {img:'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=240&fit=crop', title:'₹5K/Month to an International Trip Every 2 Years', slug:'travel-fund'}
+    retirement: {img:'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=600&h=340&fit=crop', title:"Why ₹1 Crore Won't Save Your Retirement", slug:'retirement-crore-myth'},
+    house: {img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=340&fit=crop', title:'Rent vs Buy: The Math Nobody Shows You', slug:'rent-vs-buy'},
+    education: {img:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=340&fit=crop', title:'That ₹20L Degree Will Cost ₹52L in 10 Years', slug:'education-inflation'},
+    emergency: {img:'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=600&h=340&fit=crop', title:"The 6-Month Rule is a Lie", slug:'emergency-fund-truth'},
+    car: {img:'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=600&h=340&fit=crop', title:'Car Loan vs SIP: One Wins by ₹3 Lakhs', slug:'car-loan-vs-sip'},
+    marriage: {img:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=340&fit=crop', title:'The ₹25 Lakh Wedding Nobody Planned For', slug:'wedding-planning'},
+    travel: {img:'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=340&fit=crop', title:'₹5K/Month to an International Trip Every 2 Years', slug:'travel-fund'}
   };
   const templates = [...new Set(goals.map(g => g.template))];
   const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 3);
   const artEl = $('ov-goal-articles');
   if (relevant.length) {
     artEl.classList.remove('hidden');
-    artEl.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">' + relevant.map(a =>
-      '<a href="/blogs/' + a.slug + '" target="_blank" class="text-left rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all group block">'
-      + '<img src="' + a.img + '" alt="" class="w-full h-40 sm:h-48 object-cover">'
-      + '<div class="px-4 py-3 bg-white"><h4 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 leading-snug">' + esc(a.title) + '<\/h4><\/div>'
+    artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">' + relevant.map(a =>
+      '<a href="/blogs/' + a.slug + '" target="_blank" class="relative rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all group block aspect-[16/9]">'
+      + '<img src="' + a.img + '" alt="" class="w-full h-full object-cover">'
+      + '<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>'
+      + '<div class="absolute bottom-0 left-0 right-0 p-4"><h4 class="text-base sm:text-lg font-extrabold text-white leading-snug drop-shadow-lg">' + esc(a.title) + '<\/h4><\/div>'
       + '<\/a>'
     ).join('') + '<\/div>';
   } else { artEl.classList.add('hidden'); }

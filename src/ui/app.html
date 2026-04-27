@@ -79,7 +79,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
 </header>
 
 <div id="app-container" class="flex-1 flex overflow-hidden w-full relative">
-  <main class="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar">
+  <main class="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col min-h-0">>
     <div id="loading-state" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-20 w-full">
       <div class="text-center px-6">
         <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">📊</div>
@@ -98,7 +98,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </div>
     </div>
 
-    <div id="tab-overview" class="tab-content w-full overflow-x-hidden">
+    <div id="tab-overview" class="tab-content w-full overflow-x-hidden flex-1">
       <!-- Section 1: Wealth Snapshot -->
       <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center w-full">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
@@ -180,7 +180,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
 
     </div>
 
-    <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
+    <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
       <div id="funds-empty" class="hidden text-center py-16">
         <div class="text-5xl mb-4">📄</div>
         <h4 class="text-lg font-bold text-gray-800 mb-2">No holdings yet</h4>
@@ -207,7 +207,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     </div>
 
     <!-- Goals Tab -->
-    <div id="tab-goals" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
+    <div id="tab-goals" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
       <div class="flex items-center justify-between mb-8">
         <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Financial Goals</h3><p class="text-xs text-gray-500 mt-1">Track progress toward your life goals</p></div>
         <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-lg">+ New Goal</button>
@@ -256,7 +256,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     </div>
 
     <!-- Profile Tab -->
-    <div id="tab-profile" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
+    <div id="tab-profile" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
       <div id="profile-loading" class="text-center py-16"><div class="text-4xl mb-4">⏳</div><p class="text-gray-500">Loading profile...</p></div>
       <div id="profile-empty" class="hidden text-center py-16">
         <div class="text-5xl mb-4">👤</div>
@@ -684,7 +684,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </div>
       </div>
     </div>
-    <footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6">
+    <footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6 mt-auto">
       <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2"><span class="text-lg font-extrabold text-white">अ</span><span class="font-bold text-gray-300">Arth</span><span class="text-gray-500">— अर्थमित्र</span></div>
         <p>Your data stays yours. Arth runs the math, you make the calls.</p>

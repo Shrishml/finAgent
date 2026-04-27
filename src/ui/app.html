@@ -1382,7 +1382,7 @@ function renderDataGaps(gaps) {
   if (!gaps || !gaps.length) return;
   $('ov-data-gaps').classList.remove('hidden');
   $('ov-data-gaps-grid').innerHTML = gaps.map(g =>
-    `<button onclick="openAndChat('${esc(g.chat)}')" class="flex flex-col items-center gap-2 bg-gray-50 hover:bg-emerald-50 rounded-2xl p-4 transition-all cursor-pointer group"><span class="text-2xl">${g.icon}</span><span class="text-xs font-bold text-gray-500 group-hover:text-emerald-600">${esc(g.label)}</span><span class="text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">+ Add</span></button>`
+    `<button onclick="openAndChat('${esc(g.chat)}')" class="flex flex-col items-center text-center gap-1.5 bg-gray-50 hover:bg-emerald-50 rounded-2xl p-5 transition-all cursor-pointer group"><span class="text-3xl">${g.icon}</span><span class="text-sm font-bold text-gray-800 group-hover:text-emerald-700">${esc(g.label)}</span>${g.why ? `<span class="text-[11px] text-gray-400 leading-tight">${esc(g.why)}</span>` : ''}<span class="mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full group-hover:bg-emerald-100">+ Tell Arth</span></button>`
   ).join('');
 }
 

@@ -1265,7 +1265,7 @@ function renderCashFlow(cf) {
   // Growth projections
   if (cf.projections && cf.projections.length) {
     $('ov-projection-card').classList.remove('hidden');
-    const years = [1, 3, 5, 10];
+    const years = [3, 5, 10, 20, 30];
     let activeYear = 5;
     const renderProjection = (yr) => {
       activeYear = yr;

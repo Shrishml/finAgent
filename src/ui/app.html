@@ -1005,13 +1005,13 @@ function renderGoalCards(goals) {
     travel: {img:'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=240&fit=crop', title:'₹5K/Month to an International Trip Every 2 Years', chat:'How can I build a travel fund with monthly SIPs?'}
   };
   const templates = [...new Set(goals.map(g => g.template))];
-  const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 2);
+  const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 3);
   const artEl = $('ov-goal-articles');
   if (relevant.length) {
     artEl.classList.remove('hidden');
-    artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + relevant.map(a =>
+    artEl.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">' + relevant.map(a =>
       '<button onclick="sendChat(\'' + esc(a.chat) + '\')" class="text-left rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all group">'
-      + '<img src="' + a.img + '" alt="" class="w-full h-28 object-cover">'
+      + '<img src="' + a.img + '" alt="" class="w-full h-32 sm:h-36 object-cover">'
       + '<div class="px-4 py-3 bg-white"><h4 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 leading-snug">' + esc(a.title) + '<\/h4><\/div>'
       + '<\/button>'
     ).join('') + '<\/div>';

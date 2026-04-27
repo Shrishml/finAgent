@@ -996,13 +996,13 @@ function renderGoalCards(goals) {
   }).join('');
   // Knowledge cards matched to user's goals
   const ARTICLES = {
-    retirement: {emoji:'📖', title:"Why ₹1 Cr isn't enough for retirement", desc:'Inflation turns ₹20K expenses into ₹2.8L/month over 35 years.', chat:'Explain why 1 crore is not enough for retirement with inflation math'},
-    house: {emoji:'🏗️', title:'Rent vs Buy: The math nobody shows you', desc:'Opportunity cost, EMI burden, and when buying actually makes sense.', chat:'Should I rent or buy a house? Show me the math for my situation'},
-    education: {emoji:'🎓', title:'Education costs are rising at 10% per year', desc:'A ₹20L degree today will cost ₹52L in 10 years. Plan early.', chat:'How much should I save for education considering 10% inflation?'},
-    emergency: {emoji:'🛡️', title:'How much emergency fund do you actually need?', desc:"The 6-month rule is a starting point, not the answer.", chat:'How much emergency fund do I need based on my expenses and dependents?'},
-    car: {emoji:'🚗', title:'Loan vs SIP: The smarter way to buy a car', desc:'A 3-year SIP at 12% vs a car loan at 9% — which wins?', chat:'Should I take a car loan or save via SIP and buy later?'},
-    marriage: {emoji:'💍', title:'Planning a wedding without breaking the bank', desc:'Average Indian wedding costs ₹12-25L. Plan smart.', chat:'How should I plan and save for my wedding expenses?'},
-    travel: {emoji:'✈️', title:'Travel fund: The goal nobody prioritizes', desc:'₹5K/month SIP can fund an international trip every 2 years.', chat:'How can I build a travel fund with monthly SIPs?'}
+    retirement: {img:'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=400&h=240&fit=crop', title:"Why ₹1 Crore Won't Save Your Retirement", chat:'Explain why 1 crore is not enough for retirement with inflation math'},
+    house: {img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=240&fit=crop', title:'Rent vs Buy: The Math Nobody Shows You', chat:'Should I rent or buy a house? Show me the math for my situation'},
+    education: {img:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=240&fit=crop', title:'That ₹20L Degree Will Cost ₹52L in 10 Years', chat:'How much should I save for education considering 10% inflation?'},
+    emergency: {img:'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=400&h=240&fit=crop', title:"The 6-Month Rule is a Lie", chat:'How much emergency fund do I need based on my expenses and dependents?'},
+    car: {img:'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=400&h=240&fit=crop', title:'Car Loan vs SIP: One Wins by ₹3 Lakhs', chat:'Should I take a car loan or save via SIP and buy later?'},
+    marriage: {img:'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=240&fit=crop', title:'The ₹25 Lakh Wedding Nobody Planned For', chat:'How should I plan and save for my wedding expenses?'},
+    travel: {img:'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=240&fit=crop', title:'₹5K/Month to an International Trip Every 2 Years', chat:'How can I build a travel fund with monthly SIPs?'}
   };
   const templates = [...new Set(goals.map(g => g.template))];
   const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 2);
@@ -1010,13 +1010,10 @@ function renderGoalCards(goals) {
   if (relevant.length) {
     artEl.classList.remove('hidden');
     artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + relevant.map(a =>
-      '<button onclick="sendChat(\'' + esc(a.chat) + '\')" class="text-left bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-emerald-200 transition-all group">'
-      + '<div class="flex items-start gap-3">'
-      + '<span class="text-xl mt-0.5">' + a.emoji + '<\/span>'
-      + '<div><h4 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700">' + esc(a.title) + '<\/h4>'
-      + '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' + esc(a.desc) + '<\/p>'
-      + '<span class="text-[10px] font-bold text-emerald-600 mt-2 inline-block">Ask Arth about this →<\/span>'
-      + '<\/div><\/div><\/button>'
+      '<button onclick="sendChat(\'' + esc(a.chat) + '\')" class="text-left rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all group">'
+      + '<img src="' + a.img + '" alt="" class="w-full h-28 object-cover">'
+      + '<div class="px-4 py-3 bg-white"><h4 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 leading-snug">' + esc(a.title) + '<\/h4><\/div>'
+      + '<\/button>'
     ).join('') + '<\/div>';
   } else { artEl.classList.add('hidden'); }
 }

@@ -345,6 +345,15 @@ async def overview_demo():
         "cash_flow": {
             "income": 185000, "expenses": 55000,
             "emi": 22000, "investments": 65000, "surplus": 43000,
+            "savings_rate": 58, "emi_ratio": 12,
+            "projections": [
+                {"label": "Savings A/c", "rate": 4, "icon": "🏦", "color": "#94a3b8",
+                 "values": {1: 527040, 3: 1647610, 5: 2843530, 10: 6356640}},
+                {"label": "SIP (Equity MF)", "rate": 12, "icon": "📈", "color": "#10b981",
+                 "values": {1: 547560, 3: 1862570, 5: 3556120, 10: 9946680}},
+                {"label": "Aggressive", "rate": 15, "icon": "🚀", "color": "#8b5cf6",
+                 "values": {1: 558900, 3: 1985640, 5: 3946200, 10: 12010560}},
+            ],
         },
         "nudges": [
             {"icon": "💰", "title": "₹43,000/month surplus is unallocated",

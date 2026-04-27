@@ -164,11 +164,20 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">What Needs Attention</h2>
           <p class="text-sm text-gray-500 mt-1">Personalized nudges to improve your finances</p>
         </div>
+        <div id="ov-nudge-summary" class="mb-3"></div>
         <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
           <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 text-white px-6 py-4">
             <div class="text-xl font-bold text-amber-400">Action Items</div>
           </div>
-          <div id="ov-nudges" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-5 sm:p-8"></div>
+          <div id="ov-nudges" class="p-5 sm:p-8 space-y-3"></div>
+        </div>
+        <!-- Data Gaps CTA -->
+        <div id="ov-data-gaps" class="hidden mt-4 bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-emerald-400">📋 Help Arth help you</div>
+            <p class="text-xs text-emerald-200/70 mt-0.5">The more Arth knows, the better the advice</p>
+          </div>
+          <div id="ov-data-gaps-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 sm:p-8"></div>
         </div>
       </section>
 
@@ -1168,6 +1177,8 @@ function loadOverviewDashboard() {
     renderCashFlow(data.cash_flow);
     // 4. Nudges
     renderNudges(data.nudges || []);
+    // 5. Data gaps
+    renderDataGaps(data.data_gaps || []);
     // 6. Chat suggestions from nudges
     const suggestions = (data.nudges || []).filter(n => n.chat).slice(0, 4);
     if (suggestions.length) {
@@ -1365,13 +1376,28 @@ function renderCashFlow(cf) {
 function renderNudges(nudges) {
   if (!nudges.length) return;
   $('ov-nudges-section').classList.remove('hidden');
-  $('ov-nudges').innerHTML = nudges.map(n => {
+  const SEV = {critical: {order: 0, border: 'border-l-red-500', bg: 'bg-red-50', dot: 'bg-red-500', label: 'Critical'},
+               optimize: {order: 1, border: 'border-l-amber-400', bg: 'bg-amber-50', dot: 'bg-amber-400', label: 'Optimize'},
+               info:     {order: 2, border: 'border-l-slate-300', bg: 'bg-gray-50', dot: 'bg-slate-400', label: 'Info'}};
+  const sorted = [...nudges].sort((a, b) => (SEV[a.severity]?.order ?? 2) - (SEV[b.severity]?.order ?? 2));
+  const crit = sorted.filter(n => n.severity === 'critical').length;
+  $('ov-nudge-summary').innerHTML = `<div class="flex items-center gap-2 text-xs font-bold text-gray-500">${crit ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full">${crit} critical</span>` : ''}<span>${sorted.length} item${sorted.length > 1 ? 's' : ''} need attention</span></div>`;
+  $('ov-nudges').innerHTML = sorted.map(n => {
+    const s = SEV[n.severity] || SEV.info;
     let onclick = '';
     if (n.tab) onclick = `onclick="switchTab('${n.tab}')"`;
     else if (n.modal) onclick = `onclick="$('${n.modal}').classList.remove('hidden')"`;
     else if (n.chat) onclick = `onclick="openAndChat('${esc(n.chat)}')"`;
-    return `<div ${onclick} class="bg-gray-50 rounded-2xl p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0"><h5 class="text-sm font-bold text-gray-900 truncate">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p><span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">${esc(n.action)} →</span></div></div>`;
+    return `<div ${onclick} class="${s.bg} rounded-2xl p-4 border-l-4 ${s.border} hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0 flex-1"><h5 class="text-sm font-bold text-gray-900">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p></div><span class="text-[10px] font-bold text-emerald-600 whitespace-nowrap self-center">${esc(n.action)} →</span></div>`;
   }).join('');
+}
+
+function renderDataGaps(gaps) {
+  if (!gaps || !gaps.length) return;
+  $('ov-data-gaps').classList.remove('hidden');
+  $('ov-data-gaps-grid').innerHTML = gaps.map(g =>
+    `<button onclick="openAndChat('${esc(g.chat)}')" class="flex flex-col items-center gap-2 bg-gray-50 hover:bg-emerald-50 rounded-2xl p-4 transition-all cursor-pointer group"><span class="text-2xl">${g.icon}</span><span class="text-xs font-bold text-gray-500 group-hover:text-emerald-600">${esc(g.label)}</span><span class="text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">+ Add</span></button>`
+  ).join('');
 }
 
 function openAndChat(q) { trackEvent('insight_click', { question: q.slice(0, 50) }); if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }

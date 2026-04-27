@@ -1321,7 +1321,6 @@ function renderCashFlow(cf) {
         <div class="relative">
           <svg viewBox="0 0 ${W} ${H}" class="w-full" style="max-height:300px">
             ${yLabels}${xLabels}${paths}${dots}
-            <text x="${W/2}" y="${H}" text-anchor="middle" fill="#d1d5db" font-size="9">Projections assume ₹${INR_SHORT(cf.surplus)}/mo SIP at stated returns. Actual returns may vary.</text>
           </svg>
           <div id="proj-tooltip" class="hidden absolute pointer-events-none bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl" style="z-index:50"></div>
         </div>

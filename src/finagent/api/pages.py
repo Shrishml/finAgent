@@ -39,3 +39,12 @@ async def mockup_profile():
 async def changelog():
     f = _UI_DIR / "changelog.json"
     return json.loads(f.read_text()) if f.exists() else []
+
+@router.get("/blogs/{slug}", response_class=HTMLResponse)
+async def blog_article(slug: str):
+    articles = json.loads((_UI_DIR / "blogs.json").read_text()) if (_UI_DIR / "blogs.json").exists() else {}
+    article = articles.get(slug)
+    if not article:
+        return HTMLResponse("<h1>Article not found</h1>", status_code=404)
+    tpl = (_UI_DIR / "blog-template.html").read_text()
+    return tpl.replace("{{TITLE}}", article["title"]).replace("{{IMAGE}}", article["image"]).replace("{{READ_TIME}}", article["read_time"]).replace("{{BODY}}", article["body"])

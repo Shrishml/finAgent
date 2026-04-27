@@ -245,6 +245,54 @@ def _recent_activity(user_id: int) -> list:
     return activities
 
 
+def _context_actions(net_worth: dict, goals: list, cash_flow: dict | None, profile: UserProfile | None) -> dict:
+    """Generate section-specific contextual action prompts for chat."""
+    actions = {}
+
+    # After net worth
+    nw_actions = []
+    alloc = net_worth.get("allocation", {})
+    ideal = net_worth.get("ideal_allocation", {})
+    total_alloc = sum(alloc.values())
+    if total_alloc > 0 and ideal:
+        biggest_gap = max(ideal, key=lambda k: abs((alloc.get(k, 0) / total_alloc * 100) - ideal.get(k, 0)))
+        cur = alloc.get(biggest_gap, 0) / total_alloc * 100
+        tgt = ideal.get(biggest_gap, 0)
+        if abs(cur - tgt) >= 5:
+            nw_actions.append(f"My {biggest_gap} allocation is {cur:.0f}% vs {tgt}% suggested. How do I rebalance?")
+    if net_worth.get("total_liabilities", 0) > 0:
+        nw_actions.append("Should I prioritize paying off debt or investing more?")
+    if not nw_actions:
+        nw_actions.append("How does my net worth compare for my age group?")
+    actions["net_worth"] = nw_actions[:2]
+
+    # After goals
+    g_actions = []
+    behind = [g for g in goals if not g.get("on_track")]
+    if behind:
+        g_actions.append(f"My {behind[0]['name']} goal is behind. How do I catch up?")
+    if len(goals) < 3:
+        g_actions.append("What financial goals should someone my age have?")
+    if any(g.get("template") == "retirement" for g in goals):
+        g_actions.append("Am I saving enough for retirement?")
+    actions["goals"] = g_actions[:2]
+
+    # After cash flow
+    cf_actions = []
+    if cash_flow:
+        if cash_flow.get("surplus", 0) > 5000:
+            cf_actions.append(f"I have ₹{cash_flow['surplus']:,} surplus. Where should it go?")
+        if cash_flow.get("emi", 0) > 0 and cash_flow.get("income", 0) > 0:
+            emi_pct = cash_flow["emi"] / cash_flow["income"] * 100
+            if emi_pct > 20:
+                cf_actions.append(f"My EMIs are {emi_pct:.0f}% of income. Is that too high?")
+        if not cf_actions:
+            cf_actions.append("How can I optimize my monthly cash flow?")
+    actions["cash_flow"] = cf_actions[:2]
+
+    return actions
+
+
 @router.get("/overview/demo")
 async def overview_demo():
     """Demo overview with rich dummy data for showcasing the UI."""
@@ -315,6 +363,20 @@ async def overview_demo():
         "has_holdings": True,
         "has_profile": True,
         "user_name": "Suraj",
+        "context_actions": {
+            "net_worth": [
+                "My Equity allocation is 51% vs 65% suggested. How do I rebalance?",
+                "Should I prioritize paying off debt or investing more?",
+            ],
+            "goals": [
+                "My Dream Home goal is behind. How do I catch up?",
+                "Am I saving enough for retirement?",
+            ],
+            "cash_flow": [
+                "I have ₹43,000 surplus. Where should it go?",
+                "My EMIs are 12% of income. Is that healthy?",
+            ],
+        },
     })
 
 
@@ -332,12 +394,15 @@ async def overview(request: Request):
     nudge_list = _nudges(user_id, profile, goals, holdings, nw)
     activity = _recent_activity(user_id)
 
+    ctx_actions = _context_actions(nw, goal_cards, cash, profile)
+
     return JSONResponse({
         "net_worth": nw,
         "goals": goal_cards,
         "cash_flow": cash,
         "nudges": nudge_list,
         "activity": activity,
+        "context_actions": ctx_actions,
         "has_holdings": len(holdings) > 0,
         "has_profile": profile is not None and profile.onboarding_complete,
         "user_name": profile.name if profile else None,

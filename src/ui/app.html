@@ -107,11 +107,13 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       <!-- Goals -->
       <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div id="ov-goals-section">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="text-sm font-bold text-gray-900">Goal Progress</h4>
-            <button onclick="switchTab('goals')" class="text-[10px] font-bold text-emerald-600 hover:text-emerald-700">View all →</button>
+          <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4 flex items-center justify-between">
+              <div class="text-xl font-bold text-emerald-400">Goal Progress</div>
+              <button onclick="switchTab('goals')" class="text-xs font-bold text-emerald-300 hover:text-white">View all →</button>
+            </div>
+            <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-5 sm:p-8"></div>
           </div>
-          <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
         </div>
       </section>
 
@@ -924,7 +926,7 @@ function renderOverviewSummaryBar(nw) {
 function renderGoalCards(goals) {
   const grid = $('ov-goals-grid');
   if (!goals.length) {
-    grid.innerHTML = `<button onclick="switchTab('goals')" class="bg-white rounded-2xl border-2 border-dashed border-emerald-300 p-6 text-center hover:border-emerald-500 hover:shadow-lg transition-all col-span-full sm:col-span-1"><div class="text-3xl mb-2">🎯</div><h4 class="text-sm font-bold text-gray-900">Set your first goal</h4><p class="text-xs text-gray-500 mt-1">Track progress toward what matters</p></button>`;
+    grid.innerHTML = `<button onclick="switchTab('goals')" class="bg-gray-50 rounded-2xl p-6 text-center hover:shadow-lg transition-all col-span-full sm:col-span-1"><div class="text-3xl mb-2">🎯<\/div><h4 class="text-sm font-bold text-gray-900">Set your first goal<\/h4><p class="text-xs text-gray-500 mt-1">Track progress toward what matters<\/p><\/button>`;
     return;
   }
   const ICONS = {retirement:'🏖️',house:'🏠',education:'🎓',car:'🚗',marriage:'💍',emergency:'🛡️',travel:'✈️',custom:'🎯'};
@@ -943,7 +945,7 @@ function renderGoalCards(goals) {
       + '<path d="' + arc + '" fill="none" stroke="#f3f4f6" stroke-width="' + sw + '" stroke-linecap="round"/>'
       + '<path d="' + arc + '" fill="none" stroke="' + trackColor + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + off + '"/>'
       + '<\/svg>';
-    return '<div onclick="switchTab(\'goals\')" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center">'
+    return '<div onclick="switchTab(\'goals\')" class="bg-gray-50 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center">'
       + '<div class="relative inline-block mb-2">' + svg
       + '<div class="absolute inset-0 flex items-end justify-center pb-1"><span class="text-2xl font-extrabold text-gray-900">' + pct + '%<\/span><\/div>'
       + '<\/div>'

@@ -119,20 +119,33 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
 
       <!-- Cash Flow -->
       <section id="ov-cashflow-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <h4 class="text-sm font-bold text-gray-900 mb-4">Monthly Cash Flow</h4>
-        <div id="ov-cashflow" class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm"></div>
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-purple-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-purple-400">Monthly Cash Flow</div>
+          </div>
+          <div id="ov-cashflow" class="p-5 sm:p-8"></div>
+        </div>
       </section>
 
       <!-- Nudges -->
       <section id="ov-nudges-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <h4 class="text-sm font-bold text-gray-900 mb-4">Action Items</h4>
-        <div id="ov-nudges" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-amber-400">Action Items</div>
+          </div>
+          <div id="ov-nudges" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-5 sm:p-8"></div>
+        </div>
       </section>
 
       <!-- Smart Suggestions -->
       <section id="ov-suggestions-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <h4 class="text-sm font-bold text-gray-900 mb-4">Smart Suggestions</h4>
-        <div id="ov-suggestions" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-teal-400">Ask Arth</div>
+            <p class="text-[11px] text-gray-400 mt-1">Tap a question to start a conversation</p>
+          </div>
+          <div id="ov-suggestions" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-5 sm:p-8"></div>
+        </div>
       </section>
     </div>
 
@@ -1099,7 +1112,7 @@ function loadOverviewDashboard() {
     const suggestions = (data.nudges || []).filter(n => n.chat).slice(0, 4);
     if (suggestions.length) {
       $('ov-suggestions-section').classList.remove('hidden');
-      $('ov-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(n.chat)}</button>`).join('');
+      $('ov-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-gray-50 px-4 py-3 rounded-2xl text-xs text-gray-600 font-bold transition-all hover:bg-emerald-50 hover:text-emerald-700">${esc(n.chat)}</button>`).join('');
     }
   }).catch(e => console.error('Overview load failed:', e));
 }
@@ -1115,9 +1128,9 @@ function renderCashFlow(cf) {
     {label: 'Surplus', val: cf.surplus, color: cf.surplus >= 0 ? 'bg-blue-400' : 'bg-red-500'},
   ].filter(i => i.val > 0);
   $('ov-cashflow').innerHTML = `
-    <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-gray-500">Income</span><span class="text-lg font-extrabold text-gray-900">${INR(cf.income)}/mo</span></div>
-    <div class="flex w-full h-8 rounded-full overflow-hidden mb-4">${items.map(i => `<div class="${i.color}" style="width:${(i.val/total*100).toFixed(1)}%" title="${i.label}: ${INR(i.val)}"></div>`).join('')}</div>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${items.map(i => `<div class="text-center"><div class="w-2 h-2 rounded-full ${i.color} mx-auto mb-1"></div><p class="text-[10px] font-bold text-gray-400 uppercase">${i.label}</p><p class="text-sm font-extrabold text-gray-900">${INR(i.val)}</p></div>`).join('')}</div>`;
+    <div class="flex items-center justify-between mb-4"><span class="text-sm font-bold text-gray-500">Income</span><span class="text-2xl font-extrabold text-gray-900">${INR(cf.income)}/mo</span></div>
+    <div class="flex w-full h-8 rounded-lg overflow-hidden mb-4">${items.map(i => `<div class="${i.color}" style="width:${(i.val/total*100).toFixed(1)}%" title="${i.label}: ${INR(i.val)}"></div>`).join('')}</div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${items.map(i => `<div class="text-center bg-gray-50 rounded-xl p-3"><div class="w-3 h-3 rounded-full ${i.color} mx-auto mb-1.5"></div><p class="text-[10px] font-bold text-gray-400 uppercase">${i.label}</p><p class="text-base font-extrabold text-gray-900">${INR(i.val)}</p></div>`).join('')}</div>`;
 }
 
 function renderNudges(nudges) {
@@ -1128,7 +1141,7 @@ function renderNudges(nudges) {
     if (n.tab) onclick = `onclick="switchTab('${n.tab}')"`;
     else if (n.modal) onclick = `onclick="$('${n.modal}').classList.remove('hidden')"`;
     else if (n.chat) onclick = `onclick="openAndChat('${esc(n.chat)}')"`;
-    return `<div ${onclick} class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0"><h5 class="text-sm font-bold text-gray-900 truncate">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p><span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">${esc(n.action)} →</span></div></div>`;
+    return `<div ${onclick} class="bg-gray-50 rounded-2xl p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer flex gap-3 items-start"><span class="text-xl flex-shrink-0">${n.icon}</span><div class="min-w-0"><h5 class="text-sm font-bold text-gray-900 truncate">${esc(n.title)}</h5><p class="text-[11px] text-gray-500 mt-0.5">${esc(n.desc)}</p><span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">${esc(n.action)} →</span></div></div>`;
   }).join('');
 }
 

@@ -858,11 +858,11 @@ function renderOverviewSummaryBar(nw) {
         <div class="flex items-center justify-between"><span class="text-sm font-bold text-gray-700">${esc(k)}</span><span class="text-xs font-bold ${diffColor}">${diffLabel}</span></div>
         <div class="flex items-center gap-2">
           <span class="text-[10px] font-bold text-gray-400 w-8 text-right">${curPct.toFixed(0)}%</span>
-          <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden"><div class="${color} h-5 rounded-full transition-all" style="width:${Math.min(curPct,100)}%"></div></div>
+          <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden"><div class="bg-gray-800 h-5 rounded-full transition-all" style="width:${Math.min(curPct,100)}%"></div></div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-[10px] font-bold text-gray-300 w-8 text-right">${idealPct}%</span>
-          <div class="flex-1 bg-gray-50 rounded-full h-3 overflow-hidden"><div class="${color} opacity-30 h-3 rounded-full" style="width:${Math.min(idealPct,100)}%"></div></div>
+          <div class="flex-1 bg-gray-50 rounded-full h-5 overflow-hidden"><div class="bg-gray-800 opacity-25 h-5 rounded-full" style="width:${Math.min(idealPct,100)}%"></div></div>
         </div>
       </div>`;
     }).join('');

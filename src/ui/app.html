@@ -154,7 +154,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           <div id="ov-projection" class="p-5 sm:p-8"></div>
         </div>
         <!-- Health Pills -->
-        <div id="ov-health-pills" class="hidden flex flex-wrap gap-3 mt-4"></div>
+
         <div id="ctx-cash_flow" class="hidden mt-4"></div>
       </section>
 
@@ -1266,7 +1266,7 @@ function renderCashFlow(cf) {
   if (cf.projections && cf.projections.length) {
     $('ov-projection-card').classList.remove('hidden');
     const years = [3, 5, 10, 20, 30];
-    let activeYear = 5;
+    let activeYear = 10;
     const renderProjection = (yr) => {
       activeYear = yr;
       // Toggle buttons
@@ -1357,20 +1357,6 @@ function renderCashFlow(cf) {
   }
 
   // Health pills
-  if (cf.savings_rate != null || cf.emi_ratio != null) {
-    const pills = $('ov-health-pills');
-    pills.classList.remove('hidden');
-    let html = '';
-    if (cf.savings_rate != null) {
-      const good = cf.savings_rate >= 30;
-      html += `<div class="flex items-center gap-2 ${good ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'} px-4 py-2 rounded-full text-xs font-bold">📊 Savings Rate: ${cf.savings_rate}% ${good ? '— Excellent' : '— Needs work'}</div>`;
-    }
-    if (cf.emi_ratio != null) {
-      const safe = cf.emi_ratio < 40;
-      html += `<div class="flex items-center gap-2 ${safe ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'} px-4 py-2 rounded-full text-xs font-bold">${safe ? '✅' : '⚠️'} EMI Load: ${cf.emi_ratio}% ${safe ? '— Safe' : '— High'}</div>`;
-    }
-    pills.innerHTML = html;
-  }
 }
 
 function renderNudges(nudges) {

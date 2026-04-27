@@ -128,6 +128,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
             <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-5 sm:p-8"></div>
           </div>
         </div>
+        <div id="ov-goal-articles" class="hidden mt-4"></div>
       </section>
       <div id="ctx-goals" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
@@ -993,6 +994,31 @@ function renderGoalCards(goals) {
       + '<span class="text-[11px] font-bold ' + trackTextClass + '">' + trackLabel + '<\/span>'
       + '<\/div>';
   }).join('');
+  // Knowledge cards matched to user's goals
+  const ARTICLES = {
+    retirement: {emoji:'📖', title:"Why ₹1 Cr isn't enough for retirement", desc:'Inflation turns ₹20K expenses into ₹2.8L/month over 35 years.', chat:'Explain why 1 crore is not enough for retirement with inflation math'},
+    house: {emoji:'🏗️', title:'Rent vs Buy: The math nobody shows you', desc:'Opportunity cost, EMI burden, and when buying actually makes sense.', chat:'Should I rent or buy a house? Show me the math for my situation'},
+    education: {emoji:'🎓', title:'Education costs are rising at 10% per year', desc:'A ₹20L degree today will cost ₹52L in 10 years. Plan early.', chat:'How much should I save for education considering 10% inflation?'},
+    emergency: {emoji:'🛡️', title:'How much emergency fund do you actually need?', desc:"The 6-month rule is a starting point, not the answer.", chat:'How much emergency fund do I need based on my expenses and dependents?'},
+    car: {emoji:'🚗', title:'Loan vs SIP: The smarter way to buy a car', desc:'A 3-year SIP at 12% vs a car loan at 9% — which wins?', chat:'Should I take a car loan or save via SIP and buy later?'},
+    marriage: {emoji:'💍', title:'Planning a wedding without breaking the bank', desc:'Average Indian wedding costs ₹12-25L. Plan smart.', chat:'How should I plan and save for my wedding expenses?'},
+    travel: {emoji:'✈️', title:'Travel fund: The goal nobody prioritizes', desc:'₹5K/month SIP can fund an international trip every 2 years.', chat:'How can I build a travel fund with monthly SIPs?'}
+  };
+  const templates = [...new Set(goals.map(g => g.template))];
+  const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 2);
+  const artEl = $('ov-goal-articles');
+  if (relevant.length) {
+    artEl.classList.remove('hidden');
+    artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + relevant.map(a =>
+      '<button onclick="sendChat(\'' + esc(a.chat) + '\')" class="text-left bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-emerald-200 transition-all group">'
+      + '<div class="flex items-start gap-3">'
+      + '<span class="text-xl mt-0.5">' + a.emoji + '<\/span>'
+      + '<div><h4 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700">' + esc(a.title) + '<\/h4>'
+      + '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' + esc(a.desc) + '<\/p>'
+      + '<span class="text-[10px] font-bold text-emerald-600 mt-2 inline-block">Ask Arth about this →<\/span>'
+      + '<\/div><\/div><\/button>'
+    ).join('') + '<\/div>';
+  } else { artEl.classList.add('hidden'); }
 }
 
 let _holdings = [];

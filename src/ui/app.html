@@ -941,13 +941,14 @@ function renderGoalCards(goals) {
     const trackTextClass = g.on_track ? 'text-emerald-600' : 'text-amber-600';
     // SVG semi-circle gauge
     const r = 54, cx = 60, cy = 60, stroke = 8;
-    const circ = Math.PI * r; // half circle
+    const circ = Math.PI * r;
     const offset = circ - (pct / 100) * circ;
+    const x1 = cx - r, x2 = cx + r;
     return `<div onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center">
       <div class="relative inline-block mb-2">
         <svg width="120" height="68" viewBox="0 0 120 68">
-          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#f3f4f6" stroke-width="${stroke}" stroke-linecap="round"/>
-          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${trackColor}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+          <path d="M ${x1} ${cy} A ${r} ${r} 0 0 1 ${x2} ${cy}" fill="none" stroke="#f3f4f6" stroke-width="${stroke}" stroke-linecap="round"/>
+          <path d="M ${x1} ${cy} A ${r} ${r} 0 0 1 ${x2} ${cy}" fill="none" stroke="${trackColor}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
         </svg>
         <div class="absolute inset-0 flex items-end justify-center pb-1">
           <span class="text-2xl font-extrabold text-gray-900">${pct}%</span>

@@ -931,11 +931,6 @@ function renderGoalCards(goals) {
   grid.innerHTML = goals.map(g => {
     const pct = Math.min(g.progress_pct, 100);
     const icon = ICONS[g.template] || '🎯';
-    const trackColor = g.on_track ? 'bg-emerald-500' : 'bg-amber-500';
-    const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
-  grid.innerHTML = goals.map(g => {
-    const pct = Math.min(g.progress_pct, 100);
-    const icon = ICONS[g.template] || '🎯';
     const trackColor = g.on_track ? '#10b981' : '#f59e0b';
     const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
     const trackTextClass = g.on_track ? 'text-emerald-600' : 'text-amber-600';

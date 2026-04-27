@@ -99,19 +99,31 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     </div>
 
     <div id="tab-overview" class="tab-content w-full overflow-x-hidden">
-      <!-- Net Worth -->
+      <!-- Section 1: Wealth Snapshot -->
       <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center w-full">
-        <div id="summary-bar" class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full"></div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
+          <div class="mb-6">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Wealth Snapshot</h2>
+            <p class="text-sm text-gray-500 mt-1">Your complete financial picture at a glance</p>
+          </div>
+          <div id="summary-bar"></div>
+        </div>
       </section>
       <div id="ctx-net_worth" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
-      <!-- Goals -->
+      <!-- Section 2: Financial Planning -->
       <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Financial Planning</h2>
+            <p class="text-sm text-gray-500 mt-1">Goals you're working toward and how close you are</p>
+          </div>
+          <button onclick="switchTab('goals')" class="text-xs font-bold text-emerald-600 hover:text-emerald-800 whitespace-nowrap">View all →</button>
+        </div>
         <div id="ov-goals-section">
           <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4 flex items-center justify-between">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4">
               <div class="text-xl font-bold text-emerald-400">Goal Progress</div>
-              <button onclick="switchTab('goals')" class="text-xs font-bold text-emerald-300 hover:text-white">View all →</button>
             </div>
             <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-5 sm:p-8"></div>
           </div>
@@ -119,19 +131,27 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </section>
       <div id="ctx-goals" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
-      <!-- Cash Flow -->
+      <!-- Section 3: Monthly Money Flow -->
       <section id="ov-cashflow-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Monthly Money Flow</h2>
+          <p class="text-sm text-gray-500 mt-1">Where your money comes from and where it goes</p>
+        </div>
         <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
           <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-purple-900 text-white px-6 py-4">
-            <div class="text-xl font-bold text-purple-400">Monthly Cash Flow</div>
+            <div class="text-xl font-bold text-purple-400">Cash Flow</div>
           </div>
           <div id="ov-cashflow" class="p-5 sm:p-8"></div>
         </div>
       </section>
       <div id="ctx-cash_flow" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
-      <!-- Nudges -->
+      <!-- Section 4: What Needs Attention -->
       <section id="ov-nudges-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">What Needs Attention</h2>
+          <p class="text-sm text-gray-500 mt-1">Personalized nudges to improve your finances</p>
+        </div>
         <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
           <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 text-white px-6 py-4">
             <div class="text-xl font-bold text-amber-400">Action Items</div>
@@ -140,12 +160,15 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         </div>
       </section>
 
-      <!-- Smart Suggestions -->
+      <!-- Section 5: Ask Arth -->
       <section id="ov-suggestions-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Ask Arth</h2>
+          <p class="text-sm text-gray-500 mt-1">Tap a question to start a conversation with your AI advisor</p>
+        </div>
         <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
           <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900 text-white px-6 py-4">
-            <div class="text-xl font-bold text-teal-400">Ask Arth</div>
-            <p class="text-[11px] text-gray-400 mt-1">Tap a question to start a conversation</p>
+            <div class="text-xl font-bold text-teal-400">Smart Suggestions</div>
           </div>
           <div id="ov-suggestions" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-5 sm:p-8"></div>
         </div>

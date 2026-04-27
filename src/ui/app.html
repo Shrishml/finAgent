@@ -107,12 +107,12 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
             <p class="text-sm text-gray-500 mt-1">Your complete financial picture at a glance</p>
           </div>
           <div id="summary-bar"></div>
+          <div id="ctx-net_worth" class="hidden mt-4"></div>
         </div>
       </section>
-      <div id="ctx-net_worth" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
       <!-- Section 2: Financial Planning -->
-      <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <section class="min-h-[calc(100vh-49px)] flex flex-col max-w-6xl mx-auto px-4 sm:px-6 py-8 pt-16">
         <div class="mb-6 flex items-end justify-between">
           <div>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Financial Planning</h2>
@@ -129,8 +129,8 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <div id="ov-goal-articles" class="hidden mt-4"></div>
+        <div id="ctx-goals" class="hidden mt-4"></div>
       </section>
-      <div id="ctx-goals" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
       <!-- Section 3: Monthly Money Flow -->
       <section id="ov-cashflow-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -144,8 +144,8 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
           <div id="ov-cashflow" class="p-5 sm:p-8"></div>
         </div>
+        <div id="ctx-cash_flow" class="hidden mt-4"></div>
       </section>
-      <div id="ctx-cash_flow" class="hidden max-w-6xl mx-auto px-4 sm:px-6 pb-6"></div>
 
       <!-- Section 4: What Needs Attention -->
       <section id="ov-nudges-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">

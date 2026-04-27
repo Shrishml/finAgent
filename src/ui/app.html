@@ -181,19 +181,6 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         </div>
       </section>
 
-      <!-- Section 5: Ask Arth -->
-      <section id="ov-suggestions-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div class="mb-6">
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Ask Arth</h2>
-          <p class="text-sm text-gray-500 mt-1">Tap a question to start a conversation with your AI advisor</p>
-        </div>
-        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900 text-white px-6 py-4">
-            <div class="text-xl font-bold text-teal-400">Smart Suggestions</div>
-          </div>
-          <div id="ov-suggestions" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-5 sm:p-8"></div>
-        </div>
-      </section>
     </div>
 
     <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
@@ -1180,11 +1167,6 @@ function loadOverviewDashboard() {
     // 5. Data gaps
     renderDataGaps(data.data_gaps || []);
     // 6. Chat suggestions from nudges
-    const suggestions = (data.nudges || []).filter(n => n.chat).slice(0, 4);
-    if (suggestions.length) {
-      $('ov-suggestions-section').classList.remove('hidden');
-      $('ov-suggestions').innerHTML = suggestions.map(n => `<button onclick="sendChat('${esc(n.chat)}')" class="w-full text-left bg-gray-50 px-4 py-3 rounded-2xl text-xs text-gray-600 font-bold transition-all hover:bg-emerald-50 hover:text-emerald-700">${esc(n.chat)}</button>`).join('');
-    }
     // 7. Context actions between sections
     renderContextActions(data.context_actions || {});
     // 8. Scroll-triggered animations
@@ -2582,5 +2564,19 @@ async function saveCardSection(sectionId, assetType) {
 }
 
 </script>
+<footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6 mt-auto">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <span class="text-lg font-extrabold text-white">अ</span>
+      <span class="font-bold text-gray-300">Arth</span>
+      <span class="text-gray-500">— अर्थमित्र</span>
+    </div>
+    <p>Your data stays yours. Arth runs the math, you make the calls.</p>
+    <div class="flex gap-4">
+      <a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-white transition-colors">GitHub</a>
+      <a href="/blogs/retirement-planning" class="hover:text-white transition-colors">Blog</a>
+    </div>
+  </div>
+</footer>
 </body>
 </html>

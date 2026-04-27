@@ -1023,8 +1023,8 @@ function renderGoalCards(goals) {
     artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">' + relevant.map(a =>
       '<a href="/blogs/' + a.slug + '" target="_blank" class="relative rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all group block aspect-[3/4]">'
       + '<img src="' + a.img + '" alt="" class="w-full h-full object-cover">'
-      + '<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>'
-      + '<div class="absolute bottom-0 left-0 right-0 p-4"><h4 class="text-base sm:text-lg font-extrabold text-white leading-snug drop-shadow-lg">' + esc(a.title) + '<\/h4><\/div>'
+      + '<div class="absolute inset-0 bg-black/40"></div>'
+      + '<div class="absolute inset-0 flex items-center justify-center p-5"><h4 class="text-base sm:text-lg font-extrabold text-white leading-snug drop-shadow-lg text-center">' + esc(a.title) + '<\/h4><\/div>'
       + '<\/a>'
     ).join('') + '<\/div>';
   } else { artEl.classList.add('hidden'); }

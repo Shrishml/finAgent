@@ -687,6 +687,13 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
       </div>
       </div>
     </div>
+    <footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6">
+      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2"><span class="text-lg font-extrabold text-white">अ</span><span class="font-bold text-gray-300">Arth</span><span class="text-gray-500">— अर्थमित्र</span></div>
+        <p>Your data stays yours. Arth runs the math, you make the calls.</p>
+        <div class="flex gap-4"><a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-white transition-colors">GitHub</a><a href="/blogs/retirement-planning" class="hover:text-white transition-colors">Blog</a></div>
+      </div>
+    </footer>
   </main>
 
   <!-- Sidebar Resizer -->
@@ -2564,19 +2571,5 @@ async function saveCardSection(sectionId, assetType) {
 }
 
 </script>
-<footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6 mt-auto">
-  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-    <div class="flex items-center gap-2">
-      <span class="text-lg font-extrabold text-white">अ</span>
-      <span class="font-bold text-gray-300">Arth</span>
-      <span class="text-gray-500">— अर्थमित्र</span>
-    </div>
-    <p>Your data stays yours. Arth runs the math, you make the calls.</p>
-    <div class="flex gap-4">
-      <a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-white transition-colors">GitHub</a>
-      <a href="/blogs/retirement-planning" class="hover:text-white transition-colors">Blog</a>
-    </div>
-  </div>
-</footer>
 </body>
 </html>

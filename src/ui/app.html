@@ -933,7 +933,30 @@ function renderGoalCards(goals) {
     const icon = ICONS[g.template] || '🎯';
     const trackColor = g.on_track ? 'bg-emerald-500' : 'bg-amber-500';
     const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
-    return `<div onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"><div class="flex items-center gap-2 mb-3"><span class="text-lg">${icon}</span><span class="text-sm font-bold text-gray-900 truncate">${esc(g.name)}</span></div><div class="w-full bg-gray-100 rounded-full h-3 mb-2"><div class="${trackColor} h-3 rounded-full transition-all" style="width:${pct}%"></div></div><div class="flex justify-between text-[10px]"><span class="font-bold text-gray-500">${INR_SHORT(g.current_value)} / ${INR_SHORT(g.target_amount)}</span><span class="font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'}">${trackLabel}</span></div></div>`;
+  grid.innerHTML = goals.map(g => {
+    const pct = Math.min(g.progress_pct, 100);
+    const icon = ICONS[g.template] || '🎯';
+    const trackColor = g.on_track ? '#10b981' : '#f59e0b';
+    const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
+    const trackTextClass = g.on_track ? 'text-emerald-600' : 'text-amber-600';
+    // SVG semi-circle gauge
+    const r = 54, cx = 60, cy = 60, stroke = 8;
+    const circ = Math.PI * r; // half circle
+    const offset = circ - (pct / 100) * circ;
+    return `<div onclick="switchTab('goals')" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center">
+      <div class="relative inline-block mb-2">
+        <svg width="120" height="68" viewBox="0 0 120 68">
+          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#f3f4f6" stroke-width="${stroke}" stroke-linecap="round"/>
+          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${trackColor}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+        </svg>
+        <div class="absolute inset-0 flex items-end justify-center pb-1">
+          <span class="text-2xl font-extrabold text-gray-900">${pct}%</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-1.5 mb-1"><span class="text-lg">${icon}</span><span class="text-sm font-bold text-gray-900 truncate">${esc(g.name)}</span></div>
+      <p class="text-xs text-gray-400">${INR_SHORT(g.current_value)} of ${INR_SHORT(g.target_amount)}</p>
+      <span class="text-[11px] font-bold ${trackTextClass}">${trackLabel}</span>
+    </div>`;
   }).join('');
 }
 

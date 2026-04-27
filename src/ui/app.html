@@ -1273,7 +1273,7 @@ function renderCashFlow(cf) {
       $('ov-proj-toggle').innerHTML = years.map(y =>
         `<button onclick="window._projYear(${y})" class="px-2.5 py-1 rounded-md font-bold transition-all ${y === yr ? 'bg-white text-emerald-800 shadow' : 'text-white/70 hover:text-white'}">${y}Y</button>`
       ).join('');
-      const maxVal = Math.max(...cf.projections.map(p => p.values[yr]));
+      const maxVal = Math.max(...cf.projections.map(p => p.values[String(yr)]));
       // SVG growth curves
       const W = 600, H = 260, PAD = 50, PADR = 70, PADT = 20, PADB = 40;
       const plotW = W - PAD - PADR, plotH = H - PADT - PADB;
@@ -1316,15 +1316,15 @@ function renderCashFlow(cf) {
         paths += `<path d="${areaD}" fill="${p.color}" opacity="0.08"/>`;
         paths += `<path d="${d}" fill="none" stroke="${p.color}" stroke-width="2.5" stroke-linecap="round" class="growth-line" style="stroke-dasharray:2000;stroke-dashoffset:2000"/>`;
         // Interactive year dots
-        const yearDots = [1, 3, 5, 10].filter(y => y <= yr);
+        const yearDots = years.filter(y => y <= yr);
         yearDots.forEach(y => {
-          const fv = p.values[y];
+          const fv = p.values[String(y)];
           const dx = PAD + (y / yr) * plotW;
           const dy = PADT + plotH - (fv / maxVal) * plotH;
           dots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="5" fill="white" stroke="${p.color}" stroke-width="2.5" class="cursor-pointer hover:r-7 transition-all" onmouseenter="showProjTip(evt,'${p.label}',${fv},'${p.color}')" onmouseleave="hideProjTip()"/>`;
         });
         // End label
-        paths += `<text x="${last.x + 8}" y="${last.y + 4}" fill="${p.color}" font-size="11" font-weight="700">${p.icon} ${INR_SHORT(p.values[yr])}</text>`;
+        paths += `<text x="${last.x + 8}" y="${last.y + 4}" fill="${p.color}" font-size="11" font-weight="700">${p.icon} ${INR_SHORT(p.values[String(yr)])}</text>`;
       });
       $('ov-projection').innerHTML = `
         <div class="relative">
@@ -1333,7 +1333,7 @@ function renderCashFlow(cf) {
           </svg>
           <div id="proj-tooltip" class="hidden absolute pointer-events-none bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl" style="z-index:50"></div>
         </div>
-        <div class="grid grid-cols-3 gap-3 mt-4">${cf.projections.map(p => `<button onclick="openAndChat('I have ${INR_SHORT(cf.surplus)} surplus monthly. Tell me about investing in ${p.label.toLowerCase()}')" class="text-center bg-gray-50 hover:bg-emerald-50 rounded-xl p-3 transition-all cursor-pointer group"><span class="text-lg">${p.icon}</span><p class="text-[10px] font-bold text-gray-400 uppercase mt-1 group-hover:text-emerald-600">${p.label}</p><p class="text-sm font-extrabold text-gray-900">${INR_SHORT(p.values[yr])}</p><p class="text-[10px] text-gray-400">${p.rate}% p.a.</p></button>`).join('')}</div>`;
+        <div class="grid grid-cols-3 gap-3 mt-4">${cf.projections.map(p => `<button onclick="openAndChat('I have ${INR_SHORT(cf.surplus)} surplus monthly. Tell me about investing in ${p.label.toLowerCase()}')" class="text-center bg-gray-50 hover:bg-emerald-50 rounded-xl p-3 transition-all cursor-pointer group"><span class="text-lg">${p.icon}</span><p class="text-[10px] font-bold text-gray-400 uppercase mt-1 group-hover:text-emerald-600">${p.label}</p><p class="text-sm font-extrabold text-gray-900">${INR_SHORT(p.values[String(yr)])}</p><p class="text-[10px] text-gray-400">${p.rate}% p.a.</p></button>`).join('')}</div>`;
       // Animate lines on render
       setTimeout(() => {
         document.querySelectorAll('.growth-line').forEach(el => { el.style.transition = 'stroke-dashoffset 1.5s ease-out'; el.style.strokeDashoffset = '0'; });

@@ -107,7 +107,6 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
             <p class="text-sm text-gray-500 mt-1">Your complete financial picture at a glance</p>
           </div>
           <div id="summary-bar"></div>
-          <div id="ctx-net_worth" class="hidden mt-4"></div>
         </div>
       </section>
 
@@ -129,7 +128,6 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
           </div>
         </div>
         <div id="ov-goal-articles" class="hidden mt-4"></div>
-        <div id="ctx-goals" class="hidden mt-4"></div>
       </section>
 
       <!-- Section 3: Monthly Money Flow -->
@@ -155,7 +153,6 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
         </div>
         <!-- Health Pills -->
 
-        <div id="ctx-cash_flow" class="hidden mt-4"></div>
       </section>
 
       <!-- Section 4: What Needs Attention -->
@@ -1174,8 +1171,6 @@ function loadOverviewDashboard() {
     // 5. Data gaps
     renderDataGaps(data.data_gaps || []);
     // 6. Chat suggestions from nudges
-    // 7. Context actions between sections
-    renderContextActions(data.context_actions || {});
     // 8. Scroll-triggered animations
     initScrollAnimations();
   }).catch(e => console.error('Overview load failed:', e));
@@ -1217,21 +1212,6 @@ function initScrollAnimations() {
     });
   }, { threshold: 0.3 });
   document.querySelectorAll('#tab-overview > section, #tab-overview > div').forEach(s => observer.observe(s));
-}
-
-function renderContextActions(actions) {
-  Object.entries(actions).forEach(([section, prompts]) => {
-    const el = $('ctx-' + section);
-    if (!el || !prompts.length) return;
-    el.classList.remove('hidden');
-    el.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
-      + prompts.map(q => '<button onclick="openAndChat(\'' + esc(q).replace(/'/g, "\\'") + '\')" class="group flex items-center gap-3 bg-white rounded-2xl border border-gray-200 px-5 py-4 text-left hover:border-emerald-400 hover:shadow-lg transition-all">'
-        + '<span class="text-2xl shrink-0">💬<\/span>'
-        + '<span class="text-sm font-semibold text-gray-700 group-hover:text-emerald-700">' + esc(q) + '<\/span>'
-        + '<span class="ml-auto text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→<\/span>'
-        + '<\/button>').join('')
-      + '<\/div>';
-  });
 }
 
 function renderCashFlow(cf) {

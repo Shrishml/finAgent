@@ -1307,15 +1307,13 @@ function renderCashFlow(cf) {
         // Interactive year dots
         const yearDots = [1, 3, 5, 10].filter(y => y <= yr);
         yearDots.forEach(y => {
-          const m = y * 12;
-          const rate = p.rate / 100 / 12;
-          const fv = rate > 0 ? cf.surplus * ((Math.pow(1 + rate, m) - 1) / rate) : cf.surplus * m;
-          const dx = PAD + (m / months) * plotW;
+          const fv = p.values[y];
+          const dx = PAD + (y / yr) * plotW;
           const dy = PADT + plotH - (fv / maxVal) * plotH;
           dots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="5" fill="white" stroke="${p.color}" stroke-width="2.5" class="cursor-pointer hover:r-7 transition-all" onmouseenter="showProjTip(evt,'${p.label}',${fv},'${p.color}')" onmouseleave="hideProjTip()"/>`;
         });
         // End label
-        paths += `<text x="${last.x + 8}" y="${last.y + 4}" fill="${p.color}" font-size="11" font-weight="700">${p.icon} ${INR_SHORT(last.fv)}</text>`;
+        paths += `<text x="${last.x + 8}" y="${last.y + 4}" fill="${p.color}" font-size="11" font-weight="700">${p.icon} ${INR_SHORT(p.values[yr])}</text>`;
       });
       $('ov-projection').innerHTML = `
         <div class="relative">

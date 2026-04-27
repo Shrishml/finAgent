@@ -149,7 +149,7 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
             nudges.append({
                 "icon": "💰", "title": f"₹{surplus:,.0f}/month surplus is unallocated",
                 "desc": "Consider investing this or linking to a goal",
-                "action": "Ask Arth", "chat": f"I have ₹{surplus:,.0f} surplus monthly. What should I do with it?",
+                "action": "Deploy my surplus", "chat": f"I have ₹{surplus:,.0f} surplus monthly. What should I do with it?",
             })
 
     # Stale data check
@@ -192,13 +192,13 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
             nudges.append({
                 "icon": "⚠️", "title": "No term life insurance",
                 "desc": "A term plan is the most cost-effective way to protect your family",
-                "action": "Ask Arth", "chat": "Do I need term life insurance?",
+                "action": "Get a quote", "chat": "Do I need term life insurance?",
             })
         if not profile.health_cover:
             nudges.append({
                 "icon": "🏥", "title": "No personal health insurance",
                 "desc": "Don't rely solely on employer coverage",
-                "action": "Ask Arth", "chat": "Should I get personal health insurance?",
+                "action": "Check options", "chat": "Should I get personal health insurance?",
             })
 
     return nudges[:4]
@@ -359,11 +359,11 @@ async def overview_demo():
             {"icon": "⚠️", "title": "No term life insurance", "severity": "critical",
              "why": "Your family depends on ₹1.85L/month. Without cover, one event changes everything.",
              "desc": "A ₹2Cr term plan costs just ~₹800/month at your age",
-             "action": "Ask Arth", "chat": "Do I need term life insurance? What cover amount?"},
+             "action": "Get a quote", "chat": "Do I need term life insurance? What cover amount?"},
             {"icon": "💰", "title": "₹43K/month surplus sitting idle", "severity": "optimize",
              "why": "Uninvested cash loses ~6% to inflation every year. That's ₹2.6K/month vanishing.",
              "desc": "Link to your house goal or start a new SIP",
-             "action": "Ask Arth", "chat": "I have ₹43,000 surplus monthly. What should I do with it?"},
+             "action": "Deploy my surplus", "chat": "I have ₹43,000 surplus monthly. What should I do with it?"},
             {"icon": "🛡️", "title": "Emergency fund: 78% done", "severity": "optimize",
              "why": "Without 6 months of cover, a job loss means dipping into investments.",
              "desc": "₹80K more to go — 2 months of SIP can close this",

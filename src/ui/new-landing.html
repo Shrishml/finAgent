@@ -45,20 +45,66 @@
       <span class="flex items-center gap-2">🧮 No commissions, ever</span>
       <span class="flex items-center gap-2">🇮🇳 Made in India</span>
     </div>
-    <!-- Mini dashboard preview -->
-    <div class="mt-16 max-w-lg mx-auto float-anim">
-      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 text-left glow">
-        <div class="text-xs text-gray-500 mb-3 uppercase tracking-wider">Your Wealth Snapshot</div>
-        <div class="text-3xl font-bold text-white mb-1">₹<span class="counter-value" data-target="24.7">0</span>L</div>
-        <div class="text-sm text-emerald-400 mb-4">↑ 12.3% from last year</div>
-        <div class="space-y-2">
-          <div class="flex justify-between text-sm"><span class="text-gray-400">Equity</span><span class="text-white">62%</span></div>
-          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:0%" data-bar="62"></div></div>
-          <div class="flex justify-between text-sm"><span class="text-gray-400">Debt</span><span class="text-white">28%</span></div>
-          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full" style="width:0%" data-bar="28"></div></div>
-          <div class="flex justify-between text-sm"><span class="text-gray-400">Gold</span><span class="text-white">10%</span></div>
-          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" style="width:0%" data-bar="10"></div></div>
+    <!-- Laptop-framed dashboard preview -->
+    <div class="mt-16 max-w-3xl mx-auto float-anim">
+      <!-- Laptop frame -->
+      <div class="relative">
+        <!-- Screen bezel -->
+        <div class="bg-gray-800 rounded-t-2xl pt-3 pb-0 px-3">
+          <!-- Browser chrome -->
+          <div class="flex items-center gap-2 mb-2 px-2">
+            <div class="flex gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span></div>
+            <div class="flex-1 bg-gray-700 rounded-md px-3 py-1 text-xs text-gray-400 text-center">askarth.com/app</div>
+          </div>
+          <!-- Screen content -->
+          <div class="bg-gray-950 rounded-t-lg p-4 sm:p-6 overflow-hidden" style="min-height:280px">
+            <!-- App header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2"><span class="text-lg">🪷</span><span class="text-white font-bold text-sm">Arth</span></div>
+              <div class="flex gap-3 text-xs text-gray-500"><span class="text-emerald-400 border-b border-emerald-400 pb-0.5">Overview</span><span>Holdings</span><span>Goals</span><span>Profile</span></div>
+            </div>
+            <!-- Net worth -->
+            <div class="text-center mb-4">
+              <div class="text-xs text-gray-500 mb-1">Net Worth</div>
+              <div class="text-3xl sm:text-4xl font-extrabold text-white">₹<span class="counter-value" data-target="24.7">0</span>L</div>
+            </div>
+            <!-- Two-column cards -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <!-- Assets card -->
+              <div class="bg-gray-900 rounded-xl p-3 border border-gray-800">
+                <div class="text-xs font-semibold text-emerald-400 mb-2">Total Assets — ₹26.2L</div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between text-gray-300"><span>📊 Mutual Funds</span><span>₹12.4L</span></div>
+                  <div class="flex justify-between text-gray-300"><span>🏛️ EPF</span><span>₹6.8L</span></div>
+                  <div class="flex justify-between text-gray-300"><span>🔒 FD</span><span>₹3.0L</span></div>
+                  <div class="flex justify-between text-gray-300"><span>✨ Gold</span><span>₹2.5L</span></div>
+                  <div class="flex justify-between text-gray-300"><span>🏦 NPS</span><span>₹1.5L</span></div>
+                </div>
+              </div>
+              <!-- Allocation card -->
+              <div class="bg-gray-900 rounded-xl p-3 border border-gray-800">
+                <div class="text-xs font-semibold text-blue-400 mb-2">Allocation Check</div>
+                <div class="space-y-2 text-xs">
+                  <div><div class="flex justify-between text-gray-400 mb-0.5"><span>Equity</span><span class="text-emerald-400">✓ On track</span></div><div class="h-1.5 bg-gray-800 rounded-full relative"><div class="h-full bg-emerald-500 rounded-full" style="width:0%" data-bar="62"></div><div class="absolute top-0 h-full w-0.5 bg-white/60" style="left:60%"></div></div></div>
+                  <div><div class="flex justify-between text-gray-400 mb-0.5"><span>Debt</span><span class="text-amber-400">↑ 5% over</span></div><div class="h-1.5 bg-gray-800 rounded-full relative"><div class="h-full bg-amber-500 rounded-full" style="width:0%" data-bar="28"></div><div class="absolute top-0 h-full w-0.5 bg-white/60" style="left:23%"></div></div></div>
+                  <div><div class="flex justify-between text-gray-400 mb-0.5"><span>Gold</span><span class="text-blue-400">↓ 3% under</span></div><div class="h-1.5 bg-gray-800 rounded-full relative"><div class="h-full bg-blue-500 rounded-full" style="width:0%" data-bar="10"></div><div class="absolute top-0 h-full w-0.5 bg-white/60" style="left:13%"></div></div></div>
+                </div>
+              </div>
+            </div>
+            <!-- Goal progress row -->
+            <div class="bg-gray-900 rounded-xl p-3 border border-gray-800">
+              <div class="text-xs font-semibold text-purple-400 mb-2">Goal Progress</div>
+              <div class="grid grid-cols-3 gap-3 text-center text-xs">
+                <div><div class="text-2xl mb-0.5">🏖️</div><div class="text-emerald-400 font-bold text-sm">72%</div><div class="text-gray-500">Retirement</div></div>
+                <div><div class="text-2xl mb-0.5">🏠</div><div class="text-amber-400 font-bold text-sm">34%</div><div class="text-gray-500">House</div></div>
+                <div><div class="text-2xl mb-0.5">🎓</div><div class="text-emerald-400 font-bold text-sm">89%</div><div class="text-gray-500">Education</div></div>
+              </div>
+            </div>
+          </div>
         </div>
+        <!-- Laptop base/hinge -->
+        <div class="bg-gray-700 h-4 rounded-b-lg mx-auto" style="width:110%;margin-left:-5%"></div>
+        <div class="bg-gray-600 h-1.5 rounded-b-xl mx-auto" style="width:40%"></div>
       </div>
     </div>
   </div>

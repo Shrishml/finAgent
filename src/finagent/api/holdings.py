@@ -211,15 +211,15 @@ async def demo():
     from finagent.models.goal import Goal as GoalModel
     demo_goals = [
         GoalModel(user_id=user_id, name="Retirement at 50", template="retirement",
-                  target_amount=5_000_000, target_date="2048-01-01",
+                  target_amount=65_000_000, target_date="2051-01-01",
                   linked_folios=[{"folio": "DEMO-001/Parag Parikh Flexi Cap Fund - Direct Plan - Growth", "pct": 40},
                                  {"folio": "DEMO-004/ICICI Prudential Balanced Advantage Fund - Direct Plan - Growth", "pct": 60}]),
         GoalModel(user_id=user_id, name="Dream Home", template="house",
-                  target_amount=3_000_000, target_date="2030-06-01",
+                  target_amount=12_000_000, target_date="2031-06-01",
                   linked_folios=[{"folio": "DEMO-002/HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", "pct": 50},
                                  {"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 50}]),
         GoalModel(user_id=user_id, name="Emergency Fund", template="emergency",
-                  target_amount=300_000, target_date="2027-01-01",
+                  target_amount=360_000, target_date="2027-01-01",
                   linked_folios=[{"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 100}]),
     ]
     for g in demo_goals:
@@ -227,7 +227,7 @@ async def demo():
 
     # Seed demo profile (personal, income, expenses, insurance)
     clear_assets(user_id)
-    save_assets(user_id, "personal", [{"name": "Suraj", "age": 26, "occupation": "Software Engineer",
+    save_assets(user_id, "personal", [{"name": "Suraj", "age": 35, "occupation": "Software Engineer",
         "employer": "Amazon", "location": "Bangalore", "marital_status": "Single",
         "kids": 0, "dependent_parents": True, "risk_tolerance": "Moderate"}])
     save_assets(user_id, "income", [{"monthly_income": 185000, "annual_bonus": 200000,

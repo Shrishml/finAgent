@@ -15,6 +15,7 @@ from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.storage.sqlite import (
     save_holdings, load_holdings, clear_holdings, save_goal, load_goals,
     clear_goals, clear_profile, clear_conversation, clear_snapshots, clear_assets,
+    save_assets,
 )
 from finagent.models.goal import Goal
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
@@ -223,6 +224,31 @@ async def demo():
     ]
     for g in demo_goals:
         save_goal(g)
+
+    # Seed demo profile (personal, income, expenses, insurance)
+    clear_assets(user_id)
+    save_assets(user_id, "personal", [{"name": "Suraj", "age": 26, "occupation": "Software Engineer",
+        "employer": "Amazon", "location": "Bangalore", "marital_status": "Single",
+        "kids": 0, "dependent_parents": True, "risk_tolerance": "Moderate"}])
+    save_assets(user_id, "income", [{"monthly_income": 185000, "annual_bonus": 200000,
+        "monthly_sip": 65000, "other_income": 0}])
+    save_assets(user_id, "expenses", [{"total_monthly_expenses": 55000, "rent": 25000,
+        "groceries": 8000, "utilities": 5000, "dining": 7000, "emis": 22000}])
+    save_assets(user_id, "insurance", [{"term_cover": 0, "term_premium": 0,
+        "health_cover": 500000, "health_premium": 12000}])
+    save_assets(user_id, "meta", [{"onboarding_complete": True}])
+
+    # Seed non-MF assets to match demo overview richness
+    save_assets(user_id, "epf_ppf", [{"epf_balance": 820000, "ppf_balance": 300000}])
+    save_assets(user_id, "fd", [{"amount": 500000, "bank": "SBI", "rate": 7.1, "maturity_date": "2026-06-01"}])
+    save_assets(user_id, "gold", [{"value": 380000, "type": "SGB", "weight_grams": 50}])
+    save_assets(user_id, "nps", [{"nps_balance": 350000, "tier": "Tier 1"}])
+    save_assets(user_id, "esop", [{"vested": 332500, "company": "Amazon", "unvested": 500000}])
+    save_assets(user_id, "loan", [
+        {"loan_type": "Car Loan", "principal": 500000, "emi": 15000, "outstanding": 280000, "tenure_months": 48},
+        {"loan_type": "Credit Card", "principal": 70000, "emi": 7000, "outstanding": 70000, "tenure_months": 12},
+    ])
+
     log.info("Demo portfolio loaded")
     return JSONResponse({"status": "ok", "holdings_count": len(holdings), "goals_count": len(demo_goals)})
 

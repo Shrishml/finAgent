@@ -26,7 +26,23 @@ _ASSET_LABELS = {
 }
 
 
-def _net_worth(user_id: int, holdings: list) -> dict:
+def _ideal_allocation(profile: UserProfile | None) -> dict:
+    """Rule-based ideal allocation from age + risk tolerance."""
+    age = profile.age if profile else 30
+    risk = (profile.risk_tolerance or "").lower() if profile else ""
+    eq = max(20, min(80, 100 - age))
+    if "aggressive" in risk:
+        eq = min(80, eq + 10)
+    elif "conservative" in risk:
+        eq = max(20, eq - 10)
+    gold = 10
+    remaining = 100 - eq - gold
+    debt = round(remaining * 0.65)
+    cash = remaining - debt
+    return {"Equity": eq, "Debt": debt, "Gold": gold, "Real Estate": 0, "Cash": max(cash, 0)}
+
+
+def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None) -> dict:
     """Compute total net worth across all asset classes."""
     mf_value = sum(h.current_value for h in holdings)
     mf_invested = sum(getattr(h, 'invested', 0) or 0 for h in holdings)
@@ -45,7 +61,8 @@ def _net_worth(user_id: int, holdings: list) -> dict:
         label = _ASSET_LABELS.get(at, at)
         # Loans are liabilities
         if at == "loan":
-            liabilities[label] = liabilities.get(label, 0) + val
+            loan_label = a.get("loan_type") or label
+            liabilities[loan_label] = liabilities.get(loan_label, 0) + val
             continue
         asset_items[label] = asset_items.get(label, 0) + val
         # Map to allocation buckets
@@ -78,6 +95,7 @@ def _net_worth(user_id: int, holdings: list) -> dict:
         "assets": {k: round(v, 2) for k, v in sorted(asset_items.items(), key=lambda x: -x[1])},
         "liabilities": {k: round(v, 2) for k, v in sorted(liabilities.items(), key=lambda x: -x[1])},
         "allocation": {k: round(v, 2) for k, v in alloc.items() if v > 0},
+        "ideal_allocation": _ideal_allocation(profile),
     }
 
 
@@ -100,18 +118,39 @@ def _goal_summaries(user_id: int, holdings: list) -> list:
 
 
 def _cash_flow(profile: UserProfile | None) -> dict | None:
-    """Monthly cash flow from profile data."""
+    """Monthly cash flow from profile data with projections."""
     if not profile or not profile.monthly_income:
         return None
     income = profile.monthly_income or 0
     expenses = profile.total_monthly_expenses or profile.monthly_expenses or 0
-    emi = profile.total_emi or 0
+    emi = profile.total_emi or profile.emis or 0
     investments = profile.monthly_sip or 0
     surplus = income - expenses - emi - investments
+    savings_rate = round((income - expenses - emi) / income * 100) if income else 0
+    emi_ratio = round(emi / income * 100) if income else 0
+
+    # Growth projections on surplus
+    monthly = max(surplus, 0)
+    scenarios = [
+        {"label": "Savings A/c", "rate": 4, "icon": "🏦", "color": "#94a3b8"},
+        {"label": "SIP (Equity MF)", "rate": 12, "icon": "📈", "color": "#10b981"},
+        {"label": "Aggressive", "rate": 15, "icon": "🚀", "color": "#8b5cf6"},
+    ]
+    for s in scenarios:
+        r = s["rate"] / 100 / 12  # monthly rate
+        vals = {}
+        for yr in (3, 5, 10, 20, 30):
+            n = yr * 12
+            fv = monthly * ((1 + r) ** n - 1) / r if r > 0 else monthly * n
+            vals[yr] = round(fv)
+        s["values"] = vals
+
     return {
         "income": round(income), "expenses": round(expenses),
         "emi": round(emi), "investments": round(investments),
         "surplus": round(surplus),
+        "savings_rate": savings_rate, "emi_ratio": emi_ratio,
+        "projections": scenarios,
     }
 
 
@@ -125,7 +164,8 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
         if not ef_goals:
             months_exp = profile.total_monthly_expenses
             nudges.append({
-                "icon": "🛡️", "title": "No emergency fund goal",
+                "icon": "🛡️", "title": "No emergency fund goal", "severity": "critical",
+                "why": "Without 6 months of expenses saved, one job loss means dipping into investments or debt.",
                 "desc": f"Aim for 6 months of expenses (₹{months_exp * 6:,.0f})",
                 "action": "Set up emergency fund", "tab": "goals",
             })
@@ -134,21 +174,27 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
                 prog = _compute_goal_progress(g, holdings, user_id)
                 if prog["progress_pct"] < 100:
                     months_covered = prog["current_value"] / profile.total_monthly_expenses if profile.total_monthly_expenses else 0
+                    remaining = g.target_amount - prog["current_value"] if g.target_amount else 0
                     nudges.append({
-                        "icon": "🛡️", "title": f"Emergency fund: {months_covered:.0f} months covered",
-                        "desc": f"Target is 6 months — {prog['progress_pct']:.0f}% there",
+                        "icon": "🛡️", "title": f"Emergency fund: {prog['progress_pct']:.0f}% done",
+                        "severity": "optimize",
+                        "why": f"Without 6 months of cover, a job loss means dipping into investments.",
+                        "desc": f"₹{remaining:,.0f} more to go — {months_covered:.0f} months covered so far",
                         "action": "View goal", "tab": "goals",
                     })
 
     # Surplus sitting idle
     if profile and profile.monthly_income:
         income = profile.monthly_income
-        expenses = (profile.total_monthly_expenses or 0) + (profile.total_emi or 0) + (profile.monthly_sip or 0)
+        expenses = (profile.total_monthly_expenses or 0) + (profile.total_emi or profile.emis or 0) + (profile.monthly_sip or 0)
         surplus = income - expenses
         if surplus > 5000:
+            inflation_loss = round(surplus * 0.06 / 12)
             nudges.append({
-                "icon": "💰", "title": f"₹{surplus:,.0f}/month surplus is unallocated",
-                "desc": "Consider investing this or linking to a goal",
+                "icon": "💰", "title": f"₹{surplus:,.0f}/month surplus sitting idle",
+                "severity": "optimize",
+                "why": f"Uninvested cash loses ~6% to inflation every year. That's ₹{inflation_loss:,}/month vanishing.",
+                "desc": "Link to a goal or start a new SIP",
                 "action": "Deploy my surplus", "chat": f"I have ₹{surplus:,.0f} surplus monthly. What should I do with it?",
             })
 
@@ -166,14 +212,17 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
             unique = list(dict.fromkeys(stale))[:3]
             nudges.append({
                 "icon": "📅", "title": f"{', '.join(unique)} data may be outdated",
-                "desc": "Update for more accurate advice",
+                "severity": "info",
+                "why": "Stale data means your net worth and projections are off.",
+                "desc": "Quick update keeps your numbers accurate",
                 "action": "Update profile", "tab": "profile",
             })
 
     # No goals at all
     if not goals:
         nudges.append({
-            "icon": "🎯", "title": "No financial goals set",
+            "icon": "🎯", "title": "No financial goals set", "severity": "optimize",
+            "why": "Without goals, your money has no direction — savings stay idle.",
             "desc": "Goals help you track progress and stay motivated",
             "action": "Create a goal", "tab": "goals",
         })
@@ -181,7 +230,8 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
     # No holdings
     if not holdings:
         nudges.append({
-            "icon": "📄", "title": "Upload your CAS statement",
+            "icon": "📄", "title": "Upload your CAS statement", "severity": "info",
+            "why": "Without CAS data, we can't show exact returns, XIRR, or fund overlap.",
             "desc": "See your exact mutual fund portfolio with returns & XIRR",
             "action": "Upload CAS", "modal": "upload-modal",
         })
@@ -189,19 +239,41 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
     # Insurance gaps
     if profile:
         if not profile.term_cover and profile.monthly_income and profile.monthly_income > 30000:
+            income_fmt = f"₹{profile.monthly_income / 100000:.1f}L" if profile.monthly_income >= 100000 else f"₹{profile.monthly_income:,.0f}"
             nudges.append({
-                "icon": "⚠️", "title": "No term life insurance",
+                "icon": "⚠️", "title": "No term life insurance", "severity": "critical",
+                "why": f"Your family depends on {income_fmt}/month. Without cover, one event changes everything.",
                 "desc": "A term plan is the most cost-effective way to protect your family",
-                "action": "Get a quote", "chat": "Do I need term life insurance?",
+                "action": "Get a quote", "chat": "Do I need term life insurance? What cover amount?",
             })
         if not profile.health_cover:
             nudges.append({
-                "icon": "🏥", "title": "No personal health insurance",
+                "icon": "🏥", "title": "No personal health insurance", "severity": "critical",
+                "why": "One hospitalization without cover can wipe out months of savings.",
                 "desc": "Don't rely solely on employer coverage",
                 "action": "Check options", "chat": "Should I get personal health insurance?",
             })
 
+    _sev_order = {"critical": 0, "optimize": 1, "info": 2}
+    nudges.sort(key=lambda n: _sev_order.get(n.get("severity", "info"), 2))
     return nudges[:4]
+
+
+_DATA_GAP_DEFS = [
+    {"asset_type": "realestate", "icon": "🏠", "label": "Real Estate", "why": "Track property value in your net worth", "chat": "I want to add my property details"},
+    {"asset_type": "loan", "icon": "💳", "label": "Loans & EMIs", "why": "See true net worth after liabilities", "chat": "I want to add my loan details"},
+    {"asset_type": "gold", "icon": "🪙", "label": "Gold & SGBs", "why": "Include physical & digital gold in portfolio", "chat": "I want to add my gold investments"},
+    {"asset_type": "stocks", "icon": "📊", "label": "Stocks", "why": "Get allocation advice across all assets", "chat": "I want to add my stock holdings"},
+    {"asset_type": "esop", "icon": "📊", "label": "ESOP/RSU", "why": "Get allocation advice across all assets", "chat": "I want to add my ESOP details"},
+]
+
+
+def _data_gaps(user_id: int) -> list:
+    """Detect which asset types the user hasn't added yet."""
+    assets = load_assets(user_id)
+    existing = {a.get("asset_type") for a in assets}
+    return [{"icon": d["icon"], "label": d["label"], "why": d["why"], "chat": d["chat"]}
+            for d in _DATA_GAP_DEFS if d["asset_type"] not in existing]
 
 
 def _recent_activity(user_id: int) -> list:
@@ -295,107 +367,29 @@ def _context_actions(net_worth: dict, goals: list, cash_flow: dict | None, profi
 
 @router.get("/overview/demo")
 async def overview_demo():
-    """Demo overview with rich dummy data for showcasing the UI."""
+    """Demo overview — uses real backend functions with seeded demo data."""
+    user_id = DEMO_USER_ID
+    holdings = load_holdings(user_id)
+    profile = load_profile(user_id)
+    goals = load_goals(user_id)
+
+    nw = _net_worth(user_id, holdings, profile)
+    goal_cards = _goal_summaries(user_id, holdings)
+    cash = _cash_flow(profile)
+    nudge_list = _nudges(user_id, profile, goals, holdings, nw)
+    gaps = _data_gaps(user_id)
+    ctx_actions = _context_actions(nw, goal_cards, cash, profile)
+
     return JSONResponse({
-        "net_worth": {
-            "total": 4482500,
-            "total_assets": 4832500,
-            "total_liabilities": 350000,
-            "mf_value": 2150000,
-            "mf_invested": 1680000,
-            "mf_gain": 470000,
-            "assets": {
-                "Mutual Funds": 2150000,
-                "EPF & PPF": 1120000,
-                "Fixed Deposits": 500000,
-                "Gold (SGB + Physical)": 380000,
-                "NPS": 350000,
-                "ESOP/RSU": 332500,
-            },
-            "liabilities": {
-                "Car Loan": 280000,
-                "Credit Card": 70000,
-            },
-            "allocation": {
-                "Equity": 2482500,
-                "Debt": 1620000,
-                "Gold": 380000,
-                "Real Estate": 0,
-                "Cash": 350000,
-            },
-            "ideal_allocation": {
-                "Equity": 65,
-                "Debt": 20,
-                "Gold": 10,
-                "Real Estate": 0,
-                "Cash": 5,
-            },
-        },
-        "goals": [
-            {"id": 1, "name": "Retirement at 50", "template": "retirement",
-             "target_amount": 65000000, "target_date": "2051-01-01",
-             "current_value": 3270000, "progress_pct": 5, "on_track": True, "months_left": 300},
-            {"id": 2, "name": "Dream Home", "template": "house",
-             "target_amount": 12000000, "target_date": "2031-06-01",
-             "current_value": 2800000, "progress_pct": 23, "on_track": False, "months_left": 62},
-            {"id": 3, "name": "Emergency Fund", "template": "emergency",
-             "target_amount": 360000, "target_date": "2027-01-01",
-             "current_value": 280000, "progress_pct": 78, "on_track": True, "months_left": 8},
-        ],
-        "cash_flow": {
-            "income": 185000, "expenses": 55000,
-            "emi": 22000, "investments": 65000, "surplus": 43000,
-            "savings_rate": 58, "emi_ratio": 12,
-            "projections": [
-                {"label": "Savings A/c", "rate": 4, "icon": "🏦", "color": "#94a3b8",
-                 "values": {3: 1641810, 5: 2850860, 10: 6331740, 20: 15771310, 30: 29844120}},
-                {"label": "SIP (Equity MF)", "rate": 12, "icon": "📈", "color": "#10b981",
-                 "values": {3: 1852310, 5: 3511800, 10: 9891660, 20: 42537980, 30: 150283460}},
-                {"label": "Aggressive", "rate": 15, "icon": "🚀", "color": "#8b5cf6",
-                 "values": {3: 1939970, 5: 3808700, 10: 11834330, 20: 64381300, 30: 297701020}},
-            ],
-        },
-        "nudges": [
-            {"icon": "⚠️", "title": "No term life insurance", "severity": "critical",
-             "why": "Your family depends on ₹1.85L/month. Without cover, one event changes everything.",
-             "desc": "A ₹2Cr term plan costs just ~₹800/month at your age",
-             "action": "Get a quote", "chat": "Do I need term life insurance? What cover amount?"},
-            {"icon": "💰", "title": "₹43K/month surplus sitting idle", "severity": "optimize",
-             "why": "Uninvested cash loses ~6% to inflation every year. That's ₹2.6K/month vanishing.",
-             "desc": "Link to your house goal or start a new SIP",
-             "action": "Deploy my surplus", "chat": "I have ₹43,000 surplus monthly. What should I do with it?"},
-            {"icon": "🛡️", "title": "Emergency fund: 78% done", "severity": "optimize",
-             "why": "Without 6 months of cover, a job loss means dipping into investments.",
-             "desc": "₹80K more to go — 2 months of SIP can close this",
-             "action": "View goal", "tab": "goals"},
-            {"icon": "📅", "title": "EPF data is 3 months old", "severity": "info",
-             "why": "Stale data means your net worth and retirement projections are off.",
-             "desc": "Quick update keeps your numbers accurate",
-             "action": "Update profile", "tab": "profile"},
-        ],
-        "data_gaps": [
-            {"icon": "🏠", "label": "Real Estate", "why": "Track property value in your net worth", "chat": "I want to add my property details"},
-            {"icon": "💳", "label": "Loans & EMIs", "why": "See true net worth after liabilities", "chat": "I want to add my loan details"},
-            {"icon": "🪙", "label": "Gold & SGBs", "why": "Include physical & digital gold in portfolio", "chat": "I want to add my gold investments"},
-            {"icon": "📊", "label": "Stocks & ESOP", "why": "Get allocation advice across all assets", "chat": "I want to add my stock holdings"},
-        ],
-        "has_holdings": True,
-        "has_profile": True,
-        "user_name": "Suraj",
-        "context_actions": {
-            "net_worth": [
-                "My Equity allocation is 51% vs 65% suggested. How do I rebalance?",
-                "Should I prioritize paying off debt or investing more?",
-            ],
-            "goals": [
-                "My Dream Home goal is behind. How do I catch up?",
-                "Am I saving enough for retirement?",
-            ],
-            "cash_flow": [
-                "I have ₹43,000 surplus. Where should it go?",
-                "My EMIs are 12% of income. Is that healthy?",
-            ],
-        },
+        "net_worth": nw,
+        "goals": goal_cards,
+        "cash_flow": cash,
+        "nudges": nudge_list,
+        "data_gaps": gaps,
+        "context_actions": ctx_actions,
+        "has_holdings": len(holdings) > 0,
+        "has_profile": profile is not None and profile.onboarding_complete,
+        "user_name": profile.name if profile else "Suraj",
     })
 
 
@@ -407,11 +401,12 @@ async def overview(request: Request):
     profile = load_profile(user_id)
     goals = load_goals(user_id)
 
-    nw = _net_worth(user_id, holdings)
+    nw = _net_worth(user_id, holdings, profile)
     goal_cards = _goal_summaries(user_id, holdings)
     cash = _cash_flow(profile)
     nudge_list = _nudges(user_id, profile, goals, holdings, nw)
     activity = _recent_activity(user_id)
+    gaps = _data_gaps(user_id)
 
     ctx_actions = _context_actions(nw, goal_cards, cash, profile)
 
@@ -421,6 +416,7 @@ async def overview(request: Request):
         "cash_flow": cash,
         "nudges": nudge_list,
         "activity": activity,
+        "data_gaps": gaps,
         "context_actions": ctx_actions,
         "has_holdings": len(holdings) > 0,
         "has_profile": profile is not None and profile.onboarding_complete,

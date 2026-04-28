@@ -17,6 +17,7 @@ ASSET_VALUE_FIELDS = {
     "fd": "amount", "gold": "value", "esop": "vested",
     "realestate": "current_value", "nps": "nps_balance",
     "mf_declared": "current_value", "mf_sips": "current_value",
+    "loan": "outstanding",
 }
 
 def _asset_value(item: dict) -> float:

@@ -14,6 +14,11 @@ async def landing():
     f = _UI_DIR / "index.html"
     return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
+@router.get("/landing", response_class=HTMLResponse)
+async def landing_v2():
+    f = _UI_DIR / "landing.html"
+    return f.read_text() if f.exists() else "<h1>Arth</h1>"
+
 @router.get("/app", response_class=HTMLResponse)
 @router.get("/demo", response_class=HTMLResponse)
 async def dashboard():

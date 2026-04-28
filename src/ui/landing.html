@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arth — अर्थमित्र | Your Wealth Companion</title>
+<meta name="description" content="AI financial advisor that runs the math on YOUR numbers. Free, open-source, privacy-first.">
+<link rel="stylesheet" href="/static/theme.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  .fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+  .counter-value { font-variant-numeric: tabular-nums; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .float-anim { animation: float 3s ease-in-out infinite; }
+  @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(16,185,129,0.15); } 50% { box-shadow: 0 0 40px rgba(16,185,129,0.3); } }
+  .glow { animation: pulse-glow 3s ease-in-out infinite; }
+  .gradient-text { background: linear-gradient(135deg, #10b981, #0d9488); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+</style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+<!-- ① HERO -->
+<section class="min-h-screen flex flex-col justify-center relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-emerald-950"></div>
+  <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 20% 50%, rgba(16,185,129,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(13,115,119,0.2) 0%, transparent 50%);"></div>
+
+  <div class="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center">
+    <div class="inline-block mb-6 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-medium">
+      Open Source · Privacy First · Free Forever
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
+      Your salary deserves<br><span class="gradient-text">a smarter plan</span>
+    </h1>
+
+    <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+      Arth is an AI financial advisor that runs the math on <strong class="text-white">your</strong> numbers.
+      No commissions. No hidden agenda. Just clarity.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+      <a href="/demo" class="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/25 text-lg">
+        Try the Demo
+      </a>
+      <a href="https://github.com/Suraj1074/finagent" target="_blank" class="px-8 py-3.5 border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white font-semibold rounded-xl transition-all text-lg">
+        ⭐ View on GitHub
+      </a>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-6 text-sm text-gray-500">
+      <span class="flex items-center gap-2">🔒 Your data stays local</span>
+      <span class="flex items-center gap-2">🧮 No commissions, ever</span>
+      <span class="flex items-center gap-2">📖 100% open source</span>
+    </div>
+
+    <!-- Mini dashboard preview -->
+    <div class="mt-16 max-w-lg mx-auto float-anim">
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 text-left glow">
+        <div class="text-xs text-gray-500 mb-3 uppercase tracking-wider">Your Wealth Snapshot</div>
+        <div class="text-3xl font-bold text-white mb-1">₹<span class="counter-value" data-target="24.7">0</span>L</div>
+        <div class="text-sm text-emerald-400 mb-4">↑ 12.3% from last year</div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm"><span class="text-gray-400">Equity</span><span class="text-white">62%</span></div>
+          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:0%" data-bar="62"></div></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-400">Debt</span><span class="text-white">28%</span></div>
+          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full" style="width:0%" data-bar="28"></div></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-400">Gold</span><span class="text-white">10%</span></div>
+          <div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" style="width:0%" data-bar="10"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ② THE PROBLEM -->
+<section class="py-20 sm:py-28 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-14 fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Why most financial advice<br>doesn't work <span class="gradient-text">for you</span></h2>
+      <p class="text-gray-500 text-lg max-w-2xl mx-auto">Everyone giving you financial advice earns money when you follow it. That's the principal-agent problem.</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm fade-up">
+        <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl mb-4">🏦</div>
+        <h3 class="font-bold text-gray-900 mb-1">Mutual Fund Distributor</h3>
+        <p class="text-sm text-gray-500 mb-3">Earns commission on every fund you buy. Recommends what pays them most.</p>
+        <div class="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full inline-block">~1-1.5% annual drag</div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm fade-up">
+        <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl mb-4">🛡️</div>
+        <h3 class="font-bold text-gray-900 mb-1">Insurance Agent</h3>
+        <p class="text-sm text-gray-500 mb-3">Sells ULIPs and endowment plans. Gets 30-40% first-year commission.</p>
+        <div class="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full inline-block">₹2-5L hidden cost</div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm fade-up">
+        <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-2xl mb-4">🤖</div>
+        <h3 class="font-bold text-gray-900 mb-1">Robo-Advisor</h3>
+        <p class="text-sm text-gray-500 mb-3">One-size-fits-all portfolios. Doesn't know your EPF, loans, or goals.</p>
+        <div class="text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-full inline-block">Generic advice</div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm fade-up">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl mb-4">🪞</div>
+        <h3 class="font-bold text-gray-900 mb-1">You, with Arth</h3>
+        <p class="text-sm text-gray-500 mb-3">AI that works for you. Sees your full picture. Shows the math, not just answers.</p>
+        <div class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full inline-block">₹0 — forever free</div>
+      </div>
+    </div>
+    <p class="text-center text-lg text-gray-600 fade-up">What if your advisor had <strong class="text-gray-900">zero conflicts of interest</strong>?</p>
+  </div>
+</section>
+
+<!-- ③ INTERACTIVE CALCULATOR -->
+<section class="py-20 sm:py-28 bg-white">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-12 fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">₹1 Crore won't save<br><span class="gradient-text">your retirement</span></h2>
+      <p class="text-gray-500 text-lg max-w-xl mx-auto">Most people underestimate by 5-7x. See what you actually need — with the math shown.</p>
+    </div>
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden fade-up">
+      <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4">
+        <div class="text-xl font-bold text-emerald-400">Retirement Reality Check</div>
+      </div>
+      <div class="p-6 sm:p-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Your age</label>
+            <input id="calc-age" type="number" value="28" min="18" max="60" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly expenses (₹)</label>
+            <input id="calc-expenses" type="number" value="40000" step="5000" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg">
+          </div>
+        </div>
+        <button onclick="calculate()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl transition-all text-lg mb-8">Show me the math →</button>
+
+        <div id="calc-result" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 rounded-2xl p-5 text-center">
+              <div class="text-sm text-gray-500 mb-1">What most people think</div>
+              <div class="text-3xl font-bold text-gray-400 line-through" id="calc-naive">₹1 Cr</div>
+            </div>
+            <div class="bg-emerald-50 rounded-2xl p-5 text-center border-2 border-emerald-200">
+              <div class="text-sm text-emerald-700 mb-1">What you actually need</div>
+              <div class="text-3xl font-bold text-emerald-700" id="calc-real">₹6.8 Cr</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-2xl p-5 text-sm text-gray-600 space-y-2" id="calc-breakdown">
+          </div>
+          <div class="mt-6 text-center">
+            <a href="/demo" class="inline-block px-8 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl transition-all">Get your full financial picture →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ SEE ARTH IN ACTION -->
+<section class="py-20 sm:py-28 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-14 fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">See Arth <span class="gradient-text">in action</span></h2>
+      <p class="text-gray-500 text-lg">No signup needed. Explore with sample data.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden fade-up">
+        <div class="h-48 bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 flex items-center justify-center">
+          <div class="text-center text-white">
+            <div class="text-4xl mb-2">📊</div>
+            <div class="text-2xl font-bold">₹24.7L</div>
+            <div class="text-emerald-400 text-sm">Net Worth Dashboard</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <h3 class="font-bold text-gray-900 mb-2">Wealth Snapshot</h3>
+          <p class="text-sm text-gray-500">See your net worth, allocation vs ideal, and growth projections across 3 scenarios over 30 years.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden fade-up">
+        <div class="h-48 bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 flex items-center justify-center">
+          <div class="text-center text-white">
+            <div class="text-4xl mb-2">🎯</div>
+            <div class="text-2xl font-bold">72%</div>
+            <div class="text-emerald-400 text-sm">Goal Progress</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <h3 class="font-bold text-gray-900 mb-2">Goal Tracking</h3>
+          <p class="text-sm text-gray-500">Set goals with inflation-adjusted targets. Link assets. Track progress with transparent math breakdowns.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden fade-up">
+        <div class="h-48 bg-gradient-to-br from-gray-900 via-gray-800 to-purple-900 flex items-center justify-center">
+          <div class="text-center text-white">
+            <div class="text-4xl mb-2">💬</div>
+            <div class="text-sm px-4 py-2 bg-white/10 rounded-xl">"Should I prepay my home loan or invest in ELSS?"</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <h3 class="font-bold text-gray-900 mb-2">AI Advisor</h3>
+          <p class="text-sm text-gray-500">Ask anything about your finances. Gets answers grounded in your actual data, not generic tips.</p>
+        </div>
+      </div>
+    </div>
+    <div class="text-center fade-up">
+      <a href="/demo" class="inline-block px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/25 text-lg">Try it yourself — no signup needed</a>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ HOW IT WORKS -->
+<section class="py-20 sm:py-28 bg-white">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-14 fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">3 minutes to your<br><span class="gradient-text">financial picture</span></h2>
+    </div>
+    <div class="space-y-8">
+      <div class="flex gap-6 items-start fade-up">
+        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl">💬</div>
+        <div>
+          <div class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Step 1</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-1">Have a conversation</h3>
+          <p class="text-gray-500">Tell Arth your salary, expenses, and goals — just chat naturally. No forms, no jargon.</p>
+        </div>
+      </div>
+      <div class="border-l-2 border-dashed border-gray-200 ml-7 h-6"></div>
+      <div class="flex gap-6 items-start fade-up">
+        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl">🧩</div>
+        <div>
+          <div class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Step 2</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-1">Build your wealth map</h3>
+          <p class="text-gray-500">Add assets at your own pace — EPF, real estate, gold, FDs, loans, mutual funds. One by one, whenever you're ready.</p>
+        </div>
+      </div>
+      <div class="border-l-2 border-dashed border-gray-200 ml-7 h-6"></div>
+      <div class="flex gap-6 items-start fade-up">
+        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center text-2xl">✨</div>
+        <div>
+          <div class="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">Step 3</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-1">Get clarity</h3>
+          <p class="text-gray-500">See your net worth, track goals, spot gaps — with the math shown, not hidden. Ask Arth anything about your money.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ TRUST & PRIVACY -->
+<section class="py-20 sm:py-28 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-14 fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Built <span class="gradient-text">different</span></h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="text-center fade-up">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-3xl mx-auto mb-4">📖</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Open Source</h3>
+        <p class="text-sm text-gray-500">Every line of code is public. Audit it, fork it, contribute. No black boxes.</p>
+        <a href="https://github.com/Suraj1074/finagent" target="_blank" class="text-sm text-emerald-600 font-medium mt-2 inline-block hover:underline">View on GitHub →</a>
+      </div>
+      <div class="text-center fade-up">
+        <div class="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl mx-auto mb-4">🔒</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Privacy First</h3>
+        <p class="text-sm text-gray-500">Your data stays with you. No tracking, no selling, no third-party sharing. Consent-first always.</p>
+      </div>
+      <div class="text-center fade-up">
+        <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-4">💰</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Free Forever</h3>
+        <p class="text-sm text-gray-500">No commissions, no premium tier, no upsells. Arth makes money from nothing — that's the point.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ FINAL CTA -->
+<section class="py-20 sm:py-28 bg-white">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 rounded-3xl p-10 sm:p-14 text-center fade-up">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Your money. Your math.<br>Your advisor.</h2>
+      <p class="text-gray-400 text-lg mb-8">अर्थमित्र — Start with a conversation.</p>
+      <a href="/demo" class="inline-block px-10 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/25 text-lg">Start with a conversation →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="py-10 bg-gray-50 border-t border-gray-200">
+  <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="text-sm text-gray-500">
+      <span class="font-semibold text-gray-700">Arth</span> · अर्थमित्र · Made in India 🇮🇳
+    </div>
+    <div class="flex gap-6 text-sm text-gray-500">
+      <a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-gray-900">GitHub</a>
+      <a href="/about" class="hover:text-gray-900">About</a>
+      <a href="/demo" class="hover:text-gray-900">Demo</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Retirement calculator
+function calculate() {
+  const age = parseInt(document.getElementById('calc-age').value) || 28;
+  const expenses = parseInt(document.getElementById('calc-expenses').value) || 40000;
+  const retireAge = 60, lifeExp = 85, inflation = 0.06, safeWithdrawal = 0.04;
+  const yearsToRetire = retireAge - age;
+  const yearsInRetirement = lifeExp - retireAge;
+  const futureMonthly = expenses * Math.pow(1 + inflation, yearsToRetire);
+  const futureAnnual = futureMonthly * 12;
+  const corpus = futureAnnual / safeWithdrawal;
+  const naive = expenses * 12 * 25;
+
+  const fmt = v => {
+    if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + ' Cr';
+    if (v >= 1e5) return '₹' + (v/1e5).toFixed(0) + ' L';
+    return '₹' + v.toLocaleString('en-IN');
+  };
+
+  document.getElementById('calc-naive').textContent = fmt(naive);
+  document.getElementById('calc-real').textContent = fmt(corpus);
+  document.getElementById('calc-breakdown').innerHTML =
+    '<div class="font-semibold text-gray-700 mb-2">Here\'s the math:</div>' +
+    '<div>📅 Years to retirement: <strong>' + yearsToRetire + '</strong> (age ' + age + ' → ' + retireAge + ')</div>' +
+    '<div>📈 Inflation rate: <strong>6% per year</strong></div>' +
+    '<div>💸 Today\'s ₹' + (expenses/1000).toFixed(0) + 'K/month → <strong>' + fmt(futureMonthly) + '/month</strong> at retirement</div>' +
+    '<div>📊 Annual need at retirement: <strong>' + fmt(futureAnnual) + '</strong></div>' +
+    '<div>🏦 Using 4% safe withdrawal rate for ' + yearsInRetirement + ' years</div>' +
+    '<div class="pt-2 border-t border-gray-200 mt-2 font-semibold text-emerald-700">🎯 Required corpus: ' + fmt(corpus) + '</div>' +
+    '<div class="text-xs text-gray-400 mt-2">That\'s ' + (corpus/naive).toFixed(1) + 'x what most people assume.</div>';
+  document.getElementById('calc-result').classList.remove('hidden');
+}
+
+// Scroll animations
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }});
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+// Hero bar animations
+setTimeout(() => {
+  document.querySelectorAll('[data-bar]').forEach(el => {
+    el.style.transition = 'width 1.2s cubic-bezier(0.22,1,0.36,1)';
+    el.style.width = el.dataset.bar + '%';
+  });
+  // Counter animation
+  const counter = document.querySelector('.counter-value');
+  if (counter) {
+    const target = parseFloat(counter.dataset.target);
+    const dur = 1200;
+    const start = performance.now();
+    const tick = now => {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      counter.textContent = (target * ease).toFixed(1);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+}, 500);
+</script>
+</body>
+</html>

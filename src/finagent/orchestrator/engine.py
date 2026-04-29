@@ -430,24 +430,19 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
     )
 
     full_response = ""
-    streamed_up_to = 0
+    pre_action_streamed = 0
     async for chunk in llm.complete_stream(prompt):
         full_response += chunk
-        # Don't stream anything once we detect an action block starting
         if "[ACTION:" in full_response:
             continue
-        # Stream up to the last sentence boundary to avoid emitting
-        # optimistic text that immediately precedes an action block.
-        # Hold back the current partial sentence.
-        safe = full_response.rfind(". ", streamed_up_to)
-        if safe > streamed_up_to:
-            yield full_response[streamed_up_to:safe + 2]
-            streamed_up_to = safe + 2
+        yield chunk
+        pre_action_streamed = len(full_response)
 
-    # If no actions, flush remaining text
     actions_found = list(_ACTION_RE.finditer(full_response))
-    if not actions_found and streamed_up_to < len(full_response):
-        yield full_response[streamed_up_to:]
+    # Text between what was streamed and the first action block — held back
+    held_back = ""
+    if actions_found and pre_action_streamed < actions_found[0].start():
+        held_back = full_response[pre_action_streamed:actions_found[0].start()].strip()
     ui_components = []
     log.debug(f"[advisor] LLM done: {len(full_response)} chars, {len(actions_found)} actions found")
 
@@ -479,6 +474,9 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
                     yield f"\n⚠️ {result['error']}"
                     failures.append(f"{action_name}({params}): {result['error']}")
                 else:
+                    if held_back:
+                        yield held_back
+                        held_back = ""
                     if not result.get("silent"):
                         if result.get("ui_component") and result.get("ui_data"):
                             yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"

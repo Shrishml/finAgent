@@ -34,12 +34,15 @@ class KiroCLIProvider(LLMProvider):
         log.info(f"[kiro] calling kiro-cli (timeout={self._timeout}s, json_mode={json_mode})")
         t0 = time.time()
         proc = await asyncio.create_subprocess_exec(
-            "kiro-cli", "chat", "--no-interactive", "--trust-all-tools", full_prompt,
+            "kiro-cli", "chat", "--no-interactive", "--trust-all-tools",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
+            stdout, _ = await asyncio.wait_for(
+                proc.communicate(input=full_prompt.encode()), timeout=self._timeout
+            )
         except asyncio.TimeoutError:
             proc.kill()
             log.error(f"[kiro] TIMEOUT after {self._timeout}s")
@@ -52,9 +55,14 @@ class KiroCLIProvider(LLMProvider):
         full_prompt = self._build_prompt(prompt, system, False)
         log.info(f"[kiro] streaming kiro-cli")
         proc = await asyncio.create_subprocess_exec(
-            "kiro-cli", "chat", "--no-interactive", "--trust-all-tools", full_prompt,
+            "kiro-cli", "chat", "--no-interactive", "--trust-all-tools",
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE,
         )
+        # Send prompt via stdin, then close to signal EOF
+        proc.stdin.write(full_prompt.encode())
+        await proc.stdin.drain()
+        proc.stdin.close()
         try:
             started = False
             async for line in proc.stdout:

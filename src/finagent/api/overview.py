@@ -44,7 +44,7 @@ def _ideal_allocation(profile: UserProfile | None) -> dict:
 def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None) -> dict:
     """Compute total net worth across all asset classes."""
     mf_value = sum(h.current_value for h in holdings)
-    mf_invested = sum(getattr(h, 'invested', 0) or 0 for h in holdings)
+    mf_invested = sum(getattr(h, 'invested_value', 0) or 0 for h in holdings)
 
     assets = load_assets(user_id)
     asset_items = {}

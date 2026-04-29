@@ -182,13 +182,39 @@ finagent/
 
 > See [ROADMAP.md](./ROADMAP.md) for the full plan.
 
+## 🧪 Running Tests
+
+```bash
+cd src
+
+# Install dev dependencies (once)
+pip install -e ".[dev]"
+
+# Run all unit tests
+pytest
+
+# Run a specific test file
+pytest tests/test_unified_asset_layer.py
+
+# Run with verbose output
+pytest -v
+
+# Include E2E tests (requires kiro-cli or gemini CLI installed)
+pytest -m e2e
+
+# Run everything (unit + E2E)
+pytest -m ""
+```
+
+> Unit tests run fast (~5s). E2E tests call a real LLM and take ~60-90s.
+
 ## Contributing
 
-FinBestie is built in public. Contributions welcome:
+Contributions welcome:
 
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Run tests: `cd src && pip install -e ".[dev]" && pytest`
+3. Run tests: `cd src && pytest`
 4. Submit a PR
 
 ## License

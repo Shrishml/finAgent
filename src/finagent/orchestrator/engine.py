@@ -430,31 +430,23 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
     )
 
     full_response = ""
-    pre_action_streamed = 0
     async for chunk in llm.complete_stream(prompt):
         full_response += chunk
-        if "[ACTION:" in full_response:
-            continue
-        yield chunk
-        pre_action_streamed = len(full_response)
+        if "[ACTION:" not in full_response:
+            yield chunk
 
     actions_found = list(_ACTION_RE.finditer(full_response))
-    # Text between what was streamed and the first action block — held back
-    held_back = ""
-    if actions_found and pre_action_streamed < actions_found[0].start():
-        held_back = full_response[pre_action_streamed:actions_found[0].start()].strip()
     ui_components = []
     log.debug(f"[advisor] LLM done: {len(full_response)} chars, {len(actions_found)} actions found")
 
     if not actions_found:
         all_clean_text = full_response
     else:
-        text_after = full_response[actions_found[-1].end():].strip()
         all_clean_text = _ACTION_RE.sub("", full_response).strip()
 
         # Execute actions, track failures and UI components
         failures = []
-        retried = False
+        successes = []
         ui_components = []
         for match in actions_found:
             action_name = match.group(1)
@@ -471,12 +463,9 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
             try:
                 result = await entry["execute"](params, user_id, {"profile": profile_json})
                 if "error" in result:
-                    yield f"\n⚠️ {result['error']}"
                     failures.append(f"{action_name}({params}): {result['error']}")
                 else:
-                    if held_back:
-                        yield held_back
-                        held_back = ""
+                    successes.append(f"{action_name}({params}): {result.get('message', 'OK')}")
                     if not result.get("silent"):
                         if result.get("ui_component") and result.get("ui_data"):
                             yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
@@ -484,48 +473,49 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
                         yield "[ACTION_STATUS] ✅ Done"
             except Exception as e:
                 log.error(f"[orchestrator] Action {action_name} failed: {e}")
-                yield f"\n⚠️ Something went wrong: {e}"
                 failures.append(f"{action_name}({params}): {e}")
 
-        if text_after:
-            yield f"\n{text_after}"
-
-        # Round 2: if actions failed, let LLM retry once with corrected params
-        if failures and not retried:
-            retried = True
+        # Feed action results back to LLM for a natural response
+        if successes or failures:
+            parts = []
+            if successes:
+                parts.append("Actions succeeded:\n" + "\n".join(successes))
+            if failures:
+                parts.append("Actions failed:\n" + "\n".join(failures))
             followup_prompt = (
-                f"You just tried to help the user but some actions failed:\n"
-                f"{chr(10).join(failures)}\n\n"
-                f"Try again with corrected parameters. Call the tool(s) again with the right values."
+                "\n".join(parts) + "\n\n"
+                "Respond naturally to the user about what happened. "
+                "If actions failed, try calling the tool(s) again with corrected parameters. "
+                "Keep it concise."
             )
             followup = await llm.complete(followup_prompt)
             retry_actions = list(_ACTION_RE.finditer(followup))
-            if retry_actions:
-                for match in retry_actions:
-                    action_name = match.group(1)
-                    params = _parse_action_params(match.group(2))
-                    entry = ACTION_REGISTRY.get(action_name)
-                    if not entry:
-                        continue
-                    try:
-                        result = await entry["execute"](params, user_id, {"profile": profile_json})
-                        if "error" in result:
-                            yield f"\n⚠️ {result['error']}"
-                        else:
-                            if not result.get("silent"):
-                                if result.get("ui_component") and result.get("ui_data"):
-                                    yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
-                                    ui_components.append({"type": result["ui_component"], "data": result["ui_data"]})
-                                yield "[ACTION_STATUS] ✅ Done"
-                    except Exception as e:
-                        log.error(f"[orchestrator] Retry {action_name} failed: {e}")
-                        yield f"\n⚠️ Retry failed: {e}"
-            else:
-                # LLM didn't produce retry actions, just show its explanation
-                clean_followup = _ACTION_RE.sub("", followup).strip()
-                if clean_followup:
-                    yield f"\n\n{clean_followup}"
-                    all_clean_text += " " + clean_followup
+            clean_followup = _ACTION_RE.sub("", followup).strip()
+
+            # Execute any retry actions from the followup
+            for rmatch in retry_actions:
+                action_name = rmatch.group(1)
+                params = _parse_action_params(rmatch.group(2))
+                entry = ACTION_REGISTRY.get(action_name)
+                if not entry:
+                    continue
+                try:
+                    result = await entry["execute"](params, user_id, {"profile": profile_json})
+                    if "error" in result:
+                        yield f"\n⚠️ {result['error']}"
+                    else:
+                        if not result.get("silent"):
+                            if result.get("ui_component") and result.get("ui_data"):
+                                yield f"[ACTION:{result['ui_component']}] {json.dumps(result['ui_data'])}"
+                                ui_components.append({"type": result["ui_component"], "data": result["ui_data"]})
+                            yield "[ACTION_STATUS] ✅ Done"
+                except Exception as e:
+                    log.error(f"[orchestrator] Retry {action_name} failed: {e}")
+                    yield f"\n⚠️ Retry failed: {e}"
+
+            if clean_followup:
+                yield f"\n\n{clean_followup}"
+                all_clean_text += " " + clean_followup
 
     # Extract and emit suggested options
     opts_match = _OPTIONS_RE.search(all_clean_text)

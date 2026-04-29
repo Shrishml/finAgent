@@ -77,6 +77,10 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
                 continue
             conf = get_confidence(t, updated_at)
             a["_freshness"] = freshness_label(conf)
+            # Strip transaction-level detail from MF assets — advisor only needs summary.
+            # Full transactions available via get_fund_details action.
+            if t == "mf":
+                a.pop("transactions", None)
             by_type.setdefault(t, []).append(a)
         if by_type:
             data["assets"] = by_type

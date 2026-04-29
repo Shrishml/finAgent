@@ -59,7 +59,9 @@ Rules:
 - Only extract what's explicitly stated, don't infer
 - RSU, ESOP, stock grants, vesting income are NOT other_income — extract into esop_* fields
 
-Respond as JSON: {{"extractions": {{...}}, "has_data": true/false}}"""
+Respond as JSON: {{"extractions": {{...}}, "has_data": true/false, "pending": ["description of what to ask"]}}
+
+If the user mentions a financial instrument (fund, FD, loan, etc.) but doesn't give enough details to save it, add a short description to "pending" instead of extracting with null values. Example: user says "I have some investment in ICICI Small Cap" → pending: ["ICICI Small Cap Fund mentioned but no amount, SIP, or value provided"]"""
 
 
 async def extract_profile_data(user_message: str, profile: UserProfile) -> dict:
@@ -80,7 +82,11 @@ async def extract_profile_data(user_message: str, profile: UserProfile) -> dict:
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
         result = json.loads(raw)
-        return result.get("extractions", {})
+        extractions = result.get("extractions", {})
+        pending = result.get("pending", [])
+        if pending:
+            extractions["_pending"] = pending
+        return extractions
     except Exception as e:
         log.error(f"[extraction] failed: {e}")
         return {}

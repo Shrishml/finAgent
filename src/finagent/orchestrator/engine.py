@@ -172,10 +172,14 @@ def _normalize_indian_numbers(text: str) -> str:
 def _extraction_hint(extractions: dict) -> str:
     """Build a hint string from numeric extractions so advisor uses exact values."""
     nums = {k: v for k, v in extractions.items() if isinstance(v, (int, float)) and v > 0}
-    if not nums:
-        return ""
-    parts = ", ".join(f"{k}=₹{int(v)}" for k, v in nums.items())
-    return f"\nEXTRACTED NUMBERS (use these exact values, do NOT re-parse from user message): {parts}"
+    parts = []
+    if nums:
+        parts.append("EXTRACTED NUMBERS (use these exact values, do NOT re-parse from user message): " +
+                      ", ".join(f"{k}=₹{int(v)}" for k, v in nums.items()))
+    pending = extractions.get("_pending", [])
+    if pending:
+        parts.append("INCOMPLETE DATA — ask the user for details: " + "; ".join(pending))
+    return ("\n" + "\n".join(parts)) if parts else ""
 
 
 def _parse_action_params(params_str: str) -> dict:

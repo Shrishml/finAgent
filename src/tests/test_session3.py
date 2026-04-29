@@ -1,51 +1,9 @@
-"""Tests for Session 3: router, orchestrator, API."""
+"""Tests for Session 3: orchestrator, API."""
 import pytest
 from unittest.mock import patch, AsyncMock
 
-from finagent.orchestrator.router import _keyword_classify
 from finagent.orchestrator.engine import handle_query
 from finagent.storage import sqlite as storage_mod
-from finagent.models.mf import MFHolding
-
-
-# --- Keyword Router ---
-
-class TestKeywordClassify:
-    def test_mf_analyze(self):
-        r = _keyword_classify("What are my expense ratios?")
-        assert r["domain"] == "mf"
-        assert r["mode"] == "analyze"
-
-    def test_mf_research(self):
-        r = _keyword_classify("Find me the best index fund")
-        assert r["domain"] == "mf"
-        assert r["mode"] == "research"
-
-    def test_insurance(self):
-        r = _keyword_classify("Is my health insurance premium too high?")
-        assert r["domain"] == "insurance"
-
-    def test_loan(self):
-        r = _keyword_classify("Should I prepay my home loan or invest?")
-        assert r["domain"] == "loan"
-        assert r["mode"] == "cross_domain"
-
-    def test_general(self):
-        r = _keyword_classify("Hello, how are you?")
-        assert r["domain"] == "general"
-
-    def test_portfolio_keyword(self):
-        r = _keyword_classify("Show me my portfolio")
-        assert r["domain"] == "mf"
-
-    def test_recommend_mode(self):
-        r = _keyword_classify("Recommend a good SIP fund")
-        assert r["mode"] == "research"
-
-    def test_suggest_alternative(self):
-        r = _keyword_classify("Suggest an alternative to my current fund")
-        assert r["domain"] == "mf"
-        assert r["mode"] == "research"
 
 
 # --- Orchestrator ---

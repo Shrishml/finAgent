@@ -228,7 +228,8 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
     if len(query) < 10 or query.startswith("/") or query == "__onboarding_init__":
         return False, {}
 
-    extractions = await extract_profile_data(query, profile)
+    recent = load_conversation(user_id, limit=3) if user_id and user_id > 0 else []
+    extractions = await extract_profile_data(query, profile, recent_messages=recent)
     if not extractions:
         log.debug("[orchestrator] extraction: no data found in message")
         return False, {}

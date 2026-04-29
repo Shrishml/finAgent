@@ -28,12 +28,23 @@ def _fmt_inr(n: float) -> str:
     return ",".join(reversed(parts)) + "," + last3
 
 
+def _strip_nulls(item: dict) -> dict:
+    """Replace None values with safe defaults (0 for numbers, '' for strings)."""
+    out = {}
+    for k, v in item.items():
+        if v is None:
+            out[k] = '' if isinstance(k, str) and k in ('bank', 'type', 'location', 'maturity', 'tax_saver', 'scheme') else 0
+        else:
+            out[k] = v
+    return out
+
+
 EXTRACTION_PROMPT = """You are Arth. Extract any financial data from the user's message.
 
 CURRENT PROFILE:
 {profile_json}
 
-USER SAID: "{user_message}"
+{recent_context}USER SAID: "{user_message}"
 
 Extract into these fields (only include fields with actual data):
 - name, age, occupation, employer, location, marital_status, kids, dependents
@@ -64,7 +75,7 @@ Respond as JSON: {{"extractions": {{...}}, "has_data": true/false, "pending": ["
 If the user mentions a financial instrument (fund, FD, loan, etc.) but doesn't give enough details to save it, add a short description to "pending" instead of extracting with null values. Example: user says "I have some investment in ICICI Small Cap" → pending: ["ICICI Small Cap Fund mentioned but no amount, SIP, or value provided"]"""
 
 
-async def extract_profile_data(user_message: str, profile: UserProfile) -> dict:
+async def extract_profile_data(user_message: str, profile: UserProfile, recent_messages: list[dict] = None) -> dict:
     """Extract financial data from a user message using LLM."""
     from dataclasses import asdict
     full = asdict(profile)
@@ -72,10 +83,18 @@ async def extract_profile_data(user_message: str, profile: UserProfile) -> dict:
         full.pop(k, None)
     profile_json = json.dumps({k: v for k, v in full.items() if v}, separators=(',', ':'))
 
+    recent_context = ""
+    if recent_messages:
+        lines = []
+        for m in recent_messages[-3:]:
+            role = "User" if m.get("role") == "user" else "Arth"
+            lines.append(f"{role}: {m.get('content', '')[:200]}")
+        recent_context = "RECENT CONVERSATION (for context):\n" + "\n".join(lines) + "\n\n"
+
     llm = get_provider("default")
     try:
         raw = await llm.complete(
-            EXTRACTION_PROMPT.format(profile_json=profile_json, user_message=user_message),
+            EXTRACTION_PROMPT.format(profile_json=profile_json, user_message=user_message, recent_context=recent_context),
             json_mode=True,
         )
         raw = raw.strip()
@@ -181,6 +200,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         for fd in fds:
             if not isinstance(fd, dict) or not fd.get("bank"):
                 continue
+            fd = _strip_nulls(fd)
             if fd["bank"].lower() in existing_banks:
                 for item in new_items:
                     if item.get("bank", "").lower() == fd["bank"].lower():
@@ -200,6 +220,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         for g in gold_items:
             if not isinstance(g, dict):
                 continue
+            g = _strip_nulls(g)
             # Normalize: extraction may use current_value, storage uses value
             if "current_value" in g and "value" not in g:
                 g["value"] = g.pop("current_value")
@@ -221,6 +242,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         for prop in re_items:
             if not isinstance(prop, dict):
                 continue
+            prop = _strip_nulls(prop)
             loc = str(prop.get("location", "")).lower()
             matched = next((i for i, e in enumerate(new_items) if str(e.get("location", "")).lower() == loc), None) if loc else None
             if matched is not None:
@@ -247,7 +269,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                   "location", "marital_status", "dependent_parents", "parents_health_insurance"}
     for key, value in extractions.items():
         if key == "loans" and isinstance(value, list):
-            profile.loans = value
+            profile.loans = [_strip_nulls(l) if isinstance(l, dict) else l for l in value]
             changed = True
         elif key in field_map and value is not None:
             if isinstance(value, str) and key not in str_fields:

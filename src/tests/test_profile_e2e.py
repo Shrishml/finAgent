@@ -502,7 +502,7 @@ def _run(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
 
 
-class TestExtractionE2E:
+class TestExtractionUnit:
     """Real LLM extraction tests. Each test sends a natural language message
     and verifies the correct profile fields are extracted and applied."""
 
@@ -626,7 +626,7 @@ class TestExtractionE2E:
         schemes = [i.get("scheme", "") for i in mfs]
         assert any("Edelweiss" in s or "Mid Cap" in s for s in schemes), f"Edelweiss not extracted. mfs={mfs}"
 
-    def test_extract_fd(self, client):
+    def test_extract_fd_basic(self, client):
         """FD mentioned in chat should be extracted."""
         self._setup_user(client)
         resp = client.post("/chat/stream", data={
@@ -688,3 +688,35 @@ class TestExtractionE2E:
         # Agent should acknowledge the SIP, not say all 55k surplus is unallocated
         assert any(t in body for t in ["sip", "40,000", "40000", "40k", "mutual fund"]), \
             f"Agent didn't acknowledge monthly_sip=40000. Response: {body[:300]}"
+
+    def test_extract_esop(self, client):
+        """ESOP mentioned in chat should be extracted to esop assets."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I have ESOPs at Amazon worth 30L vested and 50L unvested, next vesting in 2025-06"
+        })
+        assert resp.status_code == 200
+        esops = client.get("/profile/assets?type=esop").json()["items"]
+        assert len(esops) >= 1, f"No ESOPs extracted. esops={esops}"
+        assert any("amazon" in (e.get("company", "") or "").lower() for e in esops), \
+            f"Amazon not found in ESOP items. esops={esops}"
+
+    def test_extract_gold(self, client):
+        """Gold mentioned in chat should be extracted to gold assets."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I have 50 grams of physical gold worth about 3.5 lakh and 2 lakh in SGB"
+        })
+        assert resp.status_code == 200
+        golds = client.get("/profile/assets?type=gold").json()["items"]
+        assert len(golds) >= 1, f"No gold extracted. golds={golds}"
+
+    def test_extract_real_estate(self, client):
+        """Real estate mentioned in chat should be extracted to realestate assets."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I own a 2BHK flat in Bangalore worth 80 lakh, bought for 55 lakh, self-occupied"
+        })
+        assert resp.status_code == 200
+        props = client.get("/profile/assets?type=realestate").json()["items"]
+        assert len(props) >= 1, f"No real estate extracted. props={props}"

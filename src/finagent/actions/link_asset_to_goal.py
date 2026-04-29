@@ -1,5 +1,6 @@
 """Link a user asset to an existing goal."""
 import logging
+from difflib import SequenceMatcher
 from finagent.storage.sqlite import load_goals, load_assets, load_mf_assets, save_goal
 
 log = logging.getLogger("finagent")
@@ -41,7 +42,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if not goal:
         return {"error": f"No goal matching '{goal_name}'. Create it first with create_goal."}
 
-    # MF linking — uses folio-based linking from holdings table or mf_declared
+    # MF linking — uses folio-based linking from unified mf assets
     if asset_type == "mf":
         return await _link_mf(goal, user_id, match_kw, pct)
 
@@ -80,12 +81,22 @@ async def _link_mf(goal, user_id: int, match_kw: str, pct: int) -> dict:
         return {"error": "No mutual fund holdings found. Upload CAS or declare MFs via chat first."}
 
     if match_kw:
+        # Exact substring first
         matched = next((h for h in holdings if match_kw in h.scheme_name.lower()), None)
+        # Fuzzy match fallback — prefix or >75% similarity (same logic as storage._scheme_match)
+        if not matched:
+            kw = match_kw.split(" - ")[0].strip()
+            for h in holdings:
+                sn = h.scheme_name.lower().split(" - ")[0].strip()
+                if sn.startswith(kw) or kw.startswith(sn) or SequenceMatcher(None, sn, kw).ratio() > 0.7:
+                    matched = h
+                    break
     else:
         matched = holdings[0]
 
     if not matched:
-        return {"error": f"No mutual fund matching '{match_kw}'. Upload CAS or declare MFs via chat first."}
+        names = ", ".join(h.scheme_name for h in holdings[:5])
+        return {"error": f"No mutual fund matching '{match_kw}'. Available: {names}"}
 
     folio_key = f"{matched.folio}/{matched.scheme_name}" if matched.folio else matched.scheme_name
     for lf in goal.linked_folios:

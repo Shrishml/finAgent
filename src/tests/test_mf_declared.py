@@ -21,7 +21,7 @@ class TestMfDeclaredExtraction:
             {"scheme": "Edelweiss Mid Cap", "monthly_sip": 14000, "category": "mid_cap"},
             {"scheme": "Parag Parikh Flexi Cap", "monthly_sip": 5600, "category": "flexi_cap"},
         ]})
-        items = load_assets(uid, "mf_declared")
+        items = load_assets(uid, "mf")
         assert len(items) == 2
         assert items[0]["scheme"] == "Edelweiss Mid Cap"
         assert items[1]["monthly_sip"] == 5600
@@ -29,13 +29,13 @@ class TestMfDeclaredExtraction:
     def test_merge_with_existing(self):
         uid = _uid()
         from finagent.storage.sqlite import save_assets
-        save_assets(uid, "mf_declared", [{"scheme": "Nifty 50 Index", "monthly_sip": 5000}])
+        save_assets(uid, "mf", [{"scheme": "Nifty 50 Index", "monthly_sip": 5000}], source="declared")
         p = UserProfile(user_id=uid)
         apply_extractions(p, {"mf_sips": [
             {"scheme": "Nifty 50 Index", "monthly_sip": 8000},  # update existing
             {"scheme": "UTI Gold ETF", "monthly_sip": 3000},    # new
         ]})
-        items = load_assets(uid, "mf_declared")
+        items = load_assets(uid, "mf")
         assert len(items) == 2
         nifty = next(i for i in items if "Nifty" in i["scheme"])
         assert nifty["monthly_sip"] == 8000  # updated
@@ -48,7 +48,7 @@ class TestMfDeclaredExtraction:
             {"not_a_scheme": True},  # invalid
             "just a string",         # invalid
         ]})
-        items = load_assets(uid, "mf_declared")
+        items = load_assets(uid, "mf")
         valid = [i for i in items if i.get("scheme") == "Valid Fund"]
         assert len(valid) == 1
 
@@ -65,7 +65,7 @@ class TestMfDeclaredExtraction:
             {"scheme": "Edelweiss Mid Cap", "allocation_pct": 25, "category": "mid_cap"},
             {"scheme": "Parag Parikh Flexi Cap", "monthly_sip": 5600, "allocation_pct": 10, "category": "flexi_cap"},
         ]})
-        items = load_assets(uid, "mf_declared")
+        items = load_assets(uid, "mf")
         assert len(items) == 2
         edel = next(i for i in items if "Edelweiss" in i["scheme"])
         assert edel["allocation_pct"] == 25

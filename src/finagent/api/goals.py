@@ -16,7 +16,7 @@ router = APIRouter(tags=["goals"])
 ASSET_VALUE_FIELDS = {
     "fd": "amount", "gold": "value", "esop": "vested",
     "realestate": "current_value", "nps": "nps_balance",
-    "loan": "outstanding",
+    "loan": "outstanding", "mf": "current_value",
     # Legacy — existing goal links may reference these types
     "mf_declared": "current_value", "mf_sips": "current_value",
 }
@@ -62,7 +62,7 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
         if match:
             w = al.get("pct", 100) / 100
             linked_value += _asset_value(match) * w
-            if al["asset_type"] in ("mf", "mf_declared", "mf_sips"):
+            if al["asset_type"] in ("mf",):
                 monthly_sip += float(match.get("monthly_sip", 0) or 0) * w
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
@@ -290,11 +290,11 @@ async def goal_detail(goal_id: int, request: Request):
             elif at == "gold": label = f"Gold — {match.get('type', 'Physical')}"
             elif at == "esop": label = f"ESOP — {match.get('company', 'Unknown')}"
             elif at == "realestate": label = f"Property — {match.get('location', 'Unknown')}"
-            elif at in ("mf", "mf_declared", "mf_sips"): label = f"MF — {match.get('scheme', match.get('scheme_name', 'Fund'))}"
+            elif at in ("mf",): label = f"MF — {match.get('scheme', match.get('scheme_name', 'Fund'))}"
             detail = {"kind": "asset", "asset_type": at, "label": label,
                       "pct": pct, "value": round(val, 2),
                       "raw_value": round(_asset_value(match), 2)}
-            if at in ("mf", "mf_declared", "mf_sips"):
+            if at in ("mf",):
                 detail["monthly_sip"] = float(match.get("monthly_sip", 0) or 0)
             linked_details.append(detail)
         else:

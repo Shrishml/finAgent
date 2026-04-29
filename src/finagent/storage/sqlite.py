@@ -145,6 +145,7 @@ def _get_conn() -> sqlite3.Connection:
         pass
     # One-time migration: move holdings → user_assets type='mf'
     _migrate_holdings_to_assets(conn)
+    _migrate_mf_declared_to_mf(conn)
     conn.commit()
     return conn
 
@@ -185,6 +186,20 @@ def _migrate_holdings_to_assets(conn: sqlite3.Connection):
             (user_id, data_json, now),
         )
     log.info(f"[migration] migrated {len(rows)} holdings → user_assets type='mf'")
+
+
+def _migrate_mf_declared_to_mf(conn: sqlite3.Connection):
+    """Migrate mf_declared/mf_sips → asset_type='mf', source='declared'."""
+    rows = conn.execute(
+        "SELECT id FROM user_assets WHERE asset_type IN ('mf_declared', 'mf_sips') LIMIT 1"
+    ).fetchall()
+    if not rows:
+        return
+    conn.execute(
+        "UPDATE user_assets SET asset_type = 'mf', source = 'declared' "
+        "WHERE asset_type IN ('mf_declared', 'mf_sips')"
+    )
+    log.info(f"[migration] converted mf_declared/mf_sips → mf source='declared'")
 
 
 def get_or_create_user(google_id: str, email: str = "", name: str = "", picture: str = "") -> int:
@@ -392,14 +407,6 @@ def reconcile_and_save(user_id: int, asset_type: str, verified_items: list,
         (user_id, asset_type),
     ).fetchall()
 
-    # Also check legacy mf_declared/mf_sips for MF reconciliation
-    if asset_type == "mf":
-        legacy = conn.execute(
-            "SELECT id, data FROM user_assets WHERE user_id = ? AND asset_type IN ('mf_declared', 'mf_sips')",
-            (user_id,),
-        ).fetchall()
-        declared_rows.extend(legacy)
-
     declared = [(rid, json.loads(rdata)) for rid, rdata in declared_rows]
     matched_ids = set()
 
@@ -452,24 +459,18 @@ def load_mf_assets(user_id: int) -> list[MFHolding]:
     Single read path for all MF consumers: agent, holdings API, overview, goals.
     """
     conn = _get_conn()
-    # Get unified 'mf' entries (both verified and declared)
     rows = conn.execute(
         "SELECT data, source FROM user_assets WHERE user_id = ? AND asset_type = 'mf'",
-        (user_id,),
-    ).fetchall()
-    # Also get any remaining legacy mf_declared/mf_sips not yet migrated
-    legacy = conn.execute(
-        "SELECT data, 'declared' FROM user_assets WHERE user_id = ? AND asset_type IN ('mf_declared', 'mf_sips')",
         (user_id,),
     ).fetchall()
     conn.close()
 
     holdings = []
-    for data_json, source in list(rows) + list(legacy):
+    for data_json, source in rows:
         d = json.loads(data_json)
-        d["_source"] = source  # attach source metadata
+        d["_source"] = source
         h = _asset_to_holding(d)
-        if h.current_value > 0 or h.units > 0:
+        if h.current_value > 0 or h.units > 0 or (h.scheme_name and source == "declared"):
             holdings.append(h)
     return holdings
 
@@ -811,14 +812,21 @@ def clear_assets(user_id: int):
     conn.close()
 
 
-def save_assets(user_id: int, asset_type: str, items: list[dict]) -> int:
+def save_assets(user_id: int, asset_type: str, items: list[dict], source: str = None) -> int:
     import json
     conn = _get_conn()
-    conn.execute("DELETE FROM user_assets WHERE user_id = ? AND asset_type = ?",
-                 (user_id, asset_type))
-    for item in items:
-        conn.execute("INSERT INTO user_assets (user_id, asset_type, data) VALUES (?, ?, ?)",
-                     (user_id, asset_type, json.dumps(item)))
+    if source:
+        conn.execute("DELETE FROM user_assets WHERE user_id = ? AND asset_type = ? AND source = ?",
+                     (user_id, asset_type, source))
+        for item in items:
+            conn.execute("INSERT INTO user_assets (user_id, asset_type, data, source) VALUES (?, ?, ?, ?)",
+                         (user_id, asset_type, json.dumps(item), source))
+    else:
+        conn.execute("DELETE FROM user_assets WHERE user_id = ? AND asset_type = ?",
+                     (user_id, asset_type))
+        for item in items:
+            conn.execute("INSERT INTO user_assets (user_id, asset_type, data) VALUES (?, ?, ?)",
+                         (user_id, asset_type, json.dumps(item)))
     conn.commit()
     conn.close()
     return len(items)

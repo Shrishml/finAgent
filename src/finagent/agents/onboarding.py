@@ -143,21 +143,21 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
     # Handle declared MF SIPs → save to user_assets
     mf_sips = extractions.get("mf_sips")
     if isinstance(mf_sips, list) and mf_sips:
-        existing = load_assets(profile.user_id, "mf_declared")
-        existing_schemes = {e.get("scheme", "").lower() for e in existing}
-        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
+        existing = load_assets(profile.user_id, "mf")
+        existing_schemes = {(e.get("scheme") or e.get("scheme_name", "")).lower() for e in existing if e.get("source") == "declared"}
+        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing if e.get("source") == "declared"]
         for sip in mf_sips:
             if not isinstance(sip, dict) or not sip.get("scheme"):
                 continue
             if sip["scheme"].lower() in existing_schemes:
                 # Update existing
                 for item in new_items:
-                    if item.get("scheme", "").lower() == sip["scheme"].lower():
+                    if (item.get("scheme") or "").lower() == sip["scheme"].lower():
                         item.update(sip)
                         break
             else:
                 new_items.append(sip)
-        save_assets(profile.user_id, "mf_declared", new_items)
+        save_assets(profile.user_id, "mf", new_items, source="declared")
         log.info(f"[extraction] saved {len(mf_sips)} declared MF SIPs")
         changed = True
 

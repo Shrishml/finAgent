@@ -55,7 +55,7 @@ def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None)
     for a in assets:
         at = a.get("asset_type", "")
         # Skip MF types — they come from load_mf_assets() via holdings param
-        if at in ("mf", "mf_declared", "mf_sips"):
+        if at in ("mf",):
             continue
         val = _asset_value(a)
         if val <= 0:

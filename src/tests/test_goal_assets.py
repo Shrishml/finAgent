@@ -140,7 +140,7 @@ class TestLinkAssetToGoalAction:
         import asyncio, uuid
         from finagent.storage.sqlite import save_goal, load_goals
         uid = get_or_create_user(f"test-mfd-{uuid.uuid4().hex[:8]}", "mfd@t.com", "T")
-        save_assets(uid, "mf_declared", [{"scheme": "HDFC Conservative Hybrid", "current_value": 150000}])
+        save_assets(uid, "mf", [{"scheme": "HDFC Conservative Hybrid", "current_value": 150000}], source="declared")
         goal = Goal(user_id=uid, name="Marriage Fund", template="marriage",
                     target_amount=1500000, target_date="2028-01-01")
         gid = save_goal(goal)
@@ -160,12 +160,12 @@ class TestLinkAssetToGoalAction:
         from finagent.storage.sqlite import save_goal, load_goals
         from finagent.api.goals import _compute_goal_progress
         uid = get_or_create_user(f"test-sip-{uuid.uuid4().hex[:8]}", "sip@t.com", "T")
-        save_assets(uid, "mf_declared", [{"scheme": "Nifty 50", "current_value": 100000, "monthly_sip": 5000}])
-        items = load_assets(uid, "mf_declared")
+        save_assets(uid, "mf", [{"scheme": "Nifty 50", "current_value": 100000, "monthly_sip": 5000}], source="declared")
+        items = load_assets(uid, "mf")
         aid = items[0]["id"]
         goal = Goal(user_id=uid, name="Wealth", template="custom",
                     target_amount=1000000, target_date="2030-01-01",
-                    linked_folios=[{"asset_type": "mf_declared", "asset_id": aid, "pct": 100}])
+                    linked_folios=[{"asset_type": "mf", "asset_id": aid, "pct": 100}])
         save_goal(goal)
         progress = _compute_goal_progress(goal, [], uid)
         assert progress["monthly_sip"] == 5000

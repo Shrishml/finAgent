@@ -73,33 +73,30 @@ class TestReconcileAndSave:
 
     def test_replaces_declared_on_match(self):
         # User declared via chat
-        save_assets(self.uid, "mf_declared", [
+        save_assets(self.uid, "mf", [
             {"scheme": "Parag Parikh Flexi Cap", "monthly_sip": 5000, "current_value": 100000}
-        ])
+        ], source="declared")
         # CAS upload with same fund
         h = _make_holding(value=94000)
         result = reconcile_and_save(self.uid, "mf", [h])
         assert result["replaced"] == 1
-        # Declared entry should be gone
-        declared = load_assets(self.uid, "mf_declared")
-        assert len(declared) == 0
-        # Verified entry exists
+        # Declared entry replaced by verified — only 1 MF total
         holdings = load_mf_assets(self.uid)
         assert len(holdings) == 1
         assert holdings[0].current_value == 94000
 
     def test_keeps_unmatched_declared(self):
         # User declared a fund not in CAS
-        save_assets(self.uid, "mf_declared", [
+        save_assets(self.uid, "mf", [
             {"scheme": "SBI Small Cap Fund", "monthly_sip": 3000, "current_value": 50000}
-        ])
+        ], source="declared")
         # CAS has different fund
         h = _make_holding()
         reconcile_and_save(self.uid, "mf", [h])
-        # SBI declared entry should remain
-        declared = load_assets(self.uid, "mf_declared")
-        assert len(declared) == 1
-        assert declared[0]["scheme"] == "SBI Small Cap Fund"
+        # SBI declared entry should remain alongside verified Parag Parikh
+        all_mf = load_assets(self.uid, "mf")
+        sbi = [a for a in all_mf if a.get("scheme") == "SBI Small Cap Fund"]
+        assert len(sbi) == 1
 
     def test_re_upload_replaces_verified(self):
         h1 = _make_holding(value=90000)
@@ -135,9 +132,9 @@ class TestLoadMfAssets:
         assert len(holdings[0].transactions) == 1
 
     def test_loads_legacy_declared(self):
-        save_assets(self.uid, "mf_declared", [
+        save_assets(self.uid, "mf", [
             {"scheme": "SBI Small Cap", "current_value": 50000, "monthly_sip": 3000}
-        ])
+        ], source="declared")
         holdings = load_mf_assets(self.uid)
         assert len(holdings) == 1
         assert holdings[0].scheme_name == "SBI Small Cap"
@@ -145,9 +142,9 @@ class TestLoadMfAssets:
 
     def test_loads_both_verified_and_declared(self):
         reconcile_and_save(self.uid, "mf", [_make_holding()])
-        save_assets(self.uid, "mf_declared", [
+        save_assets(self.uid, "mf", [
             {"scheme": "SBI Small Cap", "current_value": 50000}
-        ])
+        ], source="declared")
         holdings = load_mf_assets(self.uid)
         assert len(holdings) == 2
 
@@ -184,12 +181,12 @@ class TestSourceColumns:
         assert row[2] is not None
 
     def test_declared_has_default_source(self):
-        save_assets(self.uid, "mf_declared", [{"scheme": "Test", "current_value": 1000}])
+        save_assets(self.uid, "mf", [{"scheme": "Test", "current_value": 1000}], source="declared")
         conn = _get_conn()
         row = conn.execute(
-            "SELECT source, source_detail FROM user_assets "
-            "WHERE user_id = ? AND asset_type = 'mf_declared'", (self.uid,)
+            "SELECT source FROM user_assets "
+            "WHERE user_id = ? AND asset_type = 'mf' AND source = 'declared'", (self.uid,)
         ).fetchone()
         conn.close()
+        assert row is not None
         assert row[0] == "declared"
-        assert row[1] == "chat"

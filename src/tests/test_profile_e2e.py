@@ -615,14 +615,14 @@ class TestExtractionE2E:
         assert has_ppf or has_nps, f"Neither PPF nor NPS extracted. epf={epf}, nps={nps}"
 
     def test_extract_mf_sips(self, client):
-        """MF SIP allocations should be extracted to mf_declared."""
+        """MF SIP allocations should be extracted to mf (source=declared)."""
         self._setup_user(client)
         resp = client.post("/chat/stream", data={
             "query": "My monthly SIP plan is 56k: Edelweiss Mid Cap 25%, Parag Parikh Flexi Cap 10%, Nifty 50 Index 10%"
         })
         assert resp.status_code == 200
 
-        mfs = client.get("/profile/assets?type=mf_declared").json()["items"]
+        mfs = client.get("/profile/assets?type=mf").json()["items"]
         schemes = [i.get("scheme", "") for i in mfs]
         assert any("Edelweiss" in s or "Mid Cap" in s for s in schemes), f"Edelweiss not extracted. mfs={mfs}"
 

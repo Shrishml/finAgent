@@ -9,8 +9,7 @@ DECAY_HALF_LIFE = {
     "income": 180,
     "expenses": 120,
     "loan": 180,
-    "mf_declared": 90,
-    "mf": 30,  # verified MF data from CAS — fresher threshold
+    "mf": 30,  # MF data — verified from CAS or declared via chat
     # Slow decay — rarely changes
     "personal": 730,
     "epf_ppf": 365,

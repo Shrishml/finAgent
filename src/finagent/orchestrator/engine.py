@@ -430,12 +430,24 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
     )
 
     full_response = ""
+    streamed_up_to = 0
     async for chunk in llm.complete_stream(prompt):
         full_response += chunk
-        if "[ACTION:" not in full_response:
-            yield chunk
+        # Don't stream anything once we detect an action block starting
+        if "[ACTION:" in full_response:
+            continue
+        # Stream up to the last sentence boundary to avoid emitting
+        # optimistic text that immediately precedes an action block.
+        # Hold back the current partial sentence.
+        safe = full_response.rfind(". ", streamed_up_to)
+        if safe > streamed_up_to:
+            yield full_response[streamed_up_to:safe + 2]
+            streamed_up_to = safe + 2
 
+    # If no actions, flush remaining text
     actions_found = list(_ACTION_RE.finditer(full_response))
+    if not actions_found and streamed_up_to < len(full_response):
+        yield full_response[streamed_up_to:]
     ui_components = []
     log.debug(f"[advisor] LLM done: {len(full_response)} chars, {len(actions_found)} actions found")
 

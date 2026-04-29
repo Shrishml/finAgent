@@ -1,7 +1,4 @@
 """Tests for goal-to-asset linking."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.api.goals import _asset_value, _compute_goal_progress
 from finagent.models.goal import Goal

@@ -59,7 +59,7 @@ class TestChatPipeline:
             resp = client.post("/chat", data={"query": "What are my expense ratios?"})
         data = resp.json()
         assert data["status"] == "ok"
-        assert "upload" in data["response"].lower()
+        assert len(data["response"]) > 0  # advisor responds (no longer routes to MF agent)
 
     def test_upload_bad_file_returns_error(self, client, tmp_path):
         txt = tmp_path / "test.txt"

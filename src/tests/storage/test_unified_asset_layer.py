@@ -1,8 +1,5 @@
 """Tests for unified asset layer: reconcile_and_save, load_mf_assets, migration."""
 import json
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.models.mf import MFHolding, MFTransaction
 from finagent.storage.sqlite import (

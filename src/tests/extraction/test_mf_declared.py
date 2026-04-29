@@ -1,7 +1,4 @@
 """Tests for declared MF SIP extraction."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.models.profile import UserProfile
 from finagent.agents.onboarding import apply_extractions

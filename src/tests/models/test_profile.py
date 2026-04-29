@@ -1,7 +1,4 @@
 """Tests for UserProfile and Conversation storage (P1 + P2)."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from finagent.models.profile import UserProfile
 from finagent.storage.sqlite import (

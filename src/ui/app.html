@@ -92,7 +92,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     <div class="bg-white border-b sticky top-0 z-20 px-4 sm:px-6 w-full">
       <div class="max-w-6xl mx-auto flex gap-6 sm:gap-10">
         <button onclick="switchTab('overview')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-emerald-600 text-emerald-600" data-tab="overview">Overview</button>
-        <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Holdings</button>
+        <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Mutual Funds</button>
         <button onclick="switchTab('goals')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="goals">Goals</button>
         <button onclick="switchTab('profile')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="profile">Profile</button>
       </div>
@@ -366,24 +366,7 @@ function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="l
     <!-- ASSET CLASS SECTIONS START -->
 
     <!-- Section: EPF & PPF -->
-    <!-- Section: Mutual Funds (Declared) -->
-    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <button onclick="toggleSection('mf-declared')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
-        <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">📊</span>
-          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Mutual Funds</h4><p class="text-[10px] text-gray-400">SIPs and fund allocations from chat</p></div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span id="mf-declared-badge" class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </div>
-      </button>
-      <div id="section-mf-declared" class="hidden border-t px-5 py-5 bg-gray-50/50">
-        <p class="text-xs text-emerald-600 font-bold mb-3">💬 Declared SIPs — upload CAS statement for verified holdings</p>
-        <button onclick="addMFDeclaredCard()" class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">+ Add Mutual Fund SIP</button>
-        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-mf-declared','mf_declared')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
-      </div>
-    </div>
+
 
     <!-- Section: EPF & PPF -->
     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
@@ -2051,7 +2034,7 @@ function renderBreakdown(desc, compact) {
     '<p class="text-[10px] text-teal-600 mt-3 font-bold">💡 These are editable assumptions — tell Arth in chat to recalculate with different values</p></div></div>';
 }
 
-const ASSET_ICONS = {fd:'🏦',gold:'🪙',esop:'📈',epf_ppf:'🏛️',nps:'🏛️',realestate:'🏠',mf_declared:'📊',mf_sips:'📊',mf:'📊'};
+const ASSET_ICONS = {fd:'🏦',gold:'🪙',esop:'📈',epf_ppf:'🏛️',nps:'🏛️',realestate:'🏠',mf_sips:'📊',mf:'📊'};
 
 function renderGoalDetail(g) {
   const statusColor = g.on_track ? 'emerald' : 'amber';
@@ -2394,18 +2377,6 @@ const CARD_TEMPLATES = {
         <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input data-field="next_vesting" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
       </div>`,
   },
-  mf_declared: {
-    fields: () => `
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div class="col-span-2 sm:col-span-1"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Scheme Name</label><p class="text-[9px] text-gray-400 mb-0.5">Fund name from your SIP</p><input data-field="scheme" type="text" placeholder="e.g. Parag Parikh Flexi Cap" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly SIP</label><p class="text-[9px] text-gray-400 mb-0.5">Amount per month</p><input data-field="monthly_sip" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approx. value today</p><input data-field="current_value" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Allocation %</label><p class="text-[9px] text-gray-400 mb-0.5">% of total SIP</p><input data-field="allocation_pct" type="text" placeholder="e.g. 25" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
-        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Category</label><p class="text-[9px] text-gray-400 mb-0.5">Fund type</p>
-          <select data-field="category" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option value="">Select...</option><option value="large_cap">Large Cap</option><option value="mid_cap">Mid Cap</option><option value="small_cap">Small Cap</option><option value="flexi_cap">Flexi Cap</option><option value="index">Index</option><option value="debt">Debt</option><option value="gold">Gold</option><option value="international">International</option><option value="other">Other</option></select>
-        </div>
-      </div>`,
-  },
 };
 
 function addCard(type, sectionId) {
@@ -2423,11 +2394,10 @@ function addFDCard() { addCard('fd', 'section-fds'); }
 function addRealEstateCard() { addCard('realestate', 'section-realestate'); }
 function addGoldCard() { addCard('gold', 'section-gold'); }
 function addESOPCard() { addCard('esop', 'section-esop'); }
-function addMFDeclaredCard() { addCard('mf_declared', 'section-mf-declared'); }
 
 // --- Profile Load ---
 const SIMPLE_SECTIONS = ['personal','income','expenses','epf_ppf','nps','stocks','insurance','tax'];
-const CARD_SECTIONS = {fd:'section-fds', realestate:'section-realestate', gold:'section-gold', esop:'section-esop', loan:'section-loans', mf_declared:'section-mf-declared'};
+const CARD_SECTIONS = {fd:'section-fds', realestate:'section-realestate', gold:'section-gold', esop:'section-esop', loan:'section-loans'};
 
 async function loadProfileData() {
   window._profileLoaded = true;
@@ -2467,7 +2437,7 @@ async function loadProfileData() {
       section.querySelectorAll('.bg-white.rounded-xl.border.p-4').forEach(c => c.remove());
       byType[type].forEach(data => {
         // Create card via existing addCard
-        const addFn = {fd:'addFDCard', realestate:'addRealEstateCard', gold:'addGoldCard', esop:'addESOPCard', loan:'addLoanCard', mf_declared:'addMFDeclaredCard'}[type];
+        const addFn = {fd:'addFDCard', realestate:'addRealEstateCard', gold:'addGoldCard', esop:'addESOPCard', loan:'addLoanCard'}[type];
         window[addFn]();
         // Fill the last added card
         const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
@@ -2487,12 +2457,6 @@ async function loadProfileData() {
         });
       });
     });
-    // Update MF declared badge
-    if (byType['mf_declared']?.length) {
-      const n = byType['mf_declared'].length;
-      $('mf-declared-badge').textContent = n + ' fund' + (n > 1 ? 's' : '');
-      $('mf-declared-badge').className = 'px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[9px] font-extrabold rounded-full';
-    }
   } catch(e) { console.error('Load profile failed', e); }
 }
 

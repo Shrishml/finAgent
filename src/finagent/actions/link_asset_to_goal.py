@@ -1,6 +1,6 @@
 """Link a user asset to an existing goal."""
 import logging
-from finagent.storage.sqlite import load_goals, load_assets, load_holdings, save_goal
+from finagent.storage.sqlite import load_goals, load_assets, load_mf_assets, save_goal
 
 log = logging.getLogger("finagent")
 
@@ -74,40 +74,24 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
 
 
 async def _link_mf(goal, user_id: int, match_kw: str, pct: int) -> dict:
-    """Link a mutual fund holding to a goal via folio key."""
-    # Try CAS holdings first (precise data)
-    holdings = load_holdings(user_id)
-    if holdings and match_kw:
+    """Link a mutual fund to a goal — unified read from load_mf_assets."""
+    holdings = load_mf_assets(user_id)
+    if not holdings:
+        return {"error": "No mutual fund holdings found. Upload CAS or declare MFs via chat first."}
+
+    if match_kw:
         matched = next((h for h in holdings if match_kw in h.scheme_name.lower()), None)
-        if matched:
-            folio_key = f"{matched.folio}/{matched.scheme_name}"
-            # Check not already linked
-            for lf in goal.linked_folios:
-                if isinstance(lf, dict) and lf.get("folio") == folio_key:
-                    return {"message": f"'{matched.scheme_name}' is already linked to '{goal.name}'."}
-            goal.linked_folios.append({"folio": folio_key, "pct": pct})
-            save_goal(goal)
-            log.info(f"[action] Linked MF '{matched.scheme_name}' to goal '{goal.name}' at {pct}%")
-            return {"message": f"✅ Linked {matched.scheme_name} (₹{matched.current_value:,.0f}) to '{goal.name}' at {pct}%."}
+    else:
+        matched = holdings[0]
 
-    # Fallback: try mf_declared/mf_sips from user_assets
-    for at in ("mf_declared", "mf_sips"):
-        items = load_assets(user_id, at)
-        if not items:
-            continue
-        if match_kw:
-            matched = next((i for i in items if match_kw in str(i.get("scheme", "")).lower()), None)
-        else:
-            matched = items[0] if items else None
-        if matched:
-            link = {"asset_type": at, "asset_id": matched.get("id", 0), "pct": pct}
-            for lf in goal.linked_folios:
-                if isinstance(lf, dict) and lf.get("asset_type") == at and lf.get("asset_id") == matched.get("id", 0):
-                    return {"message": f"This MF is already linked to '{goal.name}'."}
-            goal.linked_folios.append(link)
-            save_goal(goal)
-            val = matched.get("current_value", 0) or 0
-            log.info(f"[action] Linked {at} '{matched.get('scheme')}' to goal '{goal.name}' at {pct}%")
-            return {"message": f"✅ Linked {matched.get('scheme', 'MF')} to '{goal.name}' at {pct}%."}
+    if not matched:
+        return {"error": f"No mutual fund matching '{match_kw}'. Upload CAS or declare MFs via chat first."}
 
-    return {"error": f"No mutual fund holdings found{' matching ' + match_kw if match_kw else ''}. Upload CAS or declare MFs via chat first."}
+    folio_key = f"{matched.folio}/{matched.scheme_name}" if matched.folio else matched.scheme_name
+    for lf in goal.linked_folios:
+        if isinstance(lf, dict) and lf.get("folio") == folio_key:
+            return {"message": f"'{matched.scheme_name}' is already linked to '{goal.name}'."}
+    goal.linked_folios.append({"folio": folio_key, "pct": pct})
+    save_goal(goal)
+    log.info(f"[action] Linked MF '{matched.scheme_name}' to goal '{goal.name}' at {pct}%")
+    return {"message": f"✅ Linked {matched.scheme_name} (₹{matched.current_value:,.0f}) to '{goal.name}' at {pct}%."}

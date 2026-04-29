@@ -104,3 +104,102 @@ class TestFdExtraction:
         assert len(items) == 2
         sbi = next(i for i in items if i["bank"] == "SBI")
         assert sbi["amount"] == 600000
+
+
+class TestGoldExtraction:
+    def test_gold_saved(self):
+        import uuid
+        uid = get_or_create_user(f"test-gold-{uuid.uuid4().hex[:8]}", "g@t.com", "T")
+        p = UserProfile(user_id=uid)
+        changed = apply_extractions(p, {"gold": [
+            {"type": "physical", "value": 700000, "amount_invested": 500000},
+        ]})
+        assert changed is True
+        items = load_assets(uid, "gold")
+        assert len(items) == 1
+        assert items[0]["type"] == "physical"
+        assert items[0]["value"] == 700000
+        assert items[0]["amount_invested"] == 500000
+
+    def test_gold_current_value_normalized(self):
+        """LLM may return current_value instead of value — should be normalized."""
+        import uuid
+        uid = get_or_create_user(f"test-gold-cv-{uuid.uuid4().hex[:8]}", "g@t.com", "T")
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"gold": [
+            {"type": "sgb", "current_value": 300000},
+        ]})
+        items = load_assets(uid, "gold")
+        assert items[0]["value"] == 300000
+        assert "current_value" not in items[0]
+
+    def test_gold_merge_by_type(self):
+        import uuid
+        uid = get_or_create_user(f"test-gold-m-{uuid.uuid4().hex[:8]}", "g@t.com", "T")
+        save_assets(uid, "gold", [{"type": "physical", "value": 500000}])
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"gold": [
+            {"type": "physical", "value": 700000},  # update
+            {"type": "sgb", "value": 200000},  # new
+        ]})
+        items = load_assets(uid, "gold")
+        assert len(items) == 2
+        phys = next(i for i in items if i["type"] == "physical")
+        assert phys["value"] == 700000
+        sgb = next(i for i in items if i["type"] == "sgb")
+        assert sgb["value"] == 200000
+
+    def test_gold_multiple_types(self):
+        import uuid
+        uid = get_or_create_user(f"test-gold-mt-{uuid.uuid4().hex[:8]}", "g@t.com", "T")
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"gold": [
+            {"type": "physical", "value": 700000, "weight_grams": 100},
+            {"type": "sgb", "value": 300000},
+            {"type": "digital", "value": 50000},
+        ]})
+        items = load_assets(uid, "gold")
+        assert len(items) == 3
+
+
+class TestRealEstateExtraction:
+    def test_realestate_saved(self):
+        import uuid
+        uid = get_or_create_user(f"test-re-{uuid.uuid4().hex[:8]}", "r@t.com", "T")
+        p = UserProfile(user_id=uid)
+        changed = apply_extractions(p, {"real_estate": [
+            {"type": "self_occupied", "location": "Bangalore", "current_value": 8000000, "purchase_price": 5000000},
+        ]})
+        assert changed is True
+        items = load_assets(uid, "realestate")
+        assert len(items) == 1
+        assert items[0]["location"] == "Bangalore"
+        assert items[0]["current_value"] == 8000000
+
+    def test_realestate_merge_by_location(self):
+        import uuid
+        uid = get_or_create_user(f"test-re-m-{uuid.uuid4().hex[:8]}", "r@t.com", "T")
+        save_assets(uid, "realestate", [{"type": "self_occupied", "location": "Bangalore", "current_value": 6000000}])
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"real_estate": [
+            {"type": "self_occupied", "location": "Bangalore", "current_value": 8000000},  # update
+            {"type": "rented", "location": "Pune", "current_value": 4000000, "rental_income": 15000},  # new
+        ]})
+        items = load_assets(uid, "realestate")
+        assert len(items) == 2
+        blr = next(i for i in items if i["location"] == "Bangalore")
+        assert blr["current_value"] == 8000000
+        pune = next(i for i in items if i["location"] == "Pune")
+        assert pune["rental_income"] == 15000
+
+    def test_realestate_no_location_appends(self):
+        """Properties without location should always append, not merge."""
+        import uuid
+        uid = get_or_create_user(f"test-re-nl-{uuid.uuid4().hex[:8]}", "r@t.com", "T")
+        p = UserProfile(user_id=uid)
+        apply_extractions(p, {"real_estate": [
+            {"type": "plot", "current_value": 2000000},
+            {"type": "plot", "current_value": 3000000},
+        ]})
+        items = load_assets(uid, "realestate")
+        assert len(items) == 2

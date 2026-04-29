@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from finagent.models.goal import Goal, GOAL_TEMPLATES
-from finagent.storage.sqlite import save_goal, load_goals, delete_goal, load_holdings, load_assets
+from finagent.storage.sqlite import save_goal, load_goals, delete_goal, load_mf_assets, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
@@ -16,8 +16,9 @@ router = APIRouter(tags=["goals"])
 ASSET_VALUE_FIELDS = {
     "fd": "amount", "gold": "value", "esop": "vested",
     "realestate": "current_value", "nps": "nps_balance",
-    "mf_declared": "current_value", "mf_sips": "current_value",
     "loan": "outstanding",
+    # Legacy — existing goal links may reference these types
+    "mf_declared": "current_value", "mf_sips": "current_value",
 }
 
 def _asset_value(item: dict) -> float:
@@ -61,7 +62,7 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
         if match:
             w = al.get("pct", 100) / 100
             linked_value += _asset_value(match) * w
-            if al["asset_type"] in ("mf_declared", "mf_sips"):
+            if al["asset_type"] in ("mf", "mf_declared", "mf_sips"):
                 monthly_sip += float(match.get("monthly_sip", 0) or 0) * w
 
     progress_pct = (linked_value / goal.target_amount * 100) if goal.target_amount > 0 else 0
@@ -199,7 +200,7 @@ async def goal_allocations(request: Request):
 async def get_goals(request: Request):
     user_id = get_user_id(request) or DEMO_USER_ID
     goals = load_goals(user_id)
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     return JSONResponse({
         "goals": [{
             "id": g.id, "name": g.name, "template": g.template,
@@ -271,7 +272,7 @@ async def goal_detail(goal_id: int, request: Request):
     goal = next((g for g in goals if g.id == goal_id), None)
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     progress = _compute_goal_progress(goal, holdings, user_id)
     # Build enriched linked assets list
     linked_details = []
@@ -289,12 +290,11 @@ async def goal_detail(goal_id: int, request: Request):
             elif at == "gold": label = f"Gold — {match.get('type', 'Physical')}"
             elif at == "esop": label = f"ESOP — {match.get('company', 'Unknown')}"
             elif at == "realestate": label = f"Property — {match.get('location', 'Unknown')}"
-            elif at == "mf_declared": label = f"MF — {match.get('scheme', 'Declared')}"
-            elif at == "mf_sips": label = f"SIP — {match.get('scheme', 'Declared')}"
+            elif at in ("mf", "mf_declared", "mf_sips"): label = f"MF — {match.get('scheme', match.get('scheme_name', 'Fund'))}"
             detail = {"kind": "asset", "asset_type": at, "label": label,
                       "pct": pct, "value": round(val, 2),
                       "raw_value": round(_asset_value(match), 2)}
-            if at in ("mf_declared", "mf_sips"):
+            if at in ("mf", "mf_declared", "mf_sips"):
                 detail["monthly_sip"] = float(match.get("monthly_sip", 0) or 0)
             linked_details.append(detail)
         else:

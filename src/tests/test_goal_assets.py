@@ -117,11 +117,11 @@ class TestLinkAssetToGoalAction:
         """Link a CAS-uploaded MF holding to a goal via folio key."""
         import asyncio, uuid
         from finagent.models.mf import MFHolding
-        from finagent.storage.sqlite import save_goal, save_holdings, load_goals
+        from finagent.storage.sqlite import save_goal, reconcile_and_save, load_goals
         uid = get_or_create_user(f"test-mf-{uuid.uuid4().hex[:8]}", "mf@t.com", "T")
         h = MFHolding(scheme_name="Parag Parikh Flexi Cap Fund Direct Growth",
                       folio="12345", amc="PPFAS", current_value=200000)
-        save_holdings([h], uid)
+        reconcile_and_save(uid, "mf", [h], source_detail="cas_upload")
         goal = Goal(user_id=uid, name="House Purchase", template="house",
                     target_amount=5000000, target_date="2030-01-01")
         gid = save_goal(goal)
@@ -136,7 +136,7 @@ class TestLinkAssetToGoalAction:
         assert any(lf.get("folio", "").startswith("12345/") for lf in updated.linked_folios)
 
     def test_link_mf_from_declared(self):
-        """Link a chat-declared MF to a goal via asset linking."""
+        """Link a chat-declared MF to a goal via unified load_mf_assets."""
         import asyncio, uuid
         from finagent.storage.sqlite import save_goal, load_goals
         uid = get_or_create_user(f"test-mfd-{uuid.uuid4().hex[:8]}", "mfd@t.com", "T")
@@ -151,7 +151,8 @@ class TestLinkAssetToGoalAction:
         assert "✅" in result["message"]
 
         updated = next(g for g in load_goals(uid) if g.id == gid)
-        assert any(lf.get("asset_type") == "mf_declared" for lf in updated.linked_folios)
+        # Declared MFs link via scheme_name as folio key (no folio number)
+        assert any("HDFC Conservative Hybrid" in str(lf) for lf in updated.linked_folios)
 
     def test_mf_sip_included_in_goal_progress(self):
         """Declared MF monthly_sip should count in goal's monthly_sip total."""

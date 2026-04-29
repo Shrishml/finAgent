@@ -51,6 +51,8 @@ Extract into these fields (only include fields with actual data):
 - nps_balance (INR), nps_contribution (monthly NPS contribution in INR)
 - mf_sips: [{{"scheme": "fund name", "monthly_sip": N, "current_value": N, "allocation_pct": N, "category": "large_cap|mid_cap|small_cap|flexi_cap|index|debt|gold|international|other"}}]
 - fds: [{{"bank": "bank/fund name", "amount": N, "rate": N, "maturity": "YYYY-MM", "tax_saver": "yes"|"no"}}]
+- gold: [{{"type": "physical|sgb|digital|etf", "value": N, "amount_invested": N, "weight_grams": N}}]
+- real_estate: [{{"type": "self_occupied|rented|plot|commercial", "location": "city/area", "current_value": N, "purchase_price": N, "rental_income": N}}]
 
 Rules:
 - Convert lakhs to actual numbers (1.1 lakh = 110000, 40L = 4000000, 1Cr = 10000000)
@@ -177,6 +179,45 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                 new_items.append(fd)
         save_assets(profile.user_id, "fd", new_items)
         log.info(f"[extraction] saved {len(fds)} FDs")
+        changed = True
+
+    # Handle Gold → save to user_assets
+    gold_items = extractions.get("gold")
+    if isinstance(gold_items, list) and gold_items:
+        existing = load_assets(profile.user_id, "gold")
+        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
+        for g in gold_items:
+            if not isinstance(g, dict):
+                continue
+            # Normalize: extraction may use current_value, storage uses value
+            if "current_value" in g and "value" not in g:
+                g["value"] = g.pop("current_value")
+            g_type = str(g.get("type", "")).lower()
+            matched = next((i for i, e in enumerate(new_items) if str(e.get("type", "")).lower() == g_type), None)
+            if matched is not None:
+                new_items[matched].update(g)
+            else:
+                new_items.append(g)
+        save_assets(profile.user_id, "gold", new_items)
+        log.info(f"[extraction] saved {len(gold_items)} gold entries")
+        changed = True
+
+    # Handle Real Estate → save to user_assets
+    re_items = extractions.get("real_estate")
+    if isinstance(re_items, list) and re_items:
+        existing = load_assets(profile.user_id, "realestate")
+        new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
+        for prop in re_items:
+            if not isinstance(prop, dict):
+                continue
+            loc = str(prop.get("location", "")).lower()
+            matched = next((i for i, e in enumerate(new_items) if str(e.get("location", "")).lower() == loc), None) if loc else None
+            if matched is not None:
+                new_items[matched].update(prop)
+            else:
+                new_items.append(prop)
+        save_assets(profile.user_id, "realestate", new_items)
+        log.info(f"[extraction] saved {len(re_items)} real estate entries")
         changed = True
 
     field_map = {

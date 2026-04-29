@@ -11,7 +11,7 @@ from finagent.api.goals import _compute_goal_progress, _asset_value, ASSET_VALUE
 from finagent.models.goal import Goal
 from finagent.models.profile import UserProfile
 from finagent.storage.sqlite import (
-    load_holdings, load_goals, load_assets, load_profile, load_conversation, _get_conn,
+    load_mf_assets, load_goals, load_assets, load_profile, load_conversation, _get_conn,
 )
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,6 @@ router = APIRouter()
 _ASSET_LABELS = {
     "epf_ppf": "EPF & PPF", "fd": "Fixed Deposits", "gold": "Gold",
     "esop": "ESOP/RSU", "realestate": "Real Estate", "nps": "NPS",
-    "mf_declared": "Mutual Funds (declared)", "mf_sips": "SIPs (declared)",
     "loan": "Loans", "stocks": "Stocks",
 }
 
@@ -55,6 +54,9 @@ def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None)
 
     for a in assets:
         at = a.get("asset_type", "")
+        # Skip MF types — they come from load_mf_assets() via holdings param
+        if at in ("mf", "mf_declared", "mf_sips"):
+            continue
         val = _asset_value(a)
         if val <= 0:
             continue
@@ -66,7 +68,7 @@ def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None)
             continue
         asset_items[label] = asset_items.get(label, 0) + val
         # Map to allocation buckets
-        if at in ("esop", "mf_declared", "mf_sips", "stocks"):
+        if at in ("esop", "stocks"):
             alloc["Equity"] += val
         elif at in ("fd", "epf_ppf", "nps"):
             alloc["Debt"] += val
@@ -78,7 +80,7 @@ def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None)
             alloc["Cash"] += val
 
     if mf_value > 0:
-        asset_items["Mutual Funds (CAS)"] = mf_value
+        asset_items["Mutual Funds"] = mf_value
         alloc["Equity"] += mf_value
 
     total_assets = sum(asset_items.values())
@@ -369,7 +371,7 @@ def _context_actions(net_worth: dict, goals: list, cash_flow: dict | None, profi
 async def overview_demo():
     """Demo overview — uses real backend functions with seeded demo data."""
     user_id = DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     profile = load_profile(user_id)
     goals = load_goals(user_id)
 
@@ -397,7 +399,7 @@ async def overview_demo():
 async def overview(request: Request):
     """Aggregated overview dashboard data."""
     user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     profile = load_profile(user_id)
     goals = load_goals(user_id)
 

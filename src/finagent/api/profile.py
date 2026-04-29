@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from finagent.storage.sqlite import load_profile, update_profile, load_holdings, get_latest_snapshot, save_assets, load_assets
+from finagent.storage.sqlite import load_profile, update_profile, load_mf_assets, get_latest_snapshot, save_assets, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")

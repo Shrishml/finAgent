@@ -9,7 +9,7 @@ from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import extract_profile_data, apply_extractions
 from finagent.orchestrator.router import classify_intent
 from finagent.storage.sqlite import (
-    load_holdings, save_holdings, load_profile, save_profile,
+    load_mf_assets, reconcile_and_save, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
     load_assets, load_goals, save_goal,
 )
@@ -288,12 +288,12 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     log.info(f"[orchestrator] intent={intent} ({time.time()-t0:.1f}s)")
 
     if _is_mf_query(query, intent):
-        holdings = load_holdings(user_id)
+        holdings = load_mf_assets(user_id)
         if holdings:
             if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
                 try:
                     holdings = enrich_holdings(holdings)
-                    save_holdings(holdings, user_id)
+                    reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
                 except Exception:
                     pass
             if intent["mode"] == "deep_dive":
@@ -334,13 +334,13 @@ async def handle_query_stream(query: str, user_id: int | None = None):
 
     if _is_mf_query(query, intent):
         log.debug("[orchestrator] routing to MF agent")
-        holdings = load_holdings(user_id)
+        holdings = load_mf_assets(user_id)
         if holdings:
             if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
                 try:
                     yield "[STATUS] Enriching fund data..."
                     holdings = enrich_holdings(holdings)
-                    save_holdings(holdings, user_id)
+                    reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
                 except Exception:
                     pass
             yield f"[STATUS] Reviewing {len(holdings)} funds..."

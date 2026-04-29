@@ -13,7 +13,7 @@ from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
 from finagent.storage.sqlite import (
-    save_holdings, load_holdings, clear_holdings, save_goal, load_goals,
+    reconcile_and_save, load_mf_assets, clear_mf_assets, save_goal, load_goals,
     clear_goals, clear_profile, clear_conversation, clear_snapshots, clear_assets,
     save_assets,
 )
@@ -44,13 +44,13 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
             log.info("AMFI enrichment complete")
         except Exception as e:
             log.warning(f"AMFI enrichment failed (continuing without): {e}")
-        save_holdings(holdings, user_id, merge=do_merge)
+        save_result = reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
         return JSONResponse({
             "status": "ok",
             "domain": domain,
             "holdings_count": len(holdings),
             "schemes": [h.scheme_name for h in holdings],
-            "merged": do_merge,
+            "reconciled": save_result,
         })
     except Exception as e:
         log.error(f"Upload failed: {e}\n{traceback.format_exc()}")
@@ -107,11 +107,11 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
 async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
     user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
             holdings = enrich_holdings(holdings)
-            save_holdings(holdings, user_id)
+            reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
             log.info("Lazy enrichment on /holdings complete")
         except Exception as e:
             log.debug(f"Lazy enrichment failed: {e}")
@@ -200,12 +200,12 @@ async def demo():
                   units=bond_units, nav=30, current_value=bond_units*30, invested_value=75000,
                   transactions=bond_txns),
     ]
-    clear_holdings(user_id)
+    clear_mf_assets(user_id)
     try:
         holdings = enrich_holdings(holdings)
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
-    save_holdings(holdings, user_id)
+    reconcile_and_save(user_id, "mf", holdings, source_detail="demo")
     # Seed demo goals
     clear_goals(user_id)
     from finagent.models.goal import Goal as GoalModel
@@ -258,14 +258,14 @@ async def demo():
 async def clear(request: Request):
     """Clear all user data — holdings, goals, profile, conversations."""
     user_id = get_user_id(request)
-    clear_holdings(user_id)
+    clear_mf_assets(user_id)
     clear_goals(user_id)
     clear_profile(user_id)
     clear_assets(user_id)
     clear_conversation(user_id)
     clear_snapshots(user_id)
     if user_id != DEMO_USER_ID:
-        clear_holdings(DEMO_USER_ID)
+        clear_mf_assets(DEMO_USER_ID)
     log.info(f"All data cleared for user {user_id}")
     return JSONResponse({"status": "ok", "message": "All data cleared"})
 
@@ -274,7 +274,7 @@ async def clear(request: Request):
 async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""
     user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [
             "Upload a CAMS PDF to get started",
@@ -380,7 +380,7 @@ def _generate_insights(holdings: list) -> dict:
 async def insights(request: Request):
     """Generate portfolio insights — 10 rule-based cards (5 green + 5 amber)."""
     user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"good": [], "action": []})
     # Filter zero-value funds
@@ -449,7 +449,7 @@ async def portfolio_history(request: Request, period: str = "1Y", benchmark: str
     from finagent.analytics.nav_history import NAVHistoryEngine
     from datetime import timedelta
     user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_holdings(user_id)
+    holdings = load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"dates": [], "values": [], "invested": []})
 

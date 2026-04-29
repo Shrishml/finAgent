@@ -1,12 +1,10 @@
-"""Intent classifier + deterministic router."""
+"""Intent classifier — LLM-based routing."""
 import json
+import logging
 
 from finagent.llm import get_provider
 
-INTENT_SCHEMA = {
-    "domain": "mf | insurance | loan | health_check | goals | general",
-    "mode": "analyze | research | deep_dive | cross_domain",
-}
+log = logging.getLogger("finagent")
 
 CLASSIFY_PROMPT = """Classify this user query about personal finance. Respond with JSON only.
 
@@ -18,7 +16,7 @@ Rules:
 - "loan" = home loan, personal loan, EMI, prepayment, interest rate
 - "health_check" = financial health score, how am I doing, action plan, diagnose my finances
 - "goals" = financial goals, saving for house/car/retirement/education/wedding/travel/emergency fund, target amount, goal planning
-- "general" = greetings, unclear, or multi-domain questions
+- "general" = greetings, data submission, unclear, or multi-domain questions. If the user is just providing financial data (amounts, values, balances), classify as general.
 - "analyze" = questions about user's own data ("my portfolio", "my funds", "what do I have")
 - "research" = searching for new options ("find me", "best fund", "recommend", "compare")
 - "deep_dive" = historical analysis of a specific fund ("how did X perform", "rolling returns", "crash", "SIP simulation", "drawdown", "volatility", "consistency")
@@ -26,66 +24,17 @@ Rules:
 
 Query: {query}"""
 
+_FALLBACK = {"domain": "general", "mode": "analyze"}
+
 
 async def classify_intent(query: str) -> dict:
-    """Classify user query into domain + mode. Uses fast keyword matching first,
-    only falls back to LLM for ambiguous queries."""
-    result = _keyword_classify(query)
-    if result["domain"] != "general":
-        return result
-
-    # Only use LLM when keyword matching can't determine domain
+    """Classify user query into domain + mode using LLM."""
     llm = get_provider("default")
     try:
         raw = await llm.complete(CLASSIFY_PROMPT.format(query=query), json_mode=True)
         parsed = json.loads(raw)
         if "domain" in parsed and "mode" in parsed:
             return parsed
-    except (json.JSONDecodeError, Exception):
-        pass
-
-    return result
-
-
-def _keyword_classify(query: str) -> dict:
-    """Fast fallback when LLM classification fails."""
-    q = query.lower()
-
-    # Domain detection
-    domain = "general"
-    mf_keywords = ["fund", "sip", "portfolio", "expense ratio", "nav", "xirr", "elss", "mutual", "nifty",
-                    "index", "replace", "switch", "direct", "regular", "holding", "scheme", "amc",
-                    "debt", "equity", "flexi", "mid cap", "small cap", "large cap", "balanced",
-                    "overlap", "diversif", "consolidat", "redeem", "invest"]
-    insurance_keywords = ["insurance", "premium", "coverage", "claim", "policy", "health plan"]
-    loan_keywords = ["loan", "emi", "prepay", "interest rate", "mortgage"]
-    health_check_keywords = ["health score", "financial health", "how am i doing", "my score",
-                             "action plan", "what should i do", "financial checkup", "diagnose"]
-    goal_keywords = ["goal", "saving for", "save for", "target", "plan for", "retirement",
-                     "emergency fund", "house down payment", "child education", "wedding fund",
-                     "vacation fund", "car fund", "financial goal", "dream"]
-
-    if any(k in q for k in health_check_keywords):
-        domain = "health_check"
-    elif any(k in q for k in goal_keywords):
-        domain = "goals"
-    elif any(k in q for k in mf_keywords):
-        domain = "mf"
-    elif any(k in q for k in insurance_keywords):
-        domain = "insurance"
-    elif any(k in q for k in loan_keywords):
-        domain = "loan"
-
-    # Mode detection
-    mode = "analyze"
-    deep_dive_keywords = ["how did", "rolling return", "crash", "covid", "drawdown", "volatility",
-                          "sip simulation", "consistency", "stress test", "historical", "max drawdown",
-                          "sharpe", "cagr", "2008", "gfc", "nbfc"]
-    if any(k in q for k in deep_dive_keywords):
-        mode = "deep_dive"
-    elif any(k in q for k in ["find", "best", "recommend", "compare", "suggest", "search", "alternative"]):
-        mode = "research"
-    elif any(k in q for k in ["versus", "vs", "or invest", "or prepay", "loan or sip", "insurance or"]):
-        mode = "cross_domain"
-
-    return {"domain": domain, "mode": mode}
+    except Exception as e:
+        log.warning(f"[router] intent classification failed: {e}")
+    return _FALLBACK

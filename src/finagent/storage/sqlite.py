@@ -1,13 +1,17 @@
 """Single-user SQLite storage for parsed financial data."""
 import json
+import logging
 import sqlite3
 from dataclasses import asdict
-from datetime import date
+from datetime import date, datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from finagent.models.mf import MFHolding, MFTransaction
 from finagent.models.goal import Goal
 from finagent.models.profile import UserProfile
+
+log = logging.getLogger("finagent.storage")
 
 _DB_DIR = Path(__file__).parent.parent.parent / "data"
 _DB_PATH = _DB_DIR / "finagent.db"
@@ -128,8 +132,59 @@ def _get_conn() -> sqlite3.Connection:
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_assets_user ON user_assets(user_id, asset_type)")
+    # Migration: add source tracking columns to user_assets
+    for col, default in [("source", "'declared'"), ("source_detail", "'chat'"), ("verified_at", "NULL")]:
+        try:
+            conn.execute(f"ALTER TABLE user_assets ADD COLUMN {col} TEXT DEFAULT {default}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+    # Migration: add updated_at column to user_assets
+    try:
+        conn.execute("ALTER TABLE user_assets ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except sqlite3.OperationalError:
+        pass
+    # One-time migration: move holdings → user_assets type='mf'
+    _migrate_holdings_to_assets(conn)
     conn.commit()
     return conn
+
+
+def _migrate_holdings_to_assets(conn: sqlite3.Connection):
+    """Migrate holdings table rows into user_assets type='mf', source='verified'."""
+    # Check if holdings table exists and has data
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM holdings").fetchone()[0]
+    except sqlite3.OperationalError:
+        return  # No holdings table
+    if count == 0:
+        return
+    # Check if we already migrated (any mf+verified rows exist)
+    migrated = conn.execute(
+        "SELECT COUNT(*) FROM user_assets WHERE asset_type = 'mf' AND source = 'verified'"
+    ).fetchone()[0]
+    if migrated > 0:
+        return  # Already done
+    rows = conn.execute("SELECT user_id, data FROM holdings").fetchall()
+    now = datetime.now(timezone.utc).isoformat()
+    for user_id, data_json in rows:
+        d = json.loads(data_json)
+        # Reconcile: remove any declared MF that fuzzy-matches this verified holding
+        scheme = d.get("scheme_name", "")
+        if scheme and user_id is not None:
+            declared = conn.execute(
+                "SELECT id, data FROM user_assets WHERE user_id = ? AND asset_type IN ('mf_declared', 'mf_sips')",
+                (user_id,),
+            ).fetchall()
+            for did, ddata_json in declared:
+                dd = json.loads(ddata_json)
+                if _scheme_match(scheme, dd.get("scheme", "")):
+                    conn.execute("DELETE FROM user_assets WHERE id = ?", (did,))
+                    log.info(f"[migration] removed declared MF '{dd.get('scheme')}' — superseded by CAS '{scheme}'")
+        conn.execute(
+            "INSERT INTO user_assets (user_id, asset_type, data, source, source_detail, verified_at) VALUES (?, 'mf', ?, 'verified', 'cas_upload', ?)",
+            (user_id, data_json, now),
+        )
+    log.info(f"[migration] migrated {len(rows)} holdings → user_assets type='mf'")
 
 
 def get_or_create_user(google_id: str, email: str = "", name: str = "", picture: str = "") -> int:
@@ -249,6 +304,183 @@ def clear_holdings(user_id: int | None = None):
         conn.execute("DELETE FROM holdings WHERE user_id = ?", (user_id,))
     else:
         conn.execute("DELETE FROM holdings WHERE user_id IS NULL")
+    conn.commit()
+    conn.close()
+
+
+# --- Unified Asset Layer ---
+
+
+def _scheme_match(verified_name: str, declared_name: str) -> bool:
+    """Fuzzy-match scheme names. Handles 'Parag Parikh Flexi Cap' vs full CAS name."""
+    if not verified_name or not declared_name:
+        return False
+    v = verified_name.lower().split(" - ")[0].strip()
+    d = declared_name.lower().split(" - ")[0].strip()
+    # Exact prefix match or high similarity
+    if v.startswith(d) or d.startswith(v):
+        return True
+    return SequenceMatcher(None, v, d).ratio() > 0.75
+
+
+def _holding_to_asset_data(h: MFHolding) -> str:
+    """Convert MFHolding to JSON string for user_assets storage."""
+    data = asdict(h)
+    for t in data.get("transactions", []):
+        if hasattr(t.get("date"), "isoformat"):
+            t["date"] = t["date"].isoformat()
+    return json.dumps(data)
+
+
+def _asset_to_holding(d: dict) -> MFHolding:
+    """Convert user_assets dict → MFHolding. Handles both verified (full) and declared (partial)."""
+    txns = [
+        MFTransaction(
+            date=date.fromisoformat(t["date"]) if isinstance(t.get("date"), str) else t.get("date", date.today()),
+            description=t.get("description", ""),
+            amount=float(t.get("amount", 0)),
+            units=t.get("units"),
+            nav=t.get("nav"),
+            balance=t.get("balance"),
+            type=t.get("type", ""),
+        )
+        for t in d.get("transactions", [])
+    ]
+    return MFHolding(
+        scheme_name=d.get("scheme_name") or d.get("scheme", ""),
+        folio=d.get("folio", ""),
+        amc=d.get("amc", ""),
+        isin=d.get("isin", ""),
+        amfi_code=d.get("amfi_code", ""),
+        plan=d.get("plan", ""),
+        rta=d.get("rta", ""),
+        units=float(d.get("units", 0)),
+        nav=float(d.get("nav", 0)),
+        current_value=float(d.get("current_value", 0)),
+        invested_value=float(d.get("invested_value", 0)),
+        expense_ratio=float(d.get("expense_ratio", 0)),
+        annual_expense=float(d.get("annual_expense", 0)),
+        category=d.get("category", ""),
+        nav_date=d.get("nav_date", ""),
+        day_change=float(d.get("day_change", 0)),
+        day_change_pct=float(d.get("day_change_pct", 0)),
+        morningstar=int(d.get("morningstar", 0)),
+        aum=float(d.get("aum", 0)),
+        risk_label=d.get("risk_label", ""),
+        xirr=float(d.get("xirr", 0)),
+        tax_section=d.get("tax_section", ""),
+        transactions=txns,
+    )
+
+
+def reconcile_and_save(user_id: int, asset_type: str, verified_items: list,
+                       source_detail: str = "cas_upload") -> dict:
+    """Save verified assets, reconciling against existing declared entries.
+
+    For MF: verified_items is list[MFHolding].
+    For other types: verified_items is list[dict].
+
+    Returns {"saved": N, "replaced": N, "new": N}.
+    """
+    conn = _get_conn()
+    now = datetime.now(timezone.utc).isoformat()
+    replaced, new = 0, 0
+
+    # Load existing declared entries for this asset type
+    declared_rows = conn.execute(
+        "SELECT id, data FROM user_assets WHERE user_id = ? AND asset_type = ? AND source = 'declared'",
+        (user_id, asset_type),
+    ).fetchall()
+
+    # Also check legacy mf_declared/mf_sips for MF reconciliation
+    if asset_type == "mf":
+        legacy = conn.execute(
+            "SELECT id, data FROM user_assets WHERE user_id = ? AND asset_type IN ('mf_declared', 'mf_sips')",
+            (user_id,),
+        ).fetchall()
+        declared_rows.extend(legacy)
+
+    declared = [(rid, json.loads(rdata)) for rid, rdata in declared_rows]
+    matched_ids = set()
+
+    # Delete existing verified entries for this type (full replace on re-upload)
+    conn.execute(
+        "DELETE FROM user_assets WHERE user_id = ? AND asset_type = ? AND source = 'verified'",
+        (user_id, asset_type),
+    )
+
+    for item in verified_items:
+        if isinstance(item, MFHolding):
+            data_json = _holding_to_asset_data(item)
+            match_name = item.scheme_name
+        else:
+            data_json = json.dumps(item)
+            match_name = item.get("scheme_name", item.get("scheme", ""))
+
+        # Find matching declared entry
+        for did, dd in declared:
+            if did in matched_ids:
+                continue
+            d_name = dd.get("scheme_name") or dd.get("scheme", "")
+            if asset_type == "mf" and _scheme_match(match_name, d_name):
+                matched_ids.add(did)
+                replaced += 1
+                break
+        else:
+            new += 1
+
+        conn.execute(
+            "INSERT INTO user_assets (user_id, asset_type, data, source, source_detail, verified_at) "
+            "VALUES (?, ?, ?, 'verified', ?, ?)",
+            (user_id, asset_type, data_json, source_detail, now),
+        )
+
+    # Remove matched declared entries (superseded by verified)
+    for did in matched_ids:
+        conn.execute("DELETE FROM user_assets WHERE id = ?", (did,))
+
+    conn.commit()
+    conn.close()
+    total = len(verified_items)
+    log.info(f"[reconcile] {asset_type}: saved {total} verified ({replaced} replaced declared, {new} new)")
+    return {"saved": total, "replaced": replaced, "new": new}
+
+
+def load_mf_assets(user_id: int) -> list[MFHolding]:
+    """Load all MF assets (verified + declared) as MFHolding objects.
+
+    Single read path for all MF consumers: agent, holdings API, overview, goals.
+    """
+    conn = _get_conn()
+    # Get unified 'mf' entries (both verified and declared)
+    rows = conn.execute(
+        "SELECT data, source FROM user_assets WHERE user_id = ? AND asset_type = 'mf'",
+        (user_id,),
+    ).fetchall()
+    # Also get any remaining legacy mf_declared/mf_sips not yet migrated
+    legacy = conn.execute(
+        "SELECT data, 'declared' FROM user_assets WHERE user_id = ? AND asset_type IN ('mf_declared', 'mf_sips')",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+
+    holdings = []
+    for data_json, source in list(rows) + list(legacy):
+        d = json.loads(data_json)
+        d["_source"] = source  # attach source metadata
+        h = _asset_to_holding(d)
+        if h.current_value > 0 or h.units > 0:
+            holdings.append(h)
+    return holdings
+
+
+def clear_mf_assets(user_id: int):
+    """Clear all MF assets (verified + declared) for a user."""
+    conn = _get_conn()
+    conn.execute(
+        "DELETE FROM user_assets WHERE user_id = ? AND asset_type IN ('mf', 'mf_declared', 'mf_sips')",
+        (user_id,),
+    )
     conn.commit()
     conn.close()
 

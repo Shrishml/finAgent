@@ -149,6 +149,11 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
         for sip in mf_sips:
             if not isinstance(sip, dict) or not sip.get("scheme"):
                 continue
+            # Skip entries with only a scheme name — no actionable data.
+            # Let the advisor ask follow-up questions instead.
+            has_data = any(sip.get(k) for k in ("monthly_sip", "current_value", "units", "allocation_pct"))
+            if not has_data and sip["scheme"].lower() not in existing_schemes:
+                continue
             if sip["scheme"].lower() in existing_schemes:
                 # Update existing
                 for item in new_items:

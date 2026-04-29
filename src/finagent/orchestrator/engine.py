@@ -291,6 +291,11 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     intent = await classify_intent(query)
     log.info(f"[orchestrator] intent={intent} ({time.time()-t0:.1f}s)")
 
+    # If extraction flagged incomplete data, route to advisor for follow-up
+    if extractions.get("_pending"):
+        intent = {"domain": "general", "mode": "analyze"}
+        log.debug(f"[orchestrator] overriding intent to general — pending extraction data")
+
     if _is_mf_query(query, intent):
         holdings = load_mf_assets(user_id)
         if holdings:
@@ -335,6 +340,11 @@ async def handle_query_stream(query: str, user_id: int | None = None):
     yield "[STATUS] Analyzing your question..."
     intent = await classify_intent(query)
     log.debug(f"[orchestrator] intent={intent} ({time.time()-t0:.1f}s)")
+
+    # If extraction flagged incomplete data, route to advisor for follow-up
+    if extractions.get("_pending"):
+        intent = {"domain": "general", "mode": "analyze"}
+        log.debug(f"[orchestrator] overriding intent to general — pending extraction data")
 
     if _is_mf_query(query, intent):
         log.debug("[orchestrator] routing to MF agent")

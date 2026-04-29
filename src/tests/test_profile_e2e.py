@@ -634,6 +634,32 @@ class TestExtractionE2E:
         })
         assert resp.status_code == 200
 
+    def test_incomplete_mf_mention_asks_followup(self, client):
+        """Vague MF mention should NOT be saved — advisor should ask for details."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I have some investment in ICICI Small Cap fund"
+        })
+        assert resp.status_code == 200
+
+        # Should NOT have saved an empty MF entry
+        mfs = client.get("/profile/assets?type=mf").json()["items"]
+        icici = [m for m in mfs if "ICICI" in (m.get("scheme") or m.get("scheme_name") or "")]
+        assert len(icici) == 0, f"Empty MF should not be saved. Found: {icici}"
+
+        # Response should ask for more details (amount, SIP, etc.)
+        text = resp.text.lower()
+        assert any(w in text for w in ("how much", "amount", "sip", "value", "invested")), \
+            f"Advisor should ask follow-up. Response: {resp.text[:300]}"
+
+    def test_extract_fd(self, client):
+        """FD mentioned in chat should be extracted."""
+        self._setup_user(client)
+        resp = client.post("/chat/stream", data={
+            "query": "I have 1.5L in a Flexi FD at SBI"
+        })
+        assert resp.status_code == 200
+
         fds = client.get("/profile/assets?type=fd").json()["items"]
         assert len(fds) >= 1, f"No FDs extracted. fds={fds}"
 

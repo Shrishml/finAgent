@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 
 from finagent.main import app
 from finagent.models.mf import MFHolding
-from finagent.storage import sqlite as storage_mod
-from finagent.storage.sqlite import save_holdings, clear_holdings
+import finagent.storage as storage_mod
+from finagent.storage import save_holdings, clear_holdings
 
 # Skip all tests in this file if not running E2E
 pytestmark = pytest.mark.e2e

@@ -3,27 +3,56 @@
 Uses real LLM — no mocks. Tests are slow (~10s each for agent tests) but high confidence.
 Run: pytest src/tests/test_profile_e2e.py -v
 """
+import os
+import shutil
 import pytest
 
 from fastapi.testclient import TestClient
 from finagent.main import app
-from finagent.storage import sqlite as storage_mod
+import finagent.storage as storage_mod
+from tests.conftest import async_return
 
 _TEST_UID = 888
 
 
+def _llm_available():
+    """Check if an LLM provider is available."""
+    if os.environ.get("GEMINI_API_KEY"):
+        return True
+    if shutil.which("gemini") or shutil.which("kiro-cli"):
+        return True
+    return False
+
+
 @pytest.fixture(autouse=True)
 def use_tmp_db(tmp_path, monkeypatch):
+    import asyncio
+    from finagent.storage import database as db_mod
+    # Legacy paths (for backward compat)
     monkeypatch.setattr(storage_mod, "_DB_DIR", tmp_path)
     monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
+    # SQLAlchemy config
+    test_db_url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
+    monkeypatch.setenv("DATABASE_URL", test_db_url)
+    # Reset engine so it picks up new URL
+    db_mod._engine = None
+    db_mod._async_session_factory = None
+    # Initialize tables using new event loop
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.run_until_complete(db_mod.init_db())
 
 
 @pytest.fixture(autouse=True)
 def mock_auth(monkeypatch):
-    monkeypatch.setattr("finagent.api.deps.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.profile.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.chat.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.deps.require_auth", lambda r: _TEST_UID)
+    monkeypatch.setattr("finagent.api.deps.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.profile.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.chat.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.deps.require_auth", async_return(_TEST_UID))
 
 
 @pytest.fixture
@@ -150,6 +179,7 @@ class TestValidation:
 # ── Agent Context: Real LLM ─────────────────────────────────────────
 
 
+@pytest.mark.skipif(not _llm_available(), reason="No LLM provider available")
 class TestAgentContext:
     """These tests hit the real LLM. Slow (~10-15s each) but high confidence."""
 
@@ -202,6 +232,19 @@ class TestAgentContext:
 
 # ── Profile Context for Agent ────────────────────────────────────────
 
+import asyncio
+import json
+
+
+def _run_sync(coro):
+    """Run an async coroutine synchronously."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coro)
+
 
 class TestProfileContext:
     """Test _build_profile_context: surplus, savings_rate, clean JSON."""
@@ -212,12 +255,11 @@ class TestProfileContext:
         client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 285000}]})
         client.post("/profile/assets", json={"asset_type": "expenses", "items": [{"total_monthly_expenses": 80000, "emis": 20000}]})
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         from finagent.orchestrator.engine import _build_profile_context
-        import json
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert ctx["monthly_income"] == 285000
@@ -233,12 +275,11 @@ class TestProfileContext:
         client.post("/profile/assets", json={"asset_type": "meta", "items": [{"onboarding_complete": True}]})
         client.post("/profile/assets", json={"asset_type": "fd", "items": [{"bank": "SBI", "amount": 500000}]})
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         from finagent.orchestrator.engine import _build_profile_context
-        import json
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert "assets" in ctx
@@ -252,12 +293,11 @@ class TestProfileContext:
         """No income → no surplus field in context."""
         client.post("/profile/assets", json={"asset_type": "expenses", "items": [{"total_monthly_expenses": 50000}]})
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         from finagent.orchestrator.engine import _build_profile_context
-        import json
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert "monthly_surplus" not in ctx
@@ -267,12 +307,11 @@ class TestProfileContext:
         """ESOP data should appear under assets.esop."""
         client.post("/profile/assets", json={"asset_type": "esop", "items": [{"company": "Amazon", "vested": 3000000}]})
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         from finagent.orchestrator.engine import _build_profile_context
-        import json
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert "assets" in ctx
@@ -284,12 +323,11 @@ class TestProfileContext:
         """monthly_sip should appear in profile context when set."""
         client.post("/profile/assets", json={"asset_type": "income", "items": [{"monthly_income": 100000, "monthly_sip": 25000}]})
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         from finagent.orchestrator.engine import _build_profile_context
-        import json
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert ctx["monthly_sip"] == 25000
@@ -304,9 +342,8 @@ class TestGoalDedup:
     def test_create_goal_saves_to_db(self, client):
         """create_goal action saves goal and returns ui_data."""
         from finagent.actions.create_goal import execute as create_goal
-        import asyncio
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             create_goal({"goal_name": "Buy a house", "target_amount": 5000000, "target_date": "2030-01-01"}, _TEST_UID, {})
         )
         assert "error" not in result
@@ -316,20 +353,19 @@ class TestGoalDedup:
     def test_existing_goals_in_context(self, client):
         """After creating a goal, existing_goals appears in profile context."""
         from finagent.actions.create_goal import execute as create_goal
-        from finagent.storage.sqlite import load_profile, save_profile
+        from finagent.storage import load_profile, save_profile
         from finagent.models.profile import UserProfile
         from finagent.orchestrator.engine import _build_profile_context
-        import asyncio, json
 
         profile = UserProfile(user_id=_TEST_UID)
-        save_profile(profile)
+        _run_sync(save_profile(profile))
 
-        asyncio.get_event_loop().run_until_complete(
+        _run_sync(
             create_goal({"goal_name": "Retirement", "target_amount": 10000000, "target_date": "2050-01-01"}, _TEST_UID, {})
         )
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert "existing_goals" in ctx
@@ -342,30 +378,28 @@ class TestGoalDedup:
         """update_goal modifies existing goal without creating duplicate."""
         from finagent.actions.create_goal import execute as create_goal
         from finagent.actions.update_goal import execute as update_goal
-        from finagent.storage.sqlite import load_goals
-        import asyncio
+        from finagent.storage import load_goals
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             create_goal({"goal_name": "Car", "target_amount": 1000000, "target_date": "2028-01-01"}, _TEST_UID, {})
         )
         goal_id = result["ui_data"]["goal_id"]
 
-        result2 = asyncio.get_event_loop().run_until_complete(
+        result2 = _run_sync(
             update_goal({"goal_id": goal_id, "target_amount": 1500000}, _TEST_UID, {})
         )
         assert "error" not in result2
         assert result2["ui_data"]["target_amount"] == 1500000
 
-        goals = load_goals(_TEST_UID)
+        goals = _run_sync(load_goals(_TEST_UID))
         assert len(goals) == 1  # no duplicate
         assert goals[0].target_amount == 1500000
 
     def test_update_goal_not_found(self, client):
         """update_goal returns error for non-existent goal_id."""
         from finagent.actions.update_goal import execute as update_goal
-        import asyncio
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             update_goal({"goal_id": 9999, "target_amount": 500000}, _TEST_UID, {})
         )
         assert "error" in result
@@ -374,23 +408,22 @@ class TestGoalDedup:
     def test_multiple_goals_distinct_in_context(self, client):
         """Two different goals both appear in existing_goals."""
         from finagent.actions.create_goal import execute as create_goal
-        from finagent.storage.sqlite import load_profile, save_profile
+        from finagent.storage import load_profile, save_profile
         from finagent.models.profile import UserProfile
         from finagent.orchestrator.engine import _build_profile_context
-        import asyncio, json
 
         profile = UserProfile(user_id=_TEST_UID)
-        save_profile(profile)
+        _run_sync(save_profile(profile))
 
-        asyncio.get_event_loop().run_until_complete(
+        _run_sync(
             create_goal({"goal_name": "House", "target_amount": 5000000, "target_date": "2030-01-01"}, _TEST_UID, {})
         )
-        asyncio.get_event_loop().run_until_complete(
+        _run_sync(
             create_goal({"goal_name": "Emergency fund", "target_amount": 300000, "target_date": "2026-12-01"}, _TEST_UID, {})
         )
 
-        profile = load_profile(_TEST_UID)
-        ctx_json, _ = _build_profile_context(profile, _TEST_UID)
+        profile = _run_sync(load_profile(_TEST_UID))
+        ctx_json, _ = _run_sync(_build_profile_context(profile, _TEST_UID))
         ctx = json.loads(ctx_json)
 
         assert len(ctx["existing_goals"]) == 2
@@ -404,12 +437,11 @@ class TestGoalTransparency:
     def test_create_goal_with_calculator_has_description(self, client):
         """When calculator runs, description appears in ui_data and message."""
         from finagent.actions.create_goal import execute as create_goal
-        import asyncio
 
         # Set up profile with expenses and age via API (single storage)
         client.put("/profile", json={"age": 25, "total_monthly_expenses": 20000})
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             create_goal({"goal_name": "Retirement"}, _TEST_UID, {})
         )
         assert "error" not in result
@@ -420,9 +452,8 @@ class TestGoalTransparency:
     def test_create_goal_without_calculator_has_empty_description(self, client):
         """Custom goals without calculator have empty description."""
         from finagent.actions.create_goal import execute as create_goal
-        import asyncio
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             create_goal({"goal_name": "Travel to Japan", "target_amount": 300000, "target_date": "2027-06-01"}, _TEST_UID, {})
         )
         assert "error" not in result
@@ -431,18 +462,17 @@ class TestGoalTransparency:
     def test_goal_detail_api_returns_description(self, client):
         """GET /goals/{id}/detail includes the description field."""
         from finagent.actions.create_goal import execute as create_goal
-        from finagent.storage.sqlite import load_goals
-        import asyncio
+        from finagent.storage import load_goals
 
         client.put("/profile", json={"age": 30, "total_monthly_expenses": 50000})
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = _run_sync(
             create_goal({"goal_name": "Retirement"}, _TEST_UID, {})
         )
         goal_id = result["ui_data"]["goal_id"]
 
         # Verify via direct DB read (same process, same DB)
-        goals = load_goals(_TEST_UID)
+        goals = _run_sync(load_goals(_TEST_UID))
         goal = next(g for g in goals if g.id == goal_id)
         assert goal.description, "Description missing from stored goal"
         assert "inflation" in goal.description.lower()
@@ -450,17 +480,16 @@ class TestGoalTransparency:
     def test_goals_list_api_returns_description(self, client):
         """GET /goals includes description for each goal."""
         from finagent.actions.create_goal import execute as create_goal
-        from finagent.storage.sqlite import load_goals
-        import asyncio
+        from finagent.storage import load_goals
 
         client.put("/profile", json={"age": 28, "total_monthly_expenses": 30000})
 
-        asyncio.get_event_loop().run_until_complete(
+        _run_sync(
             create_goal({"goal_name": "Emergency fund"}, _TEST_UID, {})
         )
 
         # Verify via direct DB read
-        goals = load_goals(_TEST_UID)
+        goals = _run_sync(load_goals(_TEST_UID))
         assert len(goals) >= 1
         efund = next(g for g in goals if g.template == "emergency")
         assert efund.description, "Description missing from stored goal"
@@ -499,9 +528,15 @@ from finagent.agents.onboarding import extract_profile_data, apply_extractions
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coro)
 
 
+@pytest.mark.skipif(not _llm_available(), reason="No LLM provider available")
 class TestExtractionUnit:
     """Real LLM extraction tests. Each test sends a natural language message
     and verifies the correct profile fields are extracted and applied."""
@@ -593,6 +628,7 @@ class TestExtractionUnit:
 # ── Extraction E2E: Real LLM ────────────────────────────────────────
 
 
+@pytest.mark.skipif(not _llm_available(), reason="No LLM provider available")
 class TestExtractionE2E:
     """Test extraction pipeline with real LLM on Reddit-style messages."""
 
@@ -671,7 +707,7 @@ class TestExtractionE2E:
         })
         assert resp.status_code == 200
 
-        from finagent.storage.sqlite import load_profile
+        from finagent.storage import load_profile
         profile = load_profile(_TEST_UID)
         assert profile.monthly_sip > 0, f"monthly_sip={profile.monthly_sip}, expected > 0"
 

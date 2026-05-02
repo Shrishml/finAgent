@@ -10,9 +10,11 @@ from finagent.api.deps import get_user_id, DEMO_USER_ID
 from finagent.api.goals import _compute_goal_progress, _asset_value, ASSET_VALUE_FIELDS
 from finagent.models.goal import Goal
 from finagent.models.profile import UserProfile
-from finagent.storage.sqlite import (
-    load_mf_assets, load_goals, load_assets, load_profile, load_conversation, _get_conn,
+from finagent.storage import (
+    load_mf_assets, load_goals, load_assets, load_profile, load_conversation,
 )
+from finagent.storage.database import get_db
+from finagent.storage.models import Conversation
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -41,12 +43,12 @@ def _ideal_allocation(profile: UserProfile | None) -> dict:
     return {"Equity": eq, "Debt": debt, "Gold": gold, "Real Estate": 0, "Cash": max(cash, 0)}
 
 
-def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None) -> dict:
+async def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None) -> dict:
     """Compute total net worth across all asset classes."""
     mf_value = sum(h.current_value for h in holdings)
     mf_invested = sum(getattr(h, 'invested_value', 0) or 0 for h in holdings)
 
-    assets = load_assets(user_id)
+    assets = await load_assets(user_id)
     asset_items = {}
     liabilities = {}
     # Allocation buckets
@@ -101,13 +103,13 @@ def _net_worth(user_id: int, holdings: list, profile: UserProfile | None = None)
     }
 
 
-def _goal_summaries(user_id: int, holdings: list) -> list:
+async def _goal_summaries(user_id: int, holdings: list) -> list:
     """Top 3 goals with progress."""
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     active = [g for g in goals if g.status == "active"]
     result = []
     for g in active[:3]:
-        prog = _compute_goal_progress(g, holdings, user_id)
+        prog = await _compute_goal_progress(g, holdings, user_id)
         result.append({
             "id": g.id, "name": g.name, "template": g.template,
             "target_amount": g.target_amount, "target_date": g.target_date,
@@ -156,7 +158,7 @@ def _cash_flow(profile: UserProfile | None) -> dict | None:
     }
 
 
-def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: list, net_worth: dict) -> list:
+async def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: list, net_worth: dict) -> list:
     """Generate 2-4 smart, contextual action items."""
     nudges = []
 
@@ -173,7 +175,7 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
             })
         else:
             for g in ef_goals:
-                prog = _compute_goal_progress(g, holdings, user_id)
+                prog = await _compute_goal_progress(g, holdings, user_id)
                 if prog["progress_pct"] < 100:
                     months_covered = prog["current_value"] / profile.total_monthly_expenses if profile.total_monthly_expenses else 0
                     remaining = g.target_amount - prog["current_value"] if g.target_amount else 0
@@ -201,7 +203,7 @@ def _nudges(user_id: int, profile: UserProfile | None, goals: list, holdings: li
             })
 
     # Stale data check
-    assets = load_assets(user_id)
+    assets = await load_assets(user_id)
     if assets:
         from finagent.freshness import get_confidence, freshness_label
         stale = []
@@ -270,29 +272,32 @@ _DATA_GAP_DEFS = [
 ]
 
 
-def _data_gaps(user_id: int) -> list:
+async def _data_gaps(user_id: int) -> list:
     """Detect which asset types the user hasn't added yet."""
-    assets = load_assets(user_id)
+    assets = await load_assets(user_id)
     existing = {a.get("asset_type") for a in assets}
     return [{"icon": d["icon"], "label": d["label"], "why": d["why"], "chat": d["chat"]}
             for d in _DATA_GAP_DEFS if d["asset_type"] not in existing]
 
 
-def _recent_activity(user_id: int) -> list:
+async def _recent_activity(user_id: int) -> list:
     """Last 4 meaningful activities from conversation metadata."""
-    conn = _get_conn()
-    rows = conn.execute(
-        """SELECT content, metadata, created_at FROM conversations
-           WHERE user_id = ? AND role = 'assistant' AND metadata != '{}'
-           ORDER BY created_at DESC LIMIT 20""",
-        (user_id,),
-    ).fetchall()
-    conn.close()
+    from sqlalchemy import desc, select
+
+    async with get_db() as db:
+        stmt = select(Conversation).where(
+            Conversation.user_id == user_id,
+            Conversation.role == "assistant",
+            Conversation.meta != {}
+        ).order_by(desc(Conversation.created_at)).limit(20)
+        result = await db.execute(stmt)
+        rows = result.scalars().all()
 
     activities = []
     seen = set()
-    for content, meta_str, ts in rows:
-        meta = json.loads(meta_str) if meta_str else {}
+    for row in rows:
+        meta = row.meta or {}
+        ts = row.created_at.isoformat() if row.created_at else None
         actions = meta.get("actions", [])
         for act in actions:
             action_type = act.get("action", "")
@@ -371,15 +376,15 @@ def _context_actions(net_worth: dict, goals: list, cash_flow: dict | None, profi
 async def overview_demo():
     """Demo overview — uses real backend functions with seeded demo data."""
     user_id = DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
-    profile = load_profile(user_id)
-    goals = load_goals(user_id)
+    holdings = await load_mf_assets(user_id)
+    profile = await load_profile(user_id)
+    goals = await load_goals(user_id)
 
-    nw = _net_worth(user_id, holdings, profile)
-    goal_cards = _goal_summaries(user_id, holdings)
+    nw = await _net_worth(user_id, holdings, profile)
+    goal_cards = await _goal_summaries(user_id, holdings)
     cash = _cash_flow(profile)
-    nudge_list = _nudges(user_id, profile, goals, holdings, nw)
-    gaps = _data_gaps(user_id)
+    nudge_list = await _nudges(user_id, profile, goals, holdings, nw)
+    gaps = await _data_gaps(user_id)
     ctx_actions = _context_actions(nw, goal_cards, cash, profile)
 
     return JSONResponse({
@@ -398,17 +403,17 @@ async def overview_demo():
 @router.get("/overview")
 async def overview(request: Request):
     """Aggregated overview dashboard data."""
-    user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
-    profile = load_profile(user_id)
-    goals = load_goals(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    holdings = await load_mf_assets(user_id)
+    profile = await load_profile(user_id)
+    goals = await load_goals(user_id)
 
-    nw = _net_worth(user_id, holdings, profile)
-    goal_cards = _goal_summaries(user_id, holdings)
+    nw = await _net_worth(user_id, holdings, profile)
+    goal_cards = await _goal_summaries(user_id, holdings)
     cash = _cash_flow(profile)
-    nudge_list = _nudges(user_id, profile, goals, holdings, nw)
-    activity = _recent_activity(user_id)
-    gaps = _data_gaps(user_id)
+    nudge_list = await _nudges(user_id, profile, goals, holdings, nw)
+    activity = await _recent_activity(user_id)
+    gaps = await _data_gaps(user_id)
 
     ctx_actions = _context_actions(nw, goal_cards, cash, profile)
 

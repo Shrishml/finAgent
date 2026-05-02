@@ -34,12 +34,12 @@ RULES:
 
 async def execute(params: dict, user_id: int | None, context: dict) -> dict:
     from finagent.llm import get_provider
-    from finagent.storage.sqlite import load_profile, save_snapshot, get_latest_snapshot
+    from finagent.storage import load_profile, save_snapshot, get_latest_snapshot
 
     if not user_id or user_id <= 0:
         return {"error": "Sign in to generate your financial snapshot"}
 
-    profile = load_profile(user_id)
+    profile = await load_profile(user_id)
     if not profile:
         return {"error": "No profile data yet — fill in your details first"}
 
@@ -55,7 +55,7 @@ async def execute(params: dict, user_id: int | None, context: dict) -> dict:
     profile_json = json.dumps({k: v for k, v in full.items() if v}, indent=2)
 
     # Include previous snapshot for continuity
-    prev = get_latest_snapshot(user_id)
+    prev = await get_latest_snapshot(user_id)
     prev_section = ""
     if prev:
         prev_section = f"PREVIOUS SNAPSHOT (update based on what changed):\n{prev['snapshot']}"
@@ -74,11 +74,11 @@ async def execute(params: dict, user_id: int | None, context: dict) -> dict:
         return {"error": f"Snapshot generation failed: {e}"}
 
     # Persist to snapshots table
-    snap_id = save_snapshot(user_id, snapshot, trigger=reason)
+    snap_id = await save_snapshot(user_id, snapshot, trigger=reason)
     # Also cache on profile for backward compat
     profile.financial_snapshot = snapshot
-    from finagent.storage.sqlite import save_profile
-    save_profile(profile)
+    from finagent.storage import save_profile
+    await save_profile(profile)
 
     log.info(f"[snapshot] Generated snapshot #{snap_id} for user {user_id} (trigger={reason})")
 

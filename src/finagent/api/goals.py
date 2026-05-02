@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from finagent.models.goal import Goal, GOAL_TEMPLATES
-from finagent.storage.sqlite import save_goal, load_goals, delete_goal, load_mf_assets, load_assets
+from finagent.storage import save_goal, load_goals, delete_goal, load_mf_assets, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
@@ -30,7 +30,7 @@ def _asset_value(item: dict) -> float:
     return float(item.get(field, 0) or 0) if field else 0
 
 
-def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
+async def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
     """Compute progress, monthly SIP, and projection for a goal."""
     linked_value = 0.0
     monthly_sip = 0.0
@@ -57,7 +57,7 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
 
     # Linked assets (FDs, gold, EPF/PPF, NPS, etc.)
     for al in asset_links:
-        items = load_assets(user_id, al["asset_type"])
+        items = await load_assets(user_id, al["asset_type"])
         match = next((i for i in items if i.get("id") == al.get("asset_id")), items[0] if items else None)
         if match:
             w = al.get("pct", 100) / 100
@@ -112,8 +112,8 @@ def _compute_goal_progress(goal: Goal, holdings: list, user_id: int) -> dict:
     }
 
 
-def _validate_allocations(user_id: int, linked_folios: list, exclude_goal_id: int | None = None):
-    existing_goals = load_goals(user_id)
+async def _validate_allocations(user_id: int, linked_folios: list, exclude_goal_id: int | None = None):
+    existing_goals = await load_goals(user_id)
     alloc = {}
     for g in existing_goals:
         if g.id == exclude_goal_id:
@@ -146,10 +146,10 @@ ASSET_LABELS = {"fd": "Fixed Deposit", "gold": "Gold", "esop": "ESOP/RSU",
 
 @router.get("/goals/linkable-assets")
 async def linkable_assets(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     result = []
     for at in LINKABLE_TYPES:
-        items = load_assets(user_id, at)
+        items = await load_assets(user_id, at)
         for item in items:
             val = _asset_value(item)
             if val <= 0:
@@ -177,10 +177,10 @@ async def goal_templates():
 
 @router.get("/goals/allocations")
 async def goal_allocations(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     exclude_id = request.query_params.get("exclude")
     exclude_id = int(exclude_id) if exclude_id else None
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     alloc = {}
     for g in goals:
         if g.id == exclude_id:
@@ -198,19 +198,21 @@ async def goal_allocations(request: Request):
 
 @router.get("/goals")
 async def get_goals(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
-    goals = load_goals(user_id)
-    holdings = load_mf_assets(user_id)
-    return JSONResponse({
-        "goals": [{
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    goals = await load_goals(user_id)
+    holdings = await load_mf_assets(user_id)
+    result = []
+    for g in goals:
+        progress = await _compute_goal_progress(g, holdings, user_id)
+        result.append({
             "id": g.id, "name": g.name, "template": g.template,
             "target_amount": g.target_amount, "target_date": g.target_date,
             "linked_folios": g.linked_folios, "growth_rate": g.growth_rate,
             "created_at": g.created_at, "status": g.status,
             "description": g.description,
-            **_compute_goal_progress(g, holdings, user_id),
-        } for g in goals]
-    })
+            **progress,
+        })
+    return JSONResponse({"goals": result})
 
 
 @router.post("/goals")
@@ -227,10 +229,10 @@ async def create_goal(request: Request, user_id: int = Depends(require_auth)):
     if not target_date or target_amount <= 0:
         raise HTTPException(status_code=400, detail="target_amount and target_date required")
     linked = body.get("linked_folios", [])
-    _validate_allocations(user_id, linked)
+    await _validate_allocations(user_id, linked)
     goal = Goal(user_id=user_id, name=name, template=template, target_amount=target_amount,
                 target_date=target_date, linked_folios=linked, growth_rate=body.get("growth_rate", 0))
-    gid = save_goal(goal)
+    gid = await save_goal(goal)
     log.info(f"Goal created: {name} (id={gid}) for user {user_id}")
     return JSONResponse({"status": "ok", "goal_id": gid})
 
@@ -238,7 +240,7 @@ async def create_goal(request: Request, user_id: int = Depends(require_auth)):
 @router.put("/goals/{goal_id}")
 async def update_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
     body = await request.json()
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     existing = next((g for g in goals if g.id == goal_id), None)
     if not existing:
         raise HTTPException(status_code=404, detail="Goal not found")
@@ -248,17 +250,17 @@ async def update_goal(goal_id: int, request: Request, user_id: int = Depends(req
     existing.target_date = body.get("target_date", existing.target_date)
     existing.linked_folios = body.get("linked_folios", existing.linked_folios)
     if "linked_folios" in body:
-        _validate_allocations(user_id, existing.linked_folios, exclude_goal_id=goal_id)
+        await _validate_allocations(user_id, existing.linked_folios, exclude_goal_id=goal_id)
     if body.get("growth_rate"):
         existing.growth_rate = body["growth_rate"]
-    save_goal(existing)
+    await save_goal(existing)
     log.info(f"Goal updated: {existing.name} (id={goal_id})")
     return JSONResponse({"status": "ok"})
 
 
 @router.delete("/goals/{goal_id}")
 async def remove_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
-    if not delete_goal(goal_id, user_id):
+    if not await delete_goal(goal_id, user_id):
         raise HTTPException(status_code=404, detail="Goal not found")
     log.info(f"Goal deleted: id={goal_id} for user {user_id}")
     return JSONResponse({"status": "ok"})
@@ -267,20 +269,20 @@ async def remove_goal(goal_id: int, request: Request, user_id: int = Depends(req
 @router.get("/goals/{goal_id}/detail")
 async def goal_detail(goal_id: int, request: Request):
     """Return enriched goal detail with per-asset breakdown."""
-    user_id = get_user_id(request) or DEMO_USER_ID
-    goals = load_goals(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    goals = await load_goals(user_id)
     goal = next((g for g in goals if g.id == goal_id), None)
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    holdings = load_mf_assets(user_id)
-    progress = _compute_goal_progress(goal, holdings, user_id)
+    holdings = await load_mf_assets(user_id)
+    progress = await _compute_goal_progress(goal, holdings, user_id)
     # Build enriched linked assets list
     linked_details = []
     for lf in goal.linked_folios:
         if isinstance(lf, dict) and "asset_type" in lf:
             at, aid = lf["asset_type"], lf.get("asset_id", 0)
             pct = lf.get("pct", 100)
-            items = load_assets(user_id, at)
+            items = await load_assets(user_id, at)
             match = next((i for i in items if i.get("id") == aid), items[0] if items else None)
             if not match:
                 continue
@@ -322,11 +324,11 @@ async def goal_detail(goal_id: int, request: Request):
 @router.post("/goals/{goal_id}/accept")
 async def accept_goal(goal_id: int, request: Request, user_id: int = Depends(require_auth)):
     """Accept a suggested goal — sets status to active."""
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     goal = next((g for g in goals if g.id == goal_id), None)
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
     goal.status = "active"
-    save_goal(goal)
+    await save_goal(goal)
     log.info(f"Goal accepted: {goal.name} (id={goal_id})")
     return JSONResponse({"status": "ok"})

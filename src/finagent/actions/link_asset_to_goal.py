@@ -1,7 +1,7 @@
 """Link a user asset to an existing goal."""
 import logging
 from difflib import SequenceMatcher
-from finagent.storage.sqlite import load_goals, load_assets, load_mf_assets, save_goal
+from finagent.storage import load_goals, load_assets, load_mf_assets, save_goal
 
 log = logging.getLogger("finagent")
 
@@ -37,7 +37,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         return {"error": f"Unknown asset type '{asset_type}'. Use: {', '.join(sorted(VALID_TYPES))}"}
 
     # Find goal by fuzzy name match
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     goal = next((g for g in goals if goal_name in g.name.lower()), None)
     if not goal:
         return {"error": f"No goal matching '{goal_name}'. Create it first with create_goal."}
@@ -47,7 +47,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         return await _link_mf(goal, user_id, match_kw, pct)
 
     # Find asset
-    items = load_assets(user_id, asset_type)
+    items = await load_assets(user_id, asset_type)
     if not items:
         return {"error": f"No {asset_type} assets found in your profile."}
 
@@ -66,7 +66,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
             return {"message": f"This {asset_type} is already linked to '{goal.name}'."}
 
     goal.linked_folios.append(link)
-    save_goal(goal)
+    await save_goal(goal)
 
     from finagent.api.goals import _asset_value
     val = _asset_value(matched)
@@ -76,7 +76,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
 
 async def _link_mf(goal, user_id: int, match_kw: str, pct: int) -> dict:
     """Link a mutual fund to a goal — unified read from load_mf_assets."""
-    holdings = load_mf_assets(user_id)
+    holdings = await load_mf_assets(user_id)
     if not holdings:
         return {"error": "No mutual fund holdings found. Upload CAS or declare MFs via chat first."}
 
@@ -103,6 +103,6 @@ async def _link_mf(goal, user_id: int, match_kw: str, pct: int) -> dict:
         if isinstance(lf, dict) and lf.get("folio") == folio_key:
             return {"message": f"'{matched.scheme_name}' is already linked to '{goal.name}'."}
     goal.linked_folios.append({"folio": folio_key, "pct": pct})
-    save_goal(goal)
+    await save_goal(goal)
     log.info(f"[action] Linked MF '{matched.scheme_name}' to goal '{goal.name}' at {pct}%")
     return {"message": f"✅ Linked {matched.scheme_name} (₹{matched.current_value:,.0f}) to '{goal.name}' at {pct}%."}

@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from finagent.storage.sqlite import load_profile, update_profile, load_mf_assets, get_latest_snapshot, save_assets, load_assets
+from finagent.storage import load_profile, update_profile, load_mf_assets, get_latest_snapshot, save_assets, load_assets
 from finagent.api.deps import get_user_id, require_auth, DEMO_USER_ID
 
 log = logging.getLogger("finagent")
@@ -13,8 +13,8 @@ router = APIRouter(tags=["profile"])
 
 @router.get("/profile")
 async def get_profile(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
-    profile = load_profile(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    profile = await load_profile(user_id)
     if not profile:
         return JSONResponse({"profile": None, "onboarding_complete": False})
 
@@ -59,7 +59,7 @@ async def get_profile(request: Request):
 
 @router.put("/profile")
 async def save_profile_endpoint(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     body = await request.json()
     allowed = {
         "name", "age", "occupation", "employer", "location", "marital_status", "kids",
@@ -71,14 +71,14 @@ async def save_profile_endpoint(request: Request):
         "onboarding_complete",
     }
     updates = {k: v for k, v in body.items() if k in allowed}
-    profile = update_profile(user_id, updates)
+    profile = await update_profile(user_id, updates)
     return JSONResponse({"status": "ok", "onboarding_complete": profile.onboarding_complete})
 
 
 @router.get("/snapshot")
 async def get_snapshot(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
-    snap = get_latest_snapshot(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    snap = await get_latest_snapshot(user_id)
     if not snap:
         return JSONResponse({"snapshot": None})
     return JSONResponse(snap)
@@ -91,7 +91,7 @@ VALID_ASSET_TYPES = {"fd", "realestate", "gold", "esop", "loan",
 
 @router.post("/profile/assets")
 async def save_profile_assets(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     body = await request.json()
     asset_type = body.get("asset_type", "")
     items = body.get("items", [])
@@ -99,16 +99,16 @@ async def save_profile_assets(request: Request):
         return JSONResponse({"ok": False, "error": f"Invalid asset type: {asset_type}"}, status_code=400)
     if not items:
         return JSONResponse({"ok": False, "error": "No items provided"}, status_code=400)
-    count = save_assets(user_id, asset_type, items)
+    count = await save_assets(user_id, asset_type, items)
     log.info(f"[profile] Saved {count} {asset_type} assets for user {user_id}")
     return JSONResponse({"ok": True, "count": count})
 
 
 @router.get("/profile/assets")
 async def get_profile_assets(request: Request):
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     asset_type = request.query_params.get("type")
-    items = load_assets(user_id, asset_type)
+    items = await load_assets(user_id, asset_type)
     # Migrate legacy field names
     _RENAMES = {"epf_monthly": "epf_contribution", "nps_monthly": "nps_contribution"}
     for item in items:

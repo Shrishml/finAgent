@@ -12,10 +12,10 @@ from fastapi.responses import JSONResponse
 from finagent.connectors.base import ConnectorRegistry
 from finagent.connectors.cams import CAMSConnector
 from finagent.connectors.amfi import enrich_holdings, fetch_category_peers
-from finagent.storage.sqlite import (
+from finagent.storage import (
     reconcile_and_save, load_mf_assets, clear_mf_assets, save_goal, load_goals,
     clear_goals, clear_profile, clear_conversation, clear_snapshots, clear_assets,
-    save_assets,
+    save_assets, load_conversation,
 )
 from finagent.models.goal import Goal
 from finagent.utils.returns import compute_holding_returns, compute_portfolio_xirr
@@ -40,11 +40,11 @@ async def upload(request: Request, user_id: int = Depends(require_auth), file: U
         domain, holdings = _registry.parse(tmp_path, password)
         log.info(f"Parsed {len(holdings)} holdings from {file.filename}")
         try:
-            holdings = enrich_holdings(holdings)
+            holdings = await enrich_holdings(holdings)
             log.info("AMFI enrichment complete")
         except Exception as e:
             log.warning(f"AMFI enrichment failed (continuing without): {e}")
-        save_result = reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
+        save_result = await reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
         return JSONResponse({
             "status": "ok",
             "domain": domain,
@@ -64,10 +64,10 @@ _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 @router.get("/chat/history")
 async def chat_history(request: Request):
     """Return conversation history for the current user."""
-    user_id = get_user_id(request)
+    user_id = await get_user_id(request)
     if not user_id:
         return JSONResponse({"messages": []})
-    messages = load_conversation(user_id, limit=50)
+    messages = await load_conversation(user_id, limit=50)
     for m in messages:
         m["content"] = _ANSI_RE.sub("", m["content"])
     return JSONResponse({"messages": messages})
@@ -76,7 +76,7 @@ async def chat_history(request: Request):
 @router.post("/chat")
 async def chat(request: Request, query: str = Form(...)):
     """Chat endpoint — classify intent and route to agent."""
-    user_id = get_user_id(request) or DEMO_USER_ID
+    user_id = await get_user_id(request) or DEMO_USER_ID
     log.info(f"💬 User query: {query}")
     try:
         response = await handle_query(query, user_id=user_id)
@@ -106,12 +106,12 @@ async def chat_stream(request: Request, user_id: int = Depends(require_auth), qu
 @router.get("/holdings")
 async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
-    user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    holdings = await load_mf_assets(user_id)
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
-            holdings = enrich_holdings(holdings)
-            reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
+            holdings = await enrich_holdings(holdings)
+            await reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
             log.info("Lazy enrichment on /holdings complete")
         except Exception as e:
             log.debug(f"Lazy enrichment failed: {e}")
@@ -200,14 +200,14 @@ async def demo():
                   units=bond_units, nav=30, current_value=bond_units*30, invested_value=75000,
                   transactions=bond_txns),
     ]
-    clear_mf_assets(user_id)
+    await clear_mf_assets(user_id)
     try:
-        holdings = enrich_holdings(holdings)
+        holdings = await enrich_holdings(holdings)
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
-    reconcile_and_save(user_id, "mf", holdings, source_detail="demo")
+    await reconcile_and_save(user_id, "mf", holdings, source_detail="demo")
     # Seed demo goals
-    clear_goals(user_id)
+    await clear_goals(user_id)
     from finagent.models.goal import Goal as GoalModel
     demo_goals = [
         GoalModel(user_id=user_id, name="Retirement at 50", template="retirement",
@@ -223,28 +223,28 @@ async def demo():
                   linked_folios=[{"folio": "DEMO-006/HDFC Corporate Bond Fund - Direct Plan - Growth", "pct": 100}]),
     ]
     for g in demo_goals:
-        save_goal(g)
+        await save_goal(g)
 
     # Seed demo profile (personal, income, expenses, insurance)
-    clear_assets(user_id)
-    save_assets(user_id, "personal", [{"name": "Suraj", "age": 35, "occupation": "Software Engineer",
+    await clear_assets(user_id)
+    await save_assets(user_id, "personal", [{"name": "Suraj", "age": 35, "occupation": "Software Engineer",
         "employer": "Amazon", "location": "Bangalore", "marital_status": "Single",
         "kids": 0, "dependent_parents": True, "risk_tolerance": "Moderate"}])
-    save_assets(user_id, "income", [{"monthly_income": 185000, "annual_bonus": 200000,
+    await save_assets(user_id, "income", [{"monthly_income": 185000, "annual_bonus": 200000,
         "monthly_sip": 65000, "other_income": 0}])
-    save_assets(user_id, "expenses", [{"total_monthly_expenses": 55000, "rent": 25000,
+    await save_assets(user_id, "expenses", [{"total_monthly_expenses": 55000, "rent": 25000,
         "groceries": 8000, "utilities": 5000, "dining": 7000, "emis": 22000}])
-    save_assets(user_id, "insurance", [{"term_cover": 0, "term_premium": 0,
+    await save_assets(user_id, "insurance", [{"term_cover": 0, "term_premium": 0,
         "health_cover": 500000, "health_premium": 12000}])
-    save_assets(user_id, "meta", [{"onboarding_complete": True}])
+    await save_assets(user_id, "meta", [{"onboarding_complete": True}])
 
     # Seed non-MF assets to match demo overview richness
-    save_assets(user_id, "epf_ppf", [{"epf_balance": 820000, "ppf_balance": 300000}])
-    save_assets(user_id, "fd", [{"amount": 500000, "bank": "SBI", "rate": 7.1, "maturity_date": "2026-06-01"}])
-    save_assets(user_id, "gold", [{"value": 380000, "type": "SGB", "weight_grams": 50}])
-    save_assets(user_id, "nps", [{"nps_balance": 350000, "tier": "Tier 1"}])
-    save_assets(user_id, "esop", [{"vested": 332500, "company": "Amazon", "unvested": 500000}])
-    save_assets(user_id, "loan", [
+    await save_assets(user_id, "epf_ppf", [{"epf_balance": 820000, "ppf_balance": 300000}])
+    await save_assets(user_id, "fd", [{"amount": 500000, "bank": "SBI", "rate": 7.1, "maturity_date": "2026-06-01"}])
+    await save_assets(user_id, "gold", [{"value": 380000, "type": "SGB", "weight_grams": 50}])
+    await save_assets(user_id, "nps", [{"nps_balance": 350000, "tier": "Tier 1"}])
+    await save_assets(user_id, "esop", [{"vested": 332500, "company": "Amazon", "unvested": 500000}])
+    await save_assets(user_id, "loan", [
         {"loan_type": "Car Loan", "principal": 500000, "emi": 15000, "outstanding": 280000, "tenure_months": 48},
         {"loan_type": "Credit Card", "principal": 70000, "emi": 7000, "outstanding": 70000, "tenure_months": 12},
     ])
@@ -257,15 +257,15 @@ async def demo():
 @router.post("/clear")
 async def clear(request: Request):
     """Clear all user data — holdings, goals, profile, conversations."""
-    user_id = get_user_id(request)
-    clear_mf_assets(user_id)
-    clear_goals(user_id)
-    clear_profile(user_id)
-    clear_assets(user_id)
-    clear_conversation(user_id)
-    clear_snapshots(user_id)
+    user_id = await get_user_id(request)
+    await clear_mf_assets(user_id)
+    await clear_goals(user_id)
+    await clear_profile(user_id)
+    await clear_assets(user_id)
+    await clear_conversation(user_id)
+    await clear_snapshots(user_id)
     if user_id != DEMO_USER_ID:
-        clear_mf_assets(DEMO_USER_ID)
+        await clear_mf_assets(DEMO_USER_ID)
     log.info(f"All data cleared for user {user_id}")
     return JSONResponse({"status": "ok", "message": "All data cleared"})
 
@@ -273,8 +273,8 @@ async def clear(request: Request):
 @router.get("/suggestions")
 async def suggestions(request: Request):
     """Generate personalized question suggestions based on portfolio."""
-    user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    holdings = await load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"suggestions": [
             "Upload a CAMS PDF to get started",
@@ -379,8 +379,8 @@ def _generate_insights(holdings: list) -> dict:
 @router.get("/insights")
 async def insights(request: Request):
     """Generate portfolio insights — 10 rule-based cards (5 green + 5 amber)."""
-    user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    holdings = await load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"good": [], "action": []})
     # Filter zero-value funds
@@ -448,8 +448,8 @@ async def portfolio_history(request: Request, period: str = "1Y", benchmark: str
     """Portfolio value over time — aggregates NAV history across all holdings."""
     from finagent.analytics.nav_history import NAVHistoryEngine
     from datetime import timedelta
-    user_id = get_user_id(request) or DEMO_USER_ID
-    holdings = load_mf_assets(user_id)
+    user_id = await get_user_id(request) or DEMO_USER_ID
+    holdings = await load_mf_assets(user_id)
     if not holdings:
         return JSONResponse({"dates": [], "values": [], "invested": []})
 

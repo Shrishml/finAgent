@@ -1,7 +1,7 @@
 """Update an existing financial goal."""
 import logging
 from finagent.models.goal import Goal, GOAL_TEMPLATES
-from finagent.storage.sqlite import load_goals, save_goal
+from finagent.storage import load_goals, save_goal
 
 log = logging.getLogger("finagent")
 
@@ -24,7 +24,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if not goal_id:
         return {"error": "goal_id is required"}
 
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     goal = next((g for g in goals if g.id == goal_id), None)
     if not goal:
         return {"error": f"Goal #{goal_id} not found"}
@@ -44,7 +44,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         goal.target_date = params["target_date"]
         changed.append("target_date")
 
-    save_goal(goal)
+    await save_goal(goal)
     log.info(f"[action] Goal updated: {goal.name} (id={goal_id}) for user {user_id}")
 
     tmpl = GOAL_TEMPLATES.get(goal.template, {})

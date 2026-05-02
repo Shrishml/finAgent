@@ -3,24 +3,9 @@
 Profile is stored as sectioned user_assets (personal, income, expenses, insurance, meta).
 These tests verify every field survives the save→reconstruct round-trip.
 """
-import os
-import sys
-import tempfile
-import unittest
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
+import pytest
 from finagent.models.profile import UserProfile
-
-
-def _setup_db():
-    fd, path = tempfile.mkstemp(suffix=".db")
-    os.close(fd)
-    import finagent.storage.sqlite as store
-    store._DB_PATH = Path(path)
-    store._DB_DIR = Path(path).parent
-    return path, store
+import finagent.storage as store
 
 
 # ── Field contracts by section ──────────────────────────────────────────
@@ -56,18 +41,19 @@ PROFILE_SECTIONS = {
 }
 
 
-class TestProfileRoundTrip(unittest.TestCase):
+@pytest.fixture
+async def profile_uid():
+    uid = await store.get_or_create_user("profile-rt", "p@test.com", "RT")
+    await store.clear_profile(uid)
+    return uid
+
+
+@pytest.mark.asyncio
+class TestProfileRoundTrip:
     """Save a full profile → load it → verify every field matches."""
 
-    def setUp(self):
-        self.db_path, self.store = _setup_db()
-        self.uid = self.store.get_or_create_user("profile-rt", "p@test.com", "RT")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def _full_profile(self) -> UserProfile:
-        p = UserProfile(user_id=self.uid)
+    def _full_profile(self, uid) -> UserProfile:
+        p = UserProfile(user_id=uid)
         for section in PROFILE_SECTIONS.values():
             for k, v in section["fields"].items():
                 setattr(p, k, v)
@@ -75,128 +61,127 @@ class TestProfileRoundTrip(unittest.TestCase):
         p.loans = [{"type": "home", "principal": 5000000, "emi": 45000, "rate": 8.5}]
         return p
 
-    def test_full_profile_round_trip(self):
+    async def test_full_profile_round_trip(self, profile_uid):
         """Every field in a complete profile must survive save→load."""
-        original = self._full_profile()
-        self.store.save_profile(original)
-        loaded = self.store.load_profile(self.uid)
-        self.assertIsNotNone(loaded)
+        original = self._full_profile(profile_uid)
+        await store.save_profile(original)
+        loaded = await store.load_profile(profile_uid)
+        assert loaded is not None
         for section in PROFILE_SECTIONS.values():
             for field, expected in section["fields"].items():
                 actual = getattr(loaded, field)
                 if field in section["str_fields"]:
-                    self.assertEqual(actual, expected,
-                                     f"Profile.{field}: expected {expected!r}, got {actual!r}")
+                    assert actual == expected, f"Profile.{field}: expected {expected!r}, got {actual!r}"
                 else:
-                    self.assertAlmostEqual(float(actual), float(expected), places=2,
-                                           msg=f"Profile.{field}: expected {expected}, got {actual}")
+                    assert abs(float(actual) - float(expected)) < 0.01, f"Profile.{field}: expected {expected}, got {actual}"
 
-    def test_onboarding_flag_survives(self):
-        p = self._full_profile()
-        self.store.save_profile(p)
-        loaded = self.store.load_profile(self.uid)
-        self.assertTrue(loaded.onboarding_complete)
+    async def test_onboarding_flag_survives(self, profile_uid):
+        p = self._full_profile(profile_uid)
+        await store.save_profile(p)
+        loaded = await store.load_profile(profile_uid)
+        assert loaded.onboarding_complete is True
 
-    def test_loans_survive(self):
+    async def test_loans_survive(self, profile_uid):
         """Loans are stored as user_assets type='loan', not in profile sections."""
         # Need at least one profile section for load_profile to not return None
-        self.store.update_profile(self.uid, {"name": "Test"})
+        await store.update_profile(profile_uid, {"name": "Test"})
         # Loans go through save_assets, not save_profile
-        self.store.save_assets(self.uid, "loan",
+        await store.save_assets(profile_uid, "loan",
                                [{"type": "home", "principal": 5000000, "emi": 45000, "rate": 8.5}])
-        loaded = self.store.load_profile(self.uid)
+        loaded = await store.load_profile(profile_uid)
         # load_profile reconstructs loans from loan assets
-        self.assertEqual(len(loaded.loans), 1)
-        self.assertEqual(loaded.loans[0]["type"], "home")
-        self.assertEqual(loaded.loans[0]["emi"], 45000)
+        assert len(loaded.loans) == 1
+        assert loaded.loans[0]["type"] == "home"
+        assert loaded.loans[0]["emi"] == 45000
 
 
-class TestProfilePartialUpdate(unittest.TestCase):
+@pytest.fixture
+async def partial_uid():
+    uid = await store.get_or_create_user("partial", "pa@test.com", "Partial")
+    await store.clear_profile(uid)
+    return uid
+
+
+@pytest.mark.asyncio
+class TestProfilePartialUpdate:
     """Partial updates must merge, not overwrite entire profile."""
 
-    def setUp(self):
-        self.db_path, self.store = _setup_db()
-        self.uid = self.store.get_or_create_user("partial", "pa@test.com", "Partial")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def test_update_income_preserves_personal(self):
-        p = UserProfile(user_id=self.uid, name="Suraj", age=30, monthly_income=100000)
-        self.store.save_profile(p)
+    async def test_update_income_preserves_personal(self, partial_uid):
+        p = UserProfile(user_id=partial_uid, name="Suraj", age=30, monthly_income=100000)
+        await store.save_profile(p)
         # Update only income
-        self.store.update_profile(self.uid, {"monthly_income": 150000})
-        loaded = self.store.load_profile(self.uid)
-        self.assertEqual(loaded.name, "Suraj")
-        self.assertEqual(loaded.age, 30)
-        self.assertAlmostEqual(loaded.monthly_income, 150000)
+        await store.update_profile(partial_uid, {"monthly_income": 150000})
+        loaded = await store.load_profile(partial_uid)
+        assert loaded.name == "Suraj"
+        assert loaded.age == 30
+        assert abs(loaded.monthly_income - 150000) < 0.01
 
-    def test_update_single_field_preserves_section(self):
-        self.store.update_profile(self.uid, {"monthly_income": 100000, "annual_bonus": 200000})
-        self.store.update_profile(self.uid, {"monthly_income": 120000})
-        loaded = self.store.load_profile(self.uid)
-        self.assertAlmostEqual(loaded.monthly_income, 120000)
-        self.assertAlmostEqual(loaded.annual_bonus, 200000)  # must survive
+    async def test_update_single_field_preserves_section(self, partial_uid):
+        await store.update_profile(partial_uid, {"monthly_income": 100000, "annual_bonus": 200000})
+        await store.update_profile(partial_uid, {"monthly_income": 120000})
+        loaded = await store.load_profile(partial_uid)
+        assert abs(loaded.monthly_income - 120000) < 0.01
+        assert abs(loaded.annual_bonus - 200000) < 0.01  # must survive
 
-    def test_add_expenses_after_income(self):
-        self.store.update_profile(self.uid, {"monthly_income": 100000})
-        self.store.update_profile(self.uid, {"rent": 25000, "groceries": 8000})
-        loaded = self.store.load_profile(self.uid)
-        self.assertAlmostEqual(loaded.monthly_income, 100000)
-        self.assertAlmostEqual(loaded.rent, 25000)
-        self.assertAlmostEqual(loaded.groceries, 8000)
+    async def test_add_expenses_after_income(self, partial_uid):
+        await store.update_profile(partial_uid, {"monthly_income": 100000})
+        await store.update_profile(partial_uid, {"rent": 25000, "groceries": 8000})
+        loaded = await store.load_profile(partial_uid)
+        assert abs(loaded.monthly_income - 100000) < 0.01
+        assert abs(loaded.rent - 25000) < 0.01
+        assert abs(loaded.groceries - 8000) < 0.01
 
 
-class TestProfileEdgeCases(unittest.TestCase):
+@pytest.fixture
+async def edge_uid():
+    # Use a unique user for each test to avoid state pollution
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    uid = await store.get_or_create_user(f"edge-p-{unique_id}", f"ep-{unique_id}@test.com", "Edge")
+    await store.clear_profile(uid)
+    return uid
+
+
+@pytest.mark.asyncio
+class TestProfileEdgeCases:
     """Edge cases in profile storage."""
 
-    def setUp(self):
-        self.db_path, self.store = _setup_db()
-        self.uid = self.store.get_or_create_user("edge-p", "ep@test.com", "Edge")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def test_empty_profile_loads_defaults(self):
+    async def test_empty_profile_loads_defaults(self, edge_uid):
         """User with no profile data should get default UserProfile."""
-        loaded = self.store.load_profile(self.uid)
+        loaded = await store.load_profile(edge_uid)
         # No data saved → None
-        self.assertIsNone(loaded)
+        assert loaded is None
 
-    def test_zero_values_not_lost(self):
+    async def test_zero_values_not_lost(self, edge_uid):
         """Zero is a valid value (e.g. 0 kids, 0 EMI) — must not be treated as missing."""
-        self.store.update_profile(self.uid, {"kids": 0, "emis": 0, "name": "Test"})
-        loaded = self.store.load_profile(self.uid)
-        self.assertEqual(loaded.kids, 0)
-        self.assertAlmostEqual(loaded.emis, 0)
+        await store.update_profile(edge_uid, {"kids": 0, "emis": 0, "name": "Test"})
+        loaded = await store.load_profile(edge_uid)
+        assert loaded.kids == 0
+        assert abs(loaded.emis - 0) < 0.01
 
-    def test_unicode_in_profile(self):
+    async def test_unicode_in_profile(self, edge_uid):
         """Hindi names and locations must survive."""
-        self.store.update_profile(self.uid, {"name": "सूरज", "location": "बेंगलुरु"})
-        loaded = self.store.load_profile(self.uid)
-        self.assertEqual(loaded.name, "सूरज")
-        self.assertEqual(loaded.location, "बेंगलुरु")
+        await store.update_profile(edge_uid, {"name": "सूरज", "location": "बेंगलुरु"})
+        loaded = await store.load_profile(edge_uid)
+        assert loaded.name == "सूरज"
+        assert loaded.location == "बेंगलुरु"
 
-    def test_large_income_precision(self):
+    async def test_large_income_precision(self, edge_uid):
         """₹50L/month income must not lose precision."""
-        self.store.update_profile(self.uid, {"monthly_income": 5000000})
-        loaded = self.store.load_profile(self.uid)
-        self.assertAlmostEqual(loaded.monthly_income, 5000000)
+        await store.update_profile(edge_uid, {"monthly_income": 5000000})
+        loaded = await store.load_profile(edge_uid)
+        assert abs(loaded.monthly_income - 5000000) < 0.01
 
-    def test_savings_rate_computed(self):
+    async def test_savings_rate_computed(self, edge_uid):
         """Derived property savings_rate must work after round-trip."""
-        self.store.update_profile(self.uid, {"monthly_income": 100000,
+        await store.update_profile(edge_uid, {"monthly_income": 100000,
                                               "total_monthly_expenses": 40000, "emis": 10000})
-        loaded = self.store.load_profile(self.uid)
+        loaded = await store.load_profile(edge_uid)
         # savings_rate = (100k - 40k - 10k) / 100k = 0.5
-        self.assertAlmostEqual(loaded.savings_rate, 0.5)
+        assert abs(loaded.savings_rate - 0.5) < 0.01
 
-    def test_savings_rate_zero_income(self):
+    async def test_savings_rate_zero_income(self, edge_uid):
         """savings_rate with zero income must return None, not crash."""
-        self.store.update_profile(self.uid, {"name": "Test"})
-        loaded = self.store.load_profile(self.uid)
-        self.assertIsNone(loaded.savings_rate)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        await store.update_profile(edge_uid, {"name": "Test"})
+        loaded = await store.load_profile(edge_uid)
+        assert loaded.savings_rate is None

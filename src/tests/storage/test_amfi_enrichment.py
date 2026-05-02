@@ -4,52 +4,55 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from finagent.models.mf import MFHolding
-from finagent.storage import sqlite as storage_mod
+import finagent.storage as storage_mod
 
 
+@pytest.mark.asyncio
 class TestAMFIEnrichment:
-    @pytest.fixture(autouse=True)
-    def use_tmp_db(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(storage_mod, "_DB_DIR", tmp_path)
-        monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
-
     def _make_holding(self, amfi="120503", units=100, nav=50):
         return MFHolding(scheme_name="Test Fund", folio="F1", amc="AMC",
                          amfi_code=amfi, units=units, nav=nav,
                          current_value=units * nav, expense_ratio=0.01)
 
-    def test_updates_nav_and_expense(self):
+    async def test_updates_nav_and_expense(self):
         from finagent.connectors.amfi import enrich_holdings
+        from tests.conftest import async_return
         h = self._make_holding(units=100, nav=50)
         fake_data = {"nav": 55.50, "expense_ratio": 0.63, "name": "Test", "category": "Flexi Cap"}
-        with patch("finagent.connectors.amfi._fetch_scheme", return_value=fake_data):
-            enrich_holdings([h])
+        # Mock both cache check and fetch
+        with patch("finagent.connectors.amfi.get_cached_nav", async_return(None)), \
+             patch("finagent.connectors.amfi._fetch_scheme", return_value=fake_data), \
+             patch("finagent.connectors.amfi.save_nav_cache", async_return(None)):
+            await enrich_holdings([h])
         assert h.nav == 55.50
         assert h.current_value == 5550.0
         assert h.expense_ratio == 0.0063  # 0.63% → 0.0063
 
-    def test_uses_cache_when_available(self):
+    async def test_uses_cache_when_available(self):
         from finagent.connectors.amfi import enrich_holdings
-        storage_mod.save_nav_cache("120503", 60.0, "Test", 0.005)
+        await storage_mod.save_nav_cache("120503", 60.0, "Test", 0.005)
         h = self._make_holding(units=100)
         with patch("finagent.connectors.amfi._fetch_scheme") as mock_fetch:
-            enrich_holdings([h])
+            await enrich_holdings([h])
             mock_fetch.assert_not_called()
         assert h.nav == 60.0
         assert h.expense_ratio == 0.005
 
-    def test_skips_holding_without_amfi_code(self):
+    async def test_skips_holding_without_amfi_code(self):
         from finagent.connectors.amfi import enrich_holdings
         h = self._make_holding(amfi="")
         with patch("finagent.connectors.amfi._fetch_scheme") as mock_fetch:
-            enrich_holdings([h])
+            await enrich_holdings([h])
             mock_fetch.assert_not_called()
 
-    def test_handles_fetch_failure_gracefully(self):
+    async def test_handles_fetch_failure_gracefully(self):
         from finagent.connectors.amfi import enrich_holdings
+        from tests.conftest import async_return
         h = self._make_holding(units=100, nav=50)
-        with patch("finagent.connectors.amfi._fetch_scheme", side_effect=Exception("timeout")):
-            enrich_holdings([h])
+        # Mock cache miss and fetch failure
+        with patch("finagent.connectors.amfi.get_cached_nav", async_return(None)), \
+             patch("finagent.connectors.amfi._fetch_scheme", side_effect=Exception("timeout")):
+            await enrich_holdings([h])
         assert h.nav == 50  # unchanged
 
     def test_fetch_scheme_sends_user_agent(self):

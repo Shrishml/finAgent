@@ -1,6 +1,6 @@
 """Action: collect_profile_data — collect or auto-save structured profile data."""
 import logging
-from finagent.storage.sqlite import save_assets, load_assets
+from finagent.storage import save_assets, load_assets
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         except Exception: prefill = {}
 
     # Load existing data for this type
-    existing = load_assets(user_id, card_type)
+    existing = await load_assets(user_id, card_type)
     required = REQUIRED_FIELDS.get(card_type, set())
 
     # If user has existing data and prefill is partial → merge update
@@ -98,7 +98,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
             if e is target:
                 item = merged
             all_items.append(item)
-        save_assets(user_id, card_type, all_items)
+        await save_assets(user_id, card_type, all_items)
         log.info(f"[action] collect_profile_data: merge-updated {card_type} for user {user_id}")
         return {
             "message": f"✅ Updated your {card_type} profile.",
@@ -112,7 +112,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         # Add new item (strip id/asset_type from existing format)
         items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in items]
         items.append(prefill)
-        save_assets(user_id, card_type, items)
+        await save_assets(user_id, card_type, items)
         log.info(f"[action] collect_profile_data: saved new {card_type} for user {user_id}")
         return {
             "message": f"✅ Saved to your profile.",

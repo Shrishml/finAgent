@@ -14,7 +14,7 @@ os.environ["DEV_MODE"] = "1"
 import pytest
 from fastapi.testclient import TestClient
 from finagent.main import app
-from finagent.storage import sqlite as storage_mod
+import finagent.storage as storage_mod
 
 COOKIES = {"session": "arth-dev"}
 

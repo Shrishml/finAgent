@@ -1,4 +1,6 @@
 """Integration tests: full pipeline upload → store → chat."""
+import os
+import shutil
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from pathlib import Path
@@ -6,28 +8,50 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from finagent.main import app
-from finagent.storage import sqlite as storage_mod
+import finagent.storage as storage_mod
+from tests.conftest import async_return
+
+
+def _llm_available():
+    """Check if an LLM provider is available."""
+    if os.environ.get("GEMINI_API_KEY"):
+        return True
+    if shutil.which("gemini") or shutil.which("kiro-cli"):
+        return True
+    return False
 
 
 @pytest.fixture(autouse=True)
 def use_tmp_db(tmp_path, monkeypatch):
+    from finagent.storage import database as db_mod
+    import asyncio
     monkeypatch.setattr(storage_mod, "_DB_DIR", tmp_path)
     monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
+    test_db_url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
+    monkeypatch.setenv("DATABASE_URL", test_db_url)
+    db_mod._engine = None
+    db_mod._async_session_factory = None
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.run_until_complete(db_mod.init_db())
 
 
 @pytest.fixture(autouse=True)
 def skip_enrichment(monkeypatch):
-    monkeypatch.setattr("finagent.api.holdings.enrich_holdings", lambda h: h)
+    monkeypatch.setattr("finagent.api.holdings.enrich_holdings", async_return(None))
 
 
 @pytest.fixture(autouse=True)
 def mock_auth(monkeypatch):
-    monkeypatch.setattr("finagent.api.deps.get_user_id", lambda r: 1)
-    monkeypatch.setattr("finagent.api.holdings.get_user_id", lambda r: 1)
-    monkeypatch.setattr("finagent.api.chat.get_user_id", lambda r: 1)
-    monkeypatch.setattr("finagent.api.deps.require_auth", lambda r: 1)
-    monkeypatch.setattr("finagent.api.holdings.require_auth", lambda r: 1)
-    monkeypatch.setattr("finagent.api.chat.require_auth", lambda r: 1)
+    monkeypatch.setattr("finagent.api.deps.get_user_id", async_return(1))
+    monkeypatch.setattr("finagent.api.holdings.get_user_id", async_return(1))
+    monkeypatch.setattr("finagent.api.chat.get_user_id", async_return(1))
+    monkeypatch.setattr("finagent.api.deps.require_auth", async_return(1))
+    monkeypatch.setattr("finagent.api.holdings.require_auth", async_return(1))
+    monkeypatch.setattr("finagent.api.chat.require_auth", async_return(1))
 
 
 @pytest.fixture
@@ -52,10 +76,19 @@ def _mock_casparser_data():
     return cas_data
 
 
+def _mock_llm():
+    """Create a mock LLM provider."""
+    mock = MagicMock()
+    mock.complete = AsyncMock(return_value="This is a helpful response about your financial question.")
+    return mock
+
+
+@pytest.mark.skipif(not _llm_available(), reason="No LLM provider available")
 class TestChatPipeline:
     def test_chat_with_no_data(self, client):
         with patch("finagent.orchestrator.engine.classify_intent", new_callable=AsyncMock,
-                   return_value={"domain": "mf", "mode": "analyze"}):
+                   return_value={"domain": "mf", "mode": "analyze"}), \
+             patch("finagent.llm.get_provider", return_value=_mock_llm()):
             resp = client.post("/chat", data={"query": "What are my expense ratios?"})
         data = resp.json()
         assert data["status"] == "ok"

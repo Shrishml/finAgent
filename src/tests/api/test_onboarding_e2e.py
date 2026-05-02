@@ -1,28 +1,52 @@
 """E2E onboarding test: UI cards → chat → verify advisor LLM sees full profile context."""
 import json
+import os
+import shutil
 import pytest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from finagent.main import app
-from finagent.storage import sqlite as storage_mod
+import finagent.storage as storage_mod
+from tests.conftest import async_return
 
 _TEST_UID = 999
 
 
+def _llm_available():
+    """Check if an LLM provider is available."""
+    if os.environ.get("GEMINI_API_KEY"):
+        return True
+    if shutil.which("gemini") or shutil.which("kiro-cli"):
+        return True
+    return False
+
+
 @pytest.fixture(autouse=True)
 def use_tmp_db(tmp_path, monkeypatch):
+    from finagent.storage import database as db_mod
+    import asyncio
     monkeypatch.setattr(storage_mod, "_DB_DIR", tmp_path)
     monkeypatch.setattr(storage_mod, "_DB_PATH", tmp_path / "test.db")
+    test_db_url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
+    monkeypatch.setenv("DATABASE_URL", test_db_url)
+    db_mod._engine = None
+    db_mod._async_session_factory = None
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.run_until_complete(db_mod.init_db())
 
 
 @pytest.fixture(autouse=True)
 def mock_auth(monkeypatch):
     """Bypass auth — all requests return a fixed test user_id."""
-    monkeypatch.setattr("finagent.api.deps.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.chat.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.profile.get_user_id", lambda r: _TEST_UID)
-    monkeypatch.setattr("finagent.api.deps.require_auth", lambda r: _TEST_UID)
+    monkeypatch.setattr("finagent.api.deps.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.chat.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.profile.get_user_id", async_return(_TEST_UID))
+    monkeypatch.setattr("finagent.api.deps.require_auth", async_return(_TEST_UID))
 
 
 @pytest.fixture
@@ -30,6 +54,7 @@ def client():
     return TestClient(app)
 
 
+@pytest.mark.skipif(not _llm_available(), reason="No LLM provider available")
 class TestOnboardingE2EPersonalisation:
 
     def _submit_cards(self, client):

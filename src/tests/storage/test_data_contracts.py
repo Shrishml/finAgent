@@ -3,16 +3,7 @@
 Extract → save_assets → load_assets → verify all fields present with correct types.
 These catch silent data loss, type corruption, and field renaming bugs.
 """
-import json
-import os
-import sqlite3
-import sys
-import tempfile
-import unittest
-from pathlib import Path
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+import pytest
 
 # ── Asset contracts: required fields + types per asset type ──────────────
 # Each contract defines what MUST survive the round-trip.
@@ -75,277 +66,283 @@ ASSET_CONTRACTS = {
 }
 
 
-def _temp_db():
-    """Patch sqlite to use a temp DB."""
-    fd, path = tempfile.mkstemp(suffix=".db")
-    os.close(fd)
-    return path
+@pytest.fixture
+async def store_and_uid():
+    import finagent.storage as store
+    uid = await store.get_or_create_user("test-contract", "c@test.com", "Contract")
+    # Clean up all asset types before each test
+    for asset_type in ASSET_CONTRACTS.keys():
+        await store.save_assets(uid, asset_type, [])
+    return store, uid
 
 
-class TestAssetRoundTrip(unittest.TestCase):
+@pytest.mark.asyncio
+class TestAssetRoundTrip:
     """For every asset type: save → load → verify all fields survive."""
 
-    def setUp(self):
-        self.db_path = _temp_db()
-        # Patch DB path
-        import finagent.storage.sqlite as store
-        store._DB_PATH = Path(self.db_path)
-        store._DB_DIR = Path(self.db_path).parent
-        self.store = store
-        # Create a test user
-        self.uid = store.get_or_create_user("test-contract", "c@test.com", "Contract")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def test_round_trip_all_asset_types(self):
+    @pytest.mark.parametrize("asset_type,contract", ASSET_CONTRACTS.items())
+    async def test_round_trip_asset_type(self, store_and_uid, asset_type, contract):
         """Every asset type's sample data must survive save→load unchanged."""
-        for asset_type, contract in ASSET_CONTRACTS.items():
-            with self.subTest(asset_type=asset_type):
-                sample = contract["sample"].copy()
-                self.store.save_assets(self.uid, asset_type, [sample])
-                loaded = self.store.load_assets(self.uid, asset_type)
-                self.assertEqual(len(loaded), 1, f"{asset_type}: expected 1 row, got {len(loaded)}")
-                data = loaded[0]
-                for key, val in sample.items():
-                    self.assertIn(key, data, f"{asset_type}: field '{key}' lost in round-trip")
-                    self.assertEqual(data[key], val,
-                                     f"{asset_type}.{key}: saved {val!r}, loaded {data[key]!r}")
+        store, uid = store_and_uid
+        sample = contract["sample"].copy()
+        await store.save_assets(uid, asset_type, [sample])
+        loaded = await store.load_assets(uid, asset_type)
+        assert len(loaded) == 1, f"{asset_type}: expected 1 row, got {len(loaded)}"
+        data = loaded[0]
+        for key, val in sample.items():
+            assert key in data, f"{asset_type}: field '{key}' lost in round-trip"
+            assert data[key] == val, f"{asset_type}.{key}: saved {val!r}, loaded {data[key]!r}"
 
-    def test_required_fields_present(self):
+    @pytest.mark.parametrize("asset_type,contract", ASSET_CONTRACTS.items())
+    async def test_required_fields_present(self, store_and_uid, asset_type, contract):
         """Required fields must exist and have correct types after load."""
-        for asset_type, contract in ASSET_CONTRACTS.items():
-            with self.subTest(asset_type=asset_type):
-                self.store.save_assets(self.uid, asset_type, [contract["sample"]])
-                loaded = self.store.load_assets(self.uid, asset_type)[0]
-                for field, expected_type in contract["required"].items():
-                    self.assertIn(field, loaded, f"{asset_type}: required field '{field}' missing")
-                    self.assertIsInstance(loaded[field], expected_type,
-                                         f"{asset_type}.{field}: expected {expected_type}, got {type(loaded[field])}")
+        store, uid = store_and_uid
+        await store.save_assets(uid, asset_type, [contract["sample"]])
+        loaded = (await store.load_assets(uid, asset_type))[0]
+        for field, expected_type in contract["required"].items():
+            assert field in loaded, f"{asset_type}: required field '{field}' missing"
+            assert isinstance(loaded[field], expected_type), \
+                f"{asset_type}.{field}: expected {expected_type}, got {type(loaded[field])}"
 
-    def test_numeric_fields_are_numbers(self):
+    @pytest.mark.parametrize("asset_type,contract", ASSET_CONTRACTS.items())
+    async def test_numeric_fields_are_numbers(self, store_and_uid, asset_type, contract):
         """Numeric fields must load as int or float, not strings."""
-        for asset_type, contract in ASSET_CONTRACTS.items():
-            with self.subTest(asset_type=asset_type):
-                self.store.save_assets(self.uid, asset_type, [contract["sample"]])
-                loaded = self.store.load_assets(self.uid, asset_type)[0]
-                for field in contract.get("numeric", []):
-                    if field in loaded and loaded[field] is not None:
-                        self.assertIsInstance(loaded[field], (int, float),
-                                             f"{asset_type}.{field}: expected number, got {type(loaded[field])}")
+        store, uid = store_and_uid
+        await store.save_assets(uid, asset_type, [contract["sample"]])
+        loaded = (await store.load_assets(uid, asset_type))[0]
+        for field in contract.get("numeric", []):
+            if field in loaded and loaded[field] is not None:
+                assert isinstance(loaded[field], (int, float)), \
+                    f"{asset_type}.{field}: expected number, got {type(loaded[field])}"
 
-    def test_multiple_items_per_type(self):
+    async def test_multiple_items_per_type(self, store_and_uid):
         """Multiple assets of same type must all survive."""
+        store, uid = store_and_uid
         fd1 = {"bank": "SBI", "amount": 500000, "rate": 7.1}
         fd2 = {"bank": "HDFC", "amount": 300000, "rate": 6.8}
-        self.store.save_assets(self.uid, "fd", [fd1, fd2])
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertEqual(len(loaded), 2)
+        await store.save_assets(uid, "fd", [fd1, fd2])
+        loaded = await store.load_assets(uid, "fd")
+        assert len(loaded) == 2
         banks = {d["bank"] for d in loaded}
-        self.assertEqual(banks, {"SBI", "HDFC"})
+        assert banks == {"SBI", "HDFC"}
 
-    def test_save_overwrites_not_appends(self):
+    async def test_save_overwrites_not_appends(self, store_and_uid):
         """save_assets replaces all items of that type, not appends."""
-        self.store.save_assets(self.uid, "fd", [{"bank": "SBI", "amount": 100}])
-        self.store.save_assets(self.uid, "fd", [{"bank": "HDFC", "amount": 200}])
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["bank"], "HDFC")
+        store, uid = store_and_uid
+        await store.save_assets(uid, "fd", [{"bank": "SBI", "amount": 100}])
+        await store.save_assets(uid, "fd", [{"bank": "HDFC", "amount": 200}])
+        loaded = await store.load_assets(uid, "fd")
+        assert len(loaded) == 1
+        assert loaded[0]["bank"] == "HDFC"
 
-    def test_empty_list_clears_assets(self):
+    async def test_empty_list_clears_assets(self, store_and_uid):
         """Saving empty list should remove all assets of that type."""
-        self.store.save_assets(self.uid, "gold", [{"type": "sgb", "value": 100}])
-        self.store.save_assets(self.uid, "gold", [])
-        loaded = self.store.load_assets(self.uid, "gold")
-        self.assertEqual(len(loaded), 0)
+        store, uid = store_and_uid
+        await store.save_assets(uid, "gold", [{"type": "sgb", "value": 100}])
+        await store.save_assets(uid, "gold", [])
+        loaded = await store.load_assets(uid, "gold")
+        assert len(loaded) == 0
 
-    def test_asset_types_isolated(self):
+    async def test_asset_types_isolated(self, store_and_uid):
         """Saving one asset type must not affect another."""
-        self.store.save_assets(self.uid, "fd", [{"bank": "SBI", "amount": 100}])
-        self.store.save_assets(self.uid, "gold", [{"type": "sgb", "value": 200}])
-        self.store.save_assets(self.uid, "fd", [{"bank": "HDFC", "amount": 300}])
-        gold = self.store.load_assets(self.uid, "gold")
-        self.assertEqual(len(gold), 1)
-        self.assertEqual(gold[0]["value"], 200)
+        store, uid = store_and_uid
+        await store.save_assets(uid, "fd", [{"bank": "SBI", "amount": 100}])
+        await store.save_assets(uid, "gold", [{"type": "sgb", "value": 200}])
+        await store.save_assets(uid, "fd", [{"bank": "HDFC", "amount": 300}])
+        gold = await store.load_assets(uid, "gold")
+        assert len(gold) == 1
+        assert gold[0]["value"] == 200
 
 
-class TestExtractionToStorage(unittest.TestCase):
+@pytest.fixture
+async def extract_fixture():
+    import finagent.storage as store
+    uid = await store.get_or_create_user("test-extract", "e@test.com", "Extract")
+    # Clean up all asset types before each test
+    for asset_type in ASSET_CONTRACTS.keys():
+        await store.save_assets(uid, asset_type, [])
+    return store, uid
+
+
+@pytest.mark.asyncio
+class TestExtractionToStorage:
     """Test that apply_extractions correctly routes data to storage."""
 
-    def setUp(self):
-        self.db_path = _temp_db()
-        import finagent.storage.sqlite as store
-        store._DB_PATH = Path(self.db_path)
-        store._DB_DIR = Path(self.db_path).parent
-        self.store = store
-        self.uid = store.get_or_create_user("test-extract", "e@test.com", "Extract")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def _profile(self):
+    def _profile(self, uid):
         from finagent.models.profile import UserProfile
-        return UserProfile(user_id=self.uid)
+        return UserProfile(user_id=uid)
 
-    def test_epf_extraction_saves_to_assets(self):
+    async def test_epf_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"epf_balance": 850000, "epf_contribution": 15000})
-        loaded = self.store.load_assets(self.uid, "epf_ppf")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["epf_balance"], 850000)
-        self.assertEqual(loaded[0]["epf_contribution"], 15000)
+        p = self._profile(uid)
+        await apply_extractions(p, {"epf_balance": 850000, "epf_contribution": 15000})
+        loaded = await store.load_assets(uid, "epf_ppf")
+        assert len(loaded) == 1
+        assert loaded[0]["epf_balance"] == 850000
+        assert loaded[0]["epf_contribution"] == 15000
 
-    def test_mf_sip_extraction_saves_to_assets(self):
+    async def test_mf_sip_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"mf_sips": [
+        p = self._profile(uid)
+        await apply_extractions(p, {"mf_sips": [
             {"scheme": "PPFAS Flexi Cap", "monthly_sip": 10000, "current_value": 250000}
         ]})
-        loaded = self.store.load_assets(self.uid, "mf")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["scheme"], "PPFAS Flexi Cap")
-        self.assertEqual(loaded[0]["monthly_sip"], 10000)
+        loaded = await store.load_assets(uid, "mf")
+        assert len(loaded) == 1
+        assert loaded[0]["scheme"] == "PPFAS Flexi Cap"
+        assert loaded[0]["monthly_sip"] == 10000
 
-    def test_fd_extraction_saves_to_assets(self):
+    async def test_fd_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"fds": [
+        p = self._profile(uid)
+        await apply_extractions(p, {"fds": [
             {"bank": "SBI", "amount": 500000, "rate": 7.1, "maturity": "2027-06"}
         ]})
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["bank"], "SBI")
-        self.assertEqual(loaded[0]["amount"], 500000)
+        loaded = await store.load_assets(uid, "fd")
+        assert len(loaded) == 1
+        assert loaded[0]["bank"] == "SBI"
+        assert loaded[0]["amount"] == 500000
 
-    def test_gold_extraction_saves_to_assets(self):
+    async def test_gold_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"gold": [
+        p = self._profile(uid)
+        await apply_extractions(p, {"gold": [
             {"type": "sgb", "current_value": 300000, "weight_grams": 50}
         ]})
-        loaded = self.store.load_assets(self.uid, "gold")
-        self.assertEqual(len(loaded), 1)
+        loaded = await store.load_assets(uid, "gold")
+        assert len(loaded) == 1
         # current_value gets normalized to value
-        self.assertEqual(loaded[0].get("value", loaded[0].get("current_value")), 300000)
+        assert loaded[0].get("value", loaded[0].get("current_value")) == 300000
 
-    def test_realestate_extraction_saves_to_assets(self):
+    async def test_realestate_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"real_estate": [
+        p = self._profile(uid)
+        await apply_extractions(p, {"real_estate": [
             {"type": "self_occupied", "location": "Bangalore",
              "current_value": 8000000, "purchase_price": 5000000}
         ]})
-        loaded = self.store.load_assets(self.uid, "realestate")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["current_value"], 8000000)
+        loaded = await store.load_assets(uid, "realestate")
+        assert len(loaded) == 1
+        assert loaded[0]["current_value"] == 8000000
 
-    def test_esop_extraction_saves_to_assets(self):
+    async def test_esop_extraction_saves_to_assets(self, extract_fixture):
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"esop_company": "Amazon", "esop_vested": 5000000,
+        p = self._profile(uid)
+        await apply_extractions(p, {"esop_company": "Amazon", "esop_vested": 5000000,
                               "esop_unvested": 3000000})
-        loaded = self.store.load_assets(self.uid, "esop")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["company"], "Amazon")
-        self.assertEqual(loaded[0]["vested"], 5000000)
+        loaded = await store.load_assets(uid, "esop")
+        assert len(loaded) == 1
+        assert loaded[0]["company"] == "Amazon"
+        assert loaded[0]["vested"] == 5000000
 
-    def test_profile_fields_saved_to_profile(self):
+    async def test_profile_fields_saved_to_profile(self, extract_fixture):
         """Profile fields (income, expenses) go to profile, not assets."""
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"monthly_income": 150000, "age": 30, "name": "Suraj"})
-        self.assertEqual(p.monthly_income, 150000)
-        self.assertEqual(p.age, 30)
-        self.assertEqual(p.name, "Suraj")
+        p = self._profile(uid)
+        await apply_extractions(p, {"monthly_income": 150000, "age": 30, "name": "Suraj"})
+        assert p.monthly_income == 150000
+        assert p.age == 30
+        assert p.name == "Suraj"
 
-    def test_loan_extraction_saves_to_profile(self):
+    async def test_loan_extraction_saves_to_profile(self, extract_fixture):
         """Loans are stored on the profile object, not in user_assets."""
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"loans": [
+        p = self._profile(uid)
+        await apply_extractions(p, {"loans": [
             {"type": "home", "principal": 5000000, "emi": 45000, "rate": 8.5}
         ]})
-        self.assertEqual(len(p.loans), 1)
-        self.assertEqual(p.loans[0]["type"], "home")
-        self.assertEqual(p.loans[0]["principal"], 5000000)
+        assert len(p.loans) == 1
+        assert p.loans[0]["type"] == "home"
+        assert p.loans[0]["principal"] == 5000000
 
-    def test_update_existing_asset_merges(self):
+    async def test_update_existing_asset_merges(self, extract_fixture):
         """Second extraction for same asset type should merge, not duplicate."""
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"epf_balance": 500000})
-        apply_extractions(p, {"epf_contribution": 15000})
-        loaded = self.store.load_assets(self.uid, "epf_ppf")
-        self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0]["epf_balance"], 500000)
-        self.assertEqual(loaded[0]["epf_contribution"], 15000)
+        p = self._profile(uid)
+        await apply_extractions(p, {"epf_balance": 500000})
+        await apply_extractions(p, {"epf_contribution": 15000})
+        loaded = await store.load_assets(uid, "epf_ppf")
+        assert len(loaded) == 1
+        assert loaded[0]["epf_balance"] == 500000
+        assert loaded[0]["epf_contribution"] == 15000
 
-    def test_pending_items_not_saved(self):
+    async def test_pending_items_not_saved(self, extract_fixture):
         """Incomplete mentions (pending) should NOT create asset rows."""
+        store, uid = extract_fixture
         from finagent.agents.onboarding import apply_extractions
-        p = self._profile()
-        apply_extractions(p, {"mf_sips": [{"scheme": "ICICI Small Cap"}],
+        p = self._profile(uid)
+        await apply_extractions(p, {"mf_sips": [{"scheme": "ICICI Small Cap"}],
                               "_pending": ["ICICI Small Cap: no amount provided"]})
-        loaded = self.store.load_assets(self.uid, "mf")
+        loaded = await store.load_assets(uid, "mf")
         # Should not save MF with only scheme name and no data
-        self.assertEqual(len(loaded), 0)
+        assert len(loaded) == 0
 
 
-class TestDataCorruptionGuards(unittest.TestCase):
+@pytest.fixture
+async def corrupt_fixture():
+    import finagent.storage as store
+    uid = await store.get_or_create_user("test-corrupt", "x@test.com", "Corrupt")
+    # Clean up all asset types before each test
+    for asset_type in ASSET_CONTRACTS.keys():
+        await store.save_assets(uid, asset_type, [])
+    return store, uid
+
+
+@pytest.mark.asyncio
+class TestDataCorruptionGuards:
     """Test that bad data doesn't silently corrupt storage."""
 
-    def setUp(self):
-        self.db_path = _temp_db()
-        import finagent.storage.sqlite as store
-        store._DB_PATH = Path(self.db_path)
-        store._DB_DIR = Path(self.db_path).parent
-        self.store = store
-        self.uid = store.get_or_create_user("test-corrupt", "x@test.com", "Corrupt")
-
-    def tearDown(self):
-        os.unlink(self.db_path)
-
-    def test_none_values_handled(self):
+    async def test_none_values_handled(self, corrupt_fixture):
         """None values in data should not cause load failures."""
-        self.store.save_assets(self.uid, "fd", [{"bank": "SBI", "amount": None, "rate": None}])
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertEqual(len(loaded), 1)
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "fd", [{"bank": "SBI", "amount": None, "rate": None}])
+        loaded = await store.load_assets(uid, "fd")
+        assert len(loaded) == 1
         # Should load without crashing
 
-    def test_unicode_in_fields(self):
+    async def test_unicode_in_fields(self, corrupt_fixture):
         """Unicode characters (Hindi fund names, etc.) must survive."""
-        self.store.save_assets(self.uid, "gold", [{"type": "physical", "note": "सोना 24K"}])
-        loaded = self.store.load_assets(self.uid, "gold")
-        self.assertEqual(loaded[0]["note"], "सोना 24K")
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "gold", [{"type": "physical", "note": "सोना 24K"}])
+        loaded = await store.load_assets(uid, "gold")
+        assert loaded[0]["note"] == "सोना 24K"
 
-    def test_large_number_precision(self):
+    async def test_large_number_precision(self, corrupt_fixture):
         """Large numbers (crores) must not lose precision."""
-        self.store.save_assets(self.uid, "realestate",
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "realestate",
                                [{"type": "plot", "current_value": 150000000}])  # 15 Cr
-        loaded = self.store.load_assets(self.uid, "realestate")
-        self.assertEqual(loaded[0]["current_value"], 150000000)
+        loaded = await store.load_assets(uid, "realestate")
+        assert loaded[0]["current_value"] == 150000000
 
-    def test_float_precision(self):
+    async def test_float_precision(self, corrupt_fixture):
         """Interest rates and NAVs must preserve decimal precision."""
-        self.store.save_assets(self.uid, "fd", [{"bank": "SBI", "amount": 100, "rate": 7.125}])
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertAlmostEqual(loaded[0]["rate"], 7.125, places=3)
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "fd", [{"bank": "SBI", "amount": 100, "rate": 7.125}])
+        loaded = await store.load_assets(uid, "fd")
+        assert abs(loaded[0]["rate"] - 7.125) < 0.001
 
-    def test_empty_string_fields(self):
+    async def test_empty_string_fields(self, corrupt_fixture):
         """Empty strings should not be confused with missing fields."""
-        self.store.save_assets(self.uid, "esop", [{"company": "", "vested": 0}])
-        loaded = self.store.load_assets(self.uid, "esop")
-        self.assertIn("company", loaded[0])
-        self.assertEqual(loaded[0]["company"], "")
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "esop", [{"company": "", "vested": 0}])
+        loaded = await store.load_assets(uid, "esop")
+        assert "company" in loaded[0]
+        assert loaded[0]["company"] == ""
 
-    def test_extra_fields_preserved(self):
+    async def test_extra_fields_preserved(self, corrupt_fixture):
         """Unknown fields from LLM should be preserved, not dropped."""
-        self.store.save_assets(self.uid, "fd",
+        store, uid = corrupt_fixture
+        await store.save_assets(uid, "fd",
                                [{"bank": "SBI", "amount": 100, "unexpected_field": "keep me"}])
-        loaded = self.store.load_assets(self.uid, "fd")
-        self.assertEqual(loaded[0]["unexpected_field"], "keep me")
-
-
-if __name__ == "__main__":
-    unittest.main()
+        loaded = await store.load_assets(uid, "fd")
+        assert loaded[0]["unexpected_field"] == "keep me"

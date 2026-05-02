@@ -8,7 +8,7 @@ from dataclasses import asdict
 from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import extract_profile_data, apply_extractions
 from finagent.orchestrator.router import classify_intent
-from finagent.storage.sqlite import (
+from finagent.storage import (
     load_mf_assets, reconcile_and_save, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
     load_assets, load_goals, save_goal,
@@ -24,7 +24,7 @@ _mf_agent = MFAgent()
 _ACTION_RE = re.compile(r'\[ACTION:\s*(\w+)\(([^)]*)\)\]')
 
 
-def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
+async def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     """Build profile JSON and missing-fields hint for the prompt."""
     if not profile:
         return "{}", "No profile data yet. Ask the user about their financial situation."
@@ -61,7 +61,7 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
     }
     # Append structured assets (FDs, ESOP, gold, etc.) — skip flat sections already above
     FLAT_TYPES = {"personal", "income", "expenses", "meta"}
-    assets = load_assets(user_id) if user_id and user_id > 0 else []
+    assets = await load_assets(user_id) if user_id and user_id > 0 else []
 
     # Compute freshness before mutating the list
     stale = get_stale_fields(assets, threshold=0.5) if assets else []
@@ -86,7 +86,7 @@ def _build_profile_context(profile, user_id: int) -> tuple[str, str]:
             data["assets"] = by_type
 
     # Inject saved goals so LLM sees existing goals before creating new ones
-    goals = load_goals(user_id) if user_id and user_id > 0 else []
+    goals = await load_goals(user_id) if user_id and user_id > 0 else []
     if goals:
         data["existing_goals"] = [
             {"id": g.id, "name": g.name, "template": g.template,
@@ -206,9 +206,9 @@ def _parse_action_params(params_str: str) -> dict:
     return params
 
 
-def _maybe_suggest_emergency_fund(user_id: int, profile):
+async def _maybe_suggest_emergency_fund(user_id: int, profile):
     """Auto-create a suggested emergency fund goal if none exists."""
-    goals = load_goals(user_id)
+    goals = await load_goals(user_id)
     if any(g.template == "emergency" for g in goals):
         return  # already has one (active or suggested)
     target = round(profile.total_monthly_expenses * 6)
@@ -220,7 +220,7 @@ def _maybe_suggest_emergency_fund(user_id: int, profile):
         target_amount=target, target_date="", status="suggested",
         growth_rate=0,  # auto-fills from template
     )
-    gid = save_goal(goal)
+    gid = await save_goal(goal)
     log.info(f"[orchestrator] auto-suggested emergency fund goal id={gid} target={target}")
 
 
@@ -232,19 +232,19 @@ async def _maybe_extract_and_update(query: str, user_id: int | None, profile) ->
     if len(query) < 10 or query.startswith("/") or query == "__onboarding_init__":
         return False, {}
 
-    recent = load_conversation(user_id, limit=3) if user_id and user_id > 0 else []
+    recent = await load_conversation(user_id, limit=3) if user_id and user_id > 0 else []
     extractions = await extract_profile_data(query, profile, recent_messages=recent)
     if not extractions:
         log.debug("[orchestrator] extraction: no data found in message")
         return False, {}
 
-    changed = apply_extractions(profile, extractions)
+    changed = await apply_extractions(profile, extractions)
     if changed:
-        save_profile(profile)
+        await save_profile(profile)
         log.info(f"[orchestrator] extracted and saved: {list(extractions.keys())}")
         # Auto-create suggested emergency fund goal when expenses become available
         if profile.total_monthly_expenses > 0 and user_id and user_id > 0:
-            _maybe_suggest_emergency_fund(user_id, profile)
+            await _maybe_suggest_emergency_fund(user_id, profile)
     else:
         log.debug(f"[orchestrator] extraction found {list(extractions.keys())} but no changes")
 
@@ -259,7 +259,7 @@ async def _maybe_update_snapshot(user_id: int, profile, profile_changed: bool):
     has_data = (profile.monthly_income > 0 or profile.monthly_expenses > 0) and profile.age > 0
     if not has_data:
         return
-    snap = get_latest_snapshot(user_id)
+    snap = await get_latest_snapshot(user_id)
     if snap:
         # Don't regenerate too frequently — at most once per conversation
         return
@@ -282,11 +282,11 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     if skip_extraction:
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
-    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    profile = await load_profile(user_id) if user_id and user_id > 0 else None
     if not profile and user_id and user_id > 0:
         from finagent.models.profile import UserProfile
         profile = UserProfile(user_id=user_id)
-        save_profile(profile)
+        await save_profile(profile)
 
     # Continuous extraction — skip for onboarding init (data already saved from cards)
     profile_changed, extractions = (False, {}) if skip_extraction else await _maybe_extract_and_update(query, user_id, profile)
@@ -302,12 +302,12 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
         log.debug(f"[orchestrator] overriding intent to general — pending extraction data")
 
     if _is_mf_query(query, intent):
-        holdings = load_mf_assets(user_id)
+        holdings = await load_mf_assets(user_id)
         if holdings:
             if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
                 try:
-                    holdings = enrich_holdings(holdings)
-                    reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
+                    holdings = await enrich_holdings(holdings)
+                    await reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
                 except Exception:
                     pass
             if intent["mode"] == "deep_dive":
@@ -329,11 +329,11 @@ async def handle_query_stream(query: str, user_id: int | None = None):
     if skip_extraction:
         query = "I just filled in my financial details. What are your initial thoughts? What should I focus on?"
 
-    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    profile = await load_profile(user_id) if user_id and user_id > 0 else None
     if not profile and user_id and user_id > 0:
         from finagent.models.profile import UserProfile
         profile = UserProfile(user_id=user_id)
-        save_profile(profile)
+        await save_profile(profile)
         log.debug("[orchestrator] created new empty profile")
 
     # Continuous extraction — skip for onboarding init (data already saved from cards)
@@ -353,13 +353,13 @@ async def handle_query_stream(query: str, user_id: int | None = None):
 
     if _is_mf_query(query, intent):
         log.debug("[orchestrator] routing to MF agent")
-        holdings = load_mf_assets(user_id)
+        holdings = await load_mf_assets(user_id)
         if holdings:
             if any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
                 try:
                     yield "[STATUS] Enriching fund data..."
-                    holdings = enrich_holdings(holdings)
-                    reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
+                    holdings = await enrich_holdings(holdings)
+                    await reconcile_and_save(user_id, "mf", holdings, source_detail="cas_upload")
                 except Exception:
                     pass
             yield f"[STATUS] Reviewing {len(holdings)} funds..."
@@ -378,16 +378,16 @@ async def _advisor_respond(query: str, user_id: int | None, profile=None, extrac
     from finagent.llm import get_provider
 
     if not profile:
-        profile = load_profile(user_id) if user_id and user_id > 0 else None
-    conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
+        profile = await load_profile(user_id) if user_id and user_id > 0 else None
+    conversation = await load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
 
-    profile_json, profile_hint = _build_profile_context(profile, user_id)
+    profile_json, profile_hint = await _build_profile_context(profile, user_id)
     conv_str = "\n".join(
         f"{'User' if m['role'] == 'user' else 'Arth'}: {m['content']}"
         for m in conversation[-10:]
     ) or "No prior conversation"
 
-    snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
+    snapshot = await get_latest_snapshot(user_id) if user_id and user_id > 0 else None
     snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
 
     ext_hint = _extraction_hint(extractions or {})
@@ -401,13 +401,13 @@ async def _advisor_respond(query: str, user_id: int | None, profile=None, extrac
     )
 
     if user_id and user_id > 0:
-        save_message(user_id, "user", query, {"type": "advisor"})
+        await save_message(user_id, "user", query, {"type": "advisor"})
 
     llm = get_provider("default")
     response = await llm.complete(prompt)
 
     if user_id and user_id > 0:
-        save_message(user_id, "assistant", response, {"type": "advisor"})
+        await save_message(user_id, "assistant", response, {"type": "advisor"})
 
     return response
 
@@ -417,10 +417,10 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
     from finagent.llm import get_provider
 
     if not profile:
-        profile = load_profile(user_id) if user_id and user_id > 0 else None
-    conversation = load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
+        profile = await load_profile(user_id) if user_id and user_id > 0 else None
+    conversation = await load_conversation(user_id, limit=10) if user_id and user_id > 0 else []
 
-    profile_json, profile_hint = _build_profile_context(profile, user_id)
+    profile_json, profile_hint = await _build_profile_context(profile, user_id)
     ext_hint = _extraction_hint(extractions or {})
     profile_hint += ext_hint
     conv_str = "\n".join(
@@ -429,9 +429,9 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
     ) or "No prior conversation"
 
     if user_id and user_id > 0:
-        save_message(user_id, "user", query, {"type": "advisor"})
+        await save_message(user_id, "user", query, {"type": "advisor"})
 
-    snapshot = get_latest_snapshot(user_id) if user_id and user_id > 0 else None
+    snapshot = await get_latest_snapshot(user_id) if user_id and user_id > 0 else None
     snapshot_section = f"LAST FINANCIAL SNAPSHOT:\n{snapshot['snapshot']}\n" if snapshot else ""
 
     llm = get_provider("default")
@@ -549,7 +549,7 @@ async def _advisor_respond_stream(query: str, user_id: int | None, profile=None,
         meta = {"type": "advisor"}
         if ui_components:
             meta["actions"] = ui_components
-        save_message(user_id, "assistant", all_clean_text.strip(), meta)
+        await save_message(user_id, "assistant", all_clean_text.strip(), meta)
         log.debug(f"[advisor] saved response: {len(all_clean_text)} chars, {len(ui_components)} actions")
 
 

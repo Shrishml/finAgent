@@ -5,7 +5,7 @@ import urllib.request
 import urllib.parse
 
 from finagent.models.mf import MFHolding
-from finagent.storage.sqlite import save_nav_cache, get_cached_nav
+from finagent.storage import save_nav_cache, get_cached_nav
 
 log = logging.getLogger("finagent.enrichment.amfi")
 
@@ -30,7 +30,7 @@ def _fetch_category_from_mfapi(amfi_code: str) -> str:
     return ""
 
 
-def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
+async def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
     """Enrich holdings with live data from mfdata.in. Updates NAV, expense ratio, value."""
     for h in holdings:
         if not h.amfi_code:
@@ -38,7 +38,7 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
             continue
 
         # Check cache first (24h TTL) — returns {nav, expense_ratio} or None
-        cached = get_cached_nav(h.amfi_code)
+        cached = await get_cached_nav(h.amfi_code)
         if cached:
             _apply_data(h, cached["nav"], cached["expense_ratio"])
             if h.category:
@@ -55,7 +55,7 @@ def enrich_holdings(holdings: list[MFHolding]) -> list[MFHolding]:
                 nav = float(data.get("nav", 0))
                 expense = float(data.get("expense_ratio", 0)) / 100  # API returns percentage
                 log.info(f"AMFI {h.amfi_code}: NAV={nav}, ER={expense*100:.2f}%, category={data.get('category')}")
-                save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
+                await save_nav_cache(h.amfi_code, nav, data.get("name", ""), expense)
                 _apply_data(h, nav, expense)
                 h.category = data.get("category", "")
                 if not h.category:

@@ -1,6 +1,6 @@
 """Retrieve detailed MF fund data including transactions, XIRR, and NAV history."""
 import logging
-from finagent.storage.sqlite import load_mf_assets
+from finagent.storage import load_mf_assets
 
 log = logging.getLogger("finagent")
 
@@ -20,7 +20,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     if not match_kw:
         return {"error": "Please specify which fund to look up."}
 
-    holdings = load_mf_assets(user_id)
+    holdings = await load_mf_assets(user_id)
     if not holdings:
         return {"error": "No mutual fund holdings found."}
 

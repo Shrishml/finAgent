@@ -4,7 +4,7 @@ import logging
 from datetime import date
 from finagent.models.goal import Goal, GOAL_TEMPLATES
 from finagent.models.goal_calculator import calculate_goal
-from finagent.storage.sqlite import save_goal, load_profile
+from finagent.storage import save_goal, load_profile
 
 log = logging.getLogger("finagent")
 
@@ -48,9 +48,9 @@ def _match_template(name: str) -> str:
     return "custom"
 
 
-def _calc_from_profile(template: str, params: dict, user_id: int) -> dict | None:
+async def _calc_from_profile(template: str, params: dict, user_id: int) -> dict | None:
     """Build calculator kwargs from params + profile, then compute."""
-    profile = load_profile(user_id) if user_id and user_id > 0 else None
+    profile = await load_profile(user_id) if user_id and user_id > 0 else None
     age = profile.age if profile else 0
     expenses = profile.total_monthly_expenses or profile.monthly_expenses if profile else 0
 
@@ -87,7 +87,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
     template = _match_template(name)
 
     # Try calculator first for standard goals
-    calc_result = _calc_from_profile(template, params, user_id)
+    calc_result = await _calc_from_profile(template, params, user_id)
 
     if calc_result and "error" not in calc_result:
         target_amount = calc_result["target_amount"]
@@ -109,7 +109,7 @@ async def execute(params: dict, user_id: int, context: dict) -> dict:
         target_amount=target_amount, target_date=target_date,
         description=description,
     )
-    goal_id = save_goal(goal)
+    goal_id = await save_goal(goal)
     log.info(f"[action] Goal created: {name} (id={goal_id}) target=₹{target_amount:,} template={template} calculated={'yes' if calc_result else 'no'}")
 
     tmpl = GOAL_TEMPLATES.get(template, {})

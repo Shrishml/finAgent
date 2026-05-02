@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from finagent.auth import create_session, get_session_user, clear_session
-from finagent.storage.sqlite import get_or_create_user
+from finagent.storage import get_or_create_user
 from finagent.api.deps import _DEV_MODE, _DEV_TOKEN, _get_dev_user_id
 
 log = logging.getLogger("finagent")
@@ -21,7 +21,7 @@ async def auth_google(request: Request):
         return JSONResponse({"error": "Missing credential"}, status_code=400)
     try:
         token, user_info = create_session(credential)
-        user_id = get_or_create_user(user_info["google_id"], user_info["email"], user_info["name"], user_info["picture"])
+        user_id = await get_or_create_user(user_info["google_id"], user_info["email"], user_info["name"], user_info["picture"])
         resp = JSONResponse({"status": "ok", "user": {"name": user_info["name"], "email": user_info["email"], "picture": user_info["picture"]}})
         resp.set_cookie("session", token, max_age=7 * 86400, httponly=True, samesite="lax")
         return resp

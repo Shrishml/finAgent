@@ -9,7 +9,7 @@ import logging
 
 from finagent.llm import get_provider
 from finagent.models.profile import UserProfile
-from finagent.storage.sqlite import save_assets, load_assets
+from finagent.storage import save_assets, load_assets
 
 log = logging.getLogger("finagent")
 
@@ -111,7 +111,7 @@ async def extract_profile_data(user_message: str, profile: UserProfile, recent_m
         return {}
 
 
-def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
+async def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
     """Apply extracted data to profile. Returns True if anything changed."""
     changed = False
 
@@ -126,7 +126,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
             if field:
                 esop_data[field] = v
         if esop_data:
-            existing = load_assets(profile.user_id, "esop")
+            existing = await load_assets(profile.user_id, "esop")
             # Match by company if updating existing
             matched = None
             if existing and "company" in esop_data:
@@ -141,34 +141,34 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
             else:
                 items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
                 items.append(esop_data)
-            save_assets(profile.user_id, "esop", items)
+            await save_assets(profile.user_id, "esop", items)
             log.info(f"[extraction] saved esop data: {esop_data}")
             changed = True
 
     # Handle EPF/PPF fields → save to user_assets
     epf_ppf_keys = {k: v for k, v in extractions.items() if k in ("epf_balance", "ppf_balance", "epf_contribution", "ppf_contribution") and v is not None}
     if epf_ppf_keys:
-        existing = load_assets(profile.user_id, "epf_ppf")
+        existing = await load_assets(profile.user_id, "epf_ppf")
         current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}
         current.update(epf_ppf_keys)
-        save_assets(profile.user_id, "epf_ppf", [current])
+        await save_assets(profile.user_id, "epf_ppf", [current])
         log.info(f"[extraction] saved epf_ppf data: {epf_ppf_keys}")
         changed = True
 
     # Handle NPS fields → save to user_assets
     nps_keys = {k: v for k, v in extractions.items() if k in ("nps_balance", "nps_contribution") and v is not None}
     if nps_keys:
-        existing = load_assets(profile.user_id, "nps")
+        existing = await load_assets(profile.user_id, "nps")
         current = {k: v for k, v in existing[0].items() if k not in ("id", "asset_type")} if existing else {}
         current.update(nps_keys)
-        save_assets(profile.user_id, "nps", [current])
+        await save_assets(profile.user_id, "nps", [current])
         log.info(f"[extraction] saved nps data: {nps_keys}")
         changed = True
 
     # Handle declared MF SIPs → save to user_assets
     mf_sips = extractions.get("mf_sips")
     if isinstance(mf_sips, list) and mf_sips:
-        existing = load_assets(profile.user_id, "mf")
+        existing = await load_assets(profile.user_id, "mf")
         existing_schemes = {(e.get("scheme") or e.get("scheme_name", "")).lower() for e in existing if e.get("source") == "declared"}
         new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing if e.get("source") == "declared"]
         for sip in mf_sips:
@@ -187,14 +187,14 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                         break
             else:
                 new_items.append(sip)
-        save_assets(profile.user_id, "mf", new_items, source="declared")
+        await save_assets(profile.user_id, "mf", new_items, source="declared")
         log.info(f"[extraction] saved {len(mf_sips)} declared MF SIPs")
         changed = True
 
     # Handle FDs → save to user_assets
     fds = extractions.get("fds")
     if isinstance(fds, list) and fds:
-        existing = load_assets(profile.user_id, "fd")
+        existing = await load_assets(profile.user_id, "fd")
         existing_banks = {e.get("bank", "").lower() for e in existing}
         new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
         for fd in fds:
@@ -208,14 +208,14 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                         break
             else:
                 new_items.append(fd)
-        save_assets(profile.user_id, "fd", new_items)
+        await save_assets(profile.user_id, "fd", new_items)
         log.info(f"[extraction] saved {len(fds)} FDs")
         changed = True
 
     # Handle Gold → save to user_assets
     gold_items = extractions.get("gold")
     if isinstance(gold_items, list) and gold_items:
-        existing = load_assets(profile.user_id, "gold")
+        existing = await load_assets(profile.user_id, "gold")
         new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
         for g in gold_items:
             if not isinstance(g, dict):
@@ -230,14 +230,14 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                 new_items[matched].update(g)
             else:
                 new_items.append(g)
-        save_assets(profile.user_id, "gold", new_items)
+        await save_assets(profile.user_id, "gold", new_items)
         log.info(f"[extraction] saved {len(gold_items)} gold entries")
         changed = True
 
     # Handle Real Estate → save to user_assets
     re_items = extractions.get("real_estate")
     if isinstance(re_items, list) and re_items:
-        existing = load_assets(profile.user_id, "realestate")
+        existing = await load_assets(profile.user_id, "realestate")
         new_items = [{k: v for k, v in e.items() if k not in ("id", "asset_type")} for e in existing]
         for prop in re_items:
             if not isinstance(prop, dict):
@@ -249,7 +249,7 @@ def apply_extractions(profile: UserProfile, extractions: dict) -> bool:
                 new_items[matched].update(prop)
             else:
                 new_items.append(prop)
-        save_assets(profile.user_id, "realestate", new_items)
+        await save_assets(profile.user_id, "realestate", new_items)
         log.info(f"[extraction] saved {len(re_items)} real estate entries")
         changed = True
 

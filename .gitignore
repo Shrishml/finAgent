@@ -17,4 +17,3 @@ src/config.toml
 # OS
 .DS_Store
 CLAUDE.md
-docs/ORM_MIGRATION_PLAN.md

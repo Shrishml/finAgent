@@ -125,6 +125,18 @@ async def about():
     f = _UI_DIR / "about.html"
     return f.read_text() if f.exists() else "<h1>About Arth</h1>"
 
+@app.get("/privacy", response_class=HTMLResponse)
+@app.get("/privacy.html", response_class=HTMLResponse)
+async def privacy():
+    f = _UI_DIR / "privacy.html"
+    return f.read_text() if f.exists() else "<h1>Privacy Policy</h1>"
+
+@app.get("/terms", response_class=HTMLResponse)
+@app.get("/terms.html", response_class=HTMLResponse)
+async def terms():
+    f = _UI_DIR / "terms.html"
+    return f.read_text() if f.exists() else "<h1>Terms of Service</h1>"
+
 @app.get("/changelog")
 async def changelog():
     import json

@@ -8,6 +8,7 @@ from dataclasses import asdict
 from finagent.agents.mf import MFAgent
 from finagent.agents.onboarding import extract_profile_data, apply_extractions
 from finagent.orchestrator.router import classify_intent
+from finagent.tracing.decorators import traced_orchestrator, traced_orchestrator_stream
 from finagent.storage import (
     load_mf_assets, reconcile_and_save, load_profile, save_profile,
     load_conversation, save_message, get_latest_snapshot, save_snapshot,
@@ -273,6 +274,7 @@ def _is_mf_query(query: str, intent: dict) -> bool:
     return intent.get("domain") == "mf" and intent.get("mode") in ("analyze", "deep_dive")
 
 
+@traced_orchestrator
 async def handle_query(query: str, user_id: int | None = None) -> str:
     """Single agent loop: extract → route → respond."""
     t0 = time.time()
@@ -320,6 +322,7 @@ async def handle_query(query: str, user_id: int | None = None) -> str:
     return await _advisor_respond(query, user_id, profile, extractions)
 
 
+@traced_orchestrator_stream
 async def handle_query_stream(query: str, user_id: int | None = None):
     """Streaming version of the single agent loop."""
     t0 = time.time()

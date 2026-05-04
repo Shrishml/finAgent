@@ -3,6 +3,7 @@ import json
 import logging
 
 from finagent.llm import get_provider
+from finagent.tracing.decorators import traced_chain
 
 log = logging.getLogger("finagent")
 
@@ -27,6 +28,7 @@ Query: {query}"""
 _FALLBACK = {"domain": "general", "mode": "analyze"}
 
 
+@traced_chain("intent_classifier")
 async def classify_intent(query: str) -> dict:
     """Classify user query into domain + mode using LLM."""
     llm = get_provider("default")

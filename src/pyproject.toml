@@ -20,6 +20,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "httpx"]
+tracing = [
+    "arize-phoenix-otel>=0.16.0",
+    "openinference-semantic-conventions>=0.1.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

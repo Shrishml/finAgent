@@ -207,9 +207,13 @@ async def demo(request: Request):
         holdings = enrich_holdings(holdings)
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
+    # Clear all existing data BEFORE seeding — order matters!
+    clear_mf_assets(user_id)
+    clear_goals(user_id)
+    clear_assets(user_id)
+    # Now seed demo data
     reconcile_and_save(user_id, "mf", holdings, source_detail="demo")
     # Seed demo goals
-    clear_goals(user_id)
     from finagent.models.goal import Goal as GoalModel
     demo_goals = [
         GoalModel(user_id=user_id, name="Retirement at 50", template="retirement",
@@ -228,7 +232,6 @@ async def demo(request: Request):
         save_goal(g)
 
     # Seed demo profile (personal, income, expenses, insurance)
-    clear_assets(user_id)
     save_assets(user_id, "personal", [{"name": "Suraj", "age": 35, "occupation": "Software Engineer",
         "employer": "Amazon", "location": "Bangalore", "marital_status": "Single",
         "kids": 0, "dependent_parents": True, "risk_tolerance": "Moderate"}])

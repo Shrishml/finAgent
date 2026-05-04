@@ -108,6 +108,7 @@ async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
     user_id = get_user_id(request) or DEMO_USER_ID
     holdings = load_mf_assets(user_id)
+    log.info(f"[holdings] user_id={user_id}, count={len(holdings)}")
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
             holdings = enrich_holdings(holdings)
@@ -137,6 +138,7 @@ async def get_holdings(request: Request):
 async def demo(request: Request):
     """Load a demo portfolio for users to explore without uploading."""
     user_id = get_user_id(request) or DEMO_USER_ID
+    log.info(f"[demo] resolved user_id={user_id}")
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
     _t = lambda d, amt, units: MFTransaction(date=_date.fromisoformat(d), description="SIP", amount=amt, units=units, type="SIP")

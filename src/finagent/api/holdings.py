@@ -134,9 +134,9 @@ async def get_holdings(request: Request):
 
 
 @router.post("/demo")
-async def demo():
+async def demo(request: Request):
     """Load a demo portfolio for users to explore without uploading."""
-    user_id = DEMO_USER_ID
+    user_id = get_user_id(request) or DEMO_USER_ID
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
     _t = lambda d, amt, units: MFTransaction(date=_date.fromisoformat(d), description="SIP", amount=amt, units=units, type="SIP")

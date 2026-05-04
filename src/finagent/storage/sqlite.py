@@ -448,9 +448,14 @@ def reconcile_and_save(user_id: int, asset_type: str, verified_items: list,
         conn.execute("DELETE FROM user_assets WHERE id = ?", (did,))
 
     conn.commit()
-    conn.close()
+    # Debug: verify data persisted
     total = len(verified_items)
-    log.info(f"[reconcile] {asset_type}: saved {total} verified ({replaced} replaced declared, {new} new)")
+    verify = conn.execute(
+        "SELECT COUNT(*) FROM user_assets WHERE user_id = ? AND asset_type = ? AND source = 'verified'",
+        (user_id, asset_type),
+    ).fetchone()[0]
+    log.info(f"[reconcile] {asset_type}: saved {total} verified ({replaced} replaced declared, {new} new) [verify_count={verify}]")
+    conn.close()
     return {"saved": total, "replaced": replaced, "new": new}
 
 

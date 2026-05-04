@@ -19,6 +19,7 @@ _DB_PATH = _DB_DIR / "finagent.db"
 
 def _get_conn() -> sqlite3.Connection:
     _DB_DIR.mkdir(parents=True, exist_ok=True)
+    log.debug(f"[db] path={_DB_PATH}, exists={_DB_PATH.exists()}")
     conn = sqlite3.connect(str(_DB_PATH))
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -463,6 +464,9 @@ def load_mf_assets(user_id: int) -> list[MFHolding]:
         "SELECT data, source FROM user_assets WHERE user_id = ? AND asset_type = 'mf'",
         (user_id,),
     ).fetchall()
+    # Debug: check total rows in user_assets for this user
+    total = conn.execute("SELECT COUNT(*) FROM user_assets WHERE user_id = ?", (user_id,)).fetchone()[0]
+    log.info(f"[load_mf] user_id={user_id}, mf_rows={len(rows)}, total_assets={total}, db={_DB_PATH}")
     conn.close()
 
     holdings = []

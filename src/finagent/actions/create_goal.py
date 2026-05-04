@@ -72,7 +72,7 @@ def _calc_from_profile(template: str, params: dict, user_id: int) -> dict | None
         years_until = params.get("years_until")
         if not current_cost or not years_until:
             return None
-        cost_key = "current_price" if template == "house" else "current_cost"
+        cost_key = "current_price" if template in ("house", "car") else "current_cost"
         kwargs = {cost_key: int(current_cost), "years_until": int(years_until)}
         if template == "house":
             kwargs["down_payment_pct"] = 0.20

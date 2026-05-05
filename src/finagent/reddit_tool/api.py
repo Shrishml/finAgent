@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/reddit-tool", tags=["reddit-tool"])
 
 _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 _OPTIONS_RE = re.compile(r'\n*\[OPTIONS:.*?\]\s*$', re.DOTALL)
+_ACTION_RE = re.compile(r'\[ACTION:\s*\w+\([^)]*\)\]')
 
 REDDIT_SYSTEM_SUFFIX = """
 IMPORTANT FORMATTING RULES for this response:
@@ -27,6 +28,7 @@ IMPORTANT FORMATTING RULES for this response:
 - No "as an AI" disclaimers — speak as a knowledgeable peer
 - If you made assumptions, state them briefly at the end
 - Do NOT include [OPTIONS: ...] at the end
+- Do NOT include [ACTION: ...] tags — this is a read-only response, no actions should be triggered
 - End with: "---\n*Ran the math on your numbers with [Arth](https://askarth.com)*"
 """
 
@@ -38,9 +40,12 @@ def _text_to_user_id(text: str) -> int:
 
 
 def _clean_reply(text: str) -> str:
-    """Strip ANSI codes and [OPTIONS: ...] from response."""
+    """Strip ANSI codes, [OPTIONS: ...], and [ACTION: ...] from response."""
     text = _ANSI_RE.sub('', text)
+    text = _ACTION_RE.sub('', text)
     text = _OPTIONS_RE.sub('', text)
+    # Clean up double newlines left by removed ACTION tags
+    text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
 

@@ -18,14 +18,16 @@ log = logging.getLogger("finagent")
 router = APIRouter(prefix="/api/reddit-tool", tags=["reddit-tool"])
 
 _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
+_OPTIONS_RE = re.compile(r'\n*\[OPTIONS:.*?\]\s*$', re.DOTALL)
 
 REDDIT_SYSTEM_SUFFIX = """
-Format your response for Reddit (r/IndiaInvestments):
+IMPORTANT FORMATTING RULES for this response:
 - Keep under 300 words, be direct and actionable
 - Use Reddit markdown (**, *, numbered lists)
 - No "as an AI" disclaimers — speak as a knowledgeable peer
 - If you made assumptions, state them briefly at the end
-- End with: "---\\n*Ran the math on your numbers with [Arth](https://askarth.com)*"
+- Do NOT include [OPTIONS: ...] at the end
+- End with: "---\n*Ran the math on your numbers with [Arth](https://askarth.com)*"
 """
 
 
@@ -33,6 +35,13 @@ def _text_to_user_id(text: str) -> int:
     """Deterministic int user_id from input text hash."""
     h = hashlib.md5(f"reddit_anon_{text[:100]}".encode()).hexdigest()
     return int(h[:8], 16)
+
+
+def _clean_reply(text: str) -> str:
+    """Strip ANSI codes and [OPTIONS: ...] from response."""
+    text = _ANSI_RE.sub('', text)
+    text = _OPTIONS_RE.sub('', text)
+    return text.strip()
 
 
 class GenerateRequest(BaseModel):
@@ -63,15 +72,11 @@ async def generate(req: GenerateRequest):
         apply_extractions(profile, extractions)
         save_profile(profile)
 
-    # Save as first user message
-    save_message(user_id, "user", req.text, metadata={"source": "reddit_tool"})
-
-    # Generate advice via orchestrator
+    # Generate advice — prepend formatting instructions to the query
+    # The orchestrator will save messages to chat_history automatically
     query = f"{REDDIT_SYSTEM_SUFFIX}\n\nUser's post:\n{req.text}"
     response = await handle_query(query, user_id=user_id)
-    response = _ANSI_RE.sub('', response)
-
-    save_message(user_id, "assistant", response, metadata={"source": "reddit_tool"})
+    response = _clean_reply(response)
 
     profile_summary = {
         k: v for k, v in {
@@ -85,10 +90,14 @@ async def generate(req: GenerateRequest):
         }.items() if v
     }
 
+    # Load conversation but filter out system prompt messages
+    conversation = load_conversation(user_id, limit=10)
+    conversation = [m for m in conversation if not m.get("content", "").startswith("\nIMPORTANT FORMATTING")]
+
     return JSONResponse({
         "user_id": user_id,
         "profile": profile_summary,
-        "conversation": load_conversation(user_id, limit=10),
+        "conversation": conversation,
         "reddit_reply": response,
     })
 
@@ -96,16 +105,15 @@ async def generate(req: GenerateRequest):
 @router.post("/chat")
 async def chat(req: ChatRequest):
     """Continue conversation — operator adds context or asks for changes."""
-    save_message(req.user_id, "user", req.message, metadata={"source": "reddit_tool_operator"})
-
     query = f"{REDDIT_SYSTEM_SUFFIX}\n\nOperator follow-up:\n{req.message}"
     response = await handle_query(query, user_id=req.user_id)
-    response = _ANSI_RE.sub('', response)
+    response = _clean_reply(response)
 
-    save_message(req.user_id, "assistant", response, metadata={"source": "reddit_tool"})
+    conversation = load_conversation(req.user_id, limit=10)
+    conversation = [m for m in conversation if not m.get("content", "").startswith("\nIMPORTANT FORMATTING")]
 
     return JSONResponse({
         "response": response,
         "reddit_reply": response,
-        "conversation": load_conversation(req.user_id, limit=10),
+        "conversation": conversation,
     })

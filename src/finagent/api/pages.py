@@ -50,6 +50,11 @@ async def changelog():
     f = _UI_DIR / "changelog.json"
     return json.loads(f.read_text()) if f.exists() else []
 
+@router.get("/reddit-tool", response_class=HTMLResponse)
+async def reddit_tool():
+    f = _UI_DIR / "reddit-tool.html"
+    return f.read_text() if f.exists() else "<h1>Reddit Tool not found</h1>"
+
 @router.get("/blogs/{slug}", response_class=HTMLResponse)
 async def blog_article(slug: str):
     articles = json.loads((_UI_DIR / "blogs.json").read_text()) if (_UI_DIR / "blogs.json").exists() else {}

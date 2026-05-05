@@ -1,13 +1,12 @@
-"""Reddit Tool API — generate financial advice from Reddit posts."""
+"""Reddit Tool API — generate financial advice from pasted user queries."""
 import hashlib
 import logging
 import re
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from finagent.reddit_tool import fetch_thread
 from finagent.orchestrator.engine import handle_query
 from finagent.agents.onboarding import extract_profile_data, apply_extractions
 from finagent.storage.sqlite import (
@@ -30,14 +29,14 @@ Format your response for Reddit (r/IndiaInvestments):
 """
 
 
-def _post_id_to_user_id(post_id: str) -> int:
-    """Deterministic int user_id from Reddit post_id."""
-    h = hashlib.md5(f"reddit_anon_{post_id}".encode()).hexdigest()
-    return int(h[:8], 16)  # 32-bit int from first 8 hex chars
+def _text_to_user_id(text: str) -> int:
+    """Deterministic int user_id from input text hash."""
+    h = hashlib.md5(f"reddit_anon_{text[:100]}".encode()).hexdigest()
+    return int(h[:8], 16)
 
 
 class GenerateRequest(BaseModel):
-    url: str
+    text: str
 
 
 class ChatRequest(BaseModel):
@@ -47,49 +46,33 @@ class ChatRequest(BaseModel):
 
 @router.post("/generate")
 async def generate(req: GenerateRequest):
-    """Fetch Reddit thread, extract profile, generate advice."""
-    try:
-        # 1. Fetch thread
-        thread = await fetch_thread(req.url)
-    except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=400)
-    except Exception as e:
-        log.error(f"Reddit fetch failed: {e}")
-        return JSONResponse({"error": f"Failed to fetch thread: {e}"}, status_code=502)
+    """Extract profile from pasted text and generate advice."""
+    if not req.text.strip():
+        return JSONResponse({"error": "Please paste the user's query/post"}, status_code=400)
 
-    post_id = thread["post_id"]
-    user_id = _post_id_to_user_id(post_id)
+    user_id = _text_to_user_id(req.text)
 
-    # 2. Build full context from OP + comments by OP
-    op_author = thread["author"]
-    op_comments = [c["body"] for c in thread["comments"] if c["author"] == op_author]
-    full_text = f"{thread['title']}\n\n{thread['body']}"
-    if op_comments:
-        full_text += "\n\nAdditional context from OP's comments:\n" + "\n".join(op_comments)
-
-    # 3. Create/load anonymous user profile
+    # Create/load anonymous user profile
     profile = load_profile(user_id)
     if not profile:
         profile = UserProfile(user_id=user_id)
 
-    # 4. Extract profile data from Reddit text
-    extractions = await extract_profile_data(full_text, profile)
+    # Extract profile data from text
+    extractions = await extract_profile_data(req.text, profile)
     if extractions:
         apply_extractions(profile, extractions)
         save_profile(profile)
 
-    # 5. Save the Reddit text as first user message
-    save_message(user_id, "user", full_text, metadata={"source": "reddit_tool", "reddit_url": req.url})
+    # Save as first user message
+    save_message(user_id, "user", req.text, metadata={"source": "reddit_tool"})
 
-    # 6. Generate advice via orchestrator (reuses real pipeline)
-    query = f"{REDDIT_SYSTEM_SUFFIX}\n\nUser's Reddit post:\n{full_text}"
+    # Generate advice via orchestrator
+    query = f"{REDDIT_SYSTEM_SUFFIX}\n\nUser's post:\n{req.text}"
     response = await handle_query(query, user_id=user_id)
     response = _ANSI_RE.sub('', response)
 
-    # 7. Save assistant response
     save_message(user_id, "assistant", response, metadata={"source": "reddit_tool"})
 
-    # Build profile summary for UI
     profile_summary = {
         k: v for k, v in {
             "age": profile.age,
@@ -104,12 +87,6 @@ async def generate(req: GenerateRequest):
 
     return JSONResponse({
         "user_id": user_id,
-        "post_id": post_id,
-        "thread": {
-            "title": thread["title"],
-            "author": thread["author"],
-            "subreddit": thread["subreddit"],
-        },
         "profile": profile_summary,
         "conversation": load_conversation(user_id, limit=10),
         "reddit_reply": response,
@@ -118,10 +95,10 @@ async def generate(req: GenerateRequest):
 
 @router.post("/chat")
 async def chat(req: ChatRequest):
-    """Continue conversation with anonymous Reddit user (operator adds context)."""
-    query = f"{REDDIT_SYSTEM_SUFFIX}\n\nOperator follow-up:\n{req.message}"
+    """Continue conversation — operator adds context or asks for changes."""
     save_message(req.user_id, "user", req.message, metadata={"source": "reddit_tool_operator"})
 
+    query = f"{REDDIT_SYSTEM_SUFFIX}\n\nOperator follow-up:\n{req.message}"
     response = await handle_query(query, user_id=req.user_id)
     response = _ANSI_RE.sub('', response)
 

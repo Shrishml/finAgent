@@ -14,22 +14,6 @@ _HEADERS = {
 }
 
 
-async def _resolve_share_url(url: str) -> str:
-    """Resolve /r/sub/s/ID share links to canonical /comments/ URL."""
-    async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-        resp = await client.head(url, headers=_HEADERS)
-        resolved = str(resp.url)
-    if _REDDIT_URL_RE.search(resolved):
-        return resolved
-    # Some share links resolve via GET with a meta redirect
-    async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-        resp = await client.get(url, headers=_HEADERS)
-        resolved = str(resp.url)
-    if _REDDIT_URL_RE.search(resolved):
-        return resolved
-    raise ValueError(f"Could not resolve share URL: {url}")
-
-
 def normalize_reddit_url(url: str) -> tuple[str, str]:
     """Convert any Reddit URL to JSON API URL. Returns (json_url, post_id)."""
     m = _REDDIT_URL_RE.search(url)
@@ -37,23 +21,18 @@ def normalize_reddit_url(url: str) -> tuple[str, str]:
         subreddit, post_id = m.group(1), m.group(2)
         json_url = f"https://old.reddit.com/r/{subreddit}/comments/{post_id}.json"
         return json_url, post_id
-    # Check if it's a share URL (will need async resolution)
     if _SHARE_URL_RE.search(url):
-        raise ValueError("SHARE_URL:" + url)  # Signal to caller to resolve async
-    raise ValueError(f"Invalid Reddit URL: {url}")
+        raise ValueError(
+            "Share links (/r/.../s/...) can't be resolved server-side. "
+            "Please open the link in your browser and copy the full URL from the address bar "
+            "(it should contain /comments/ in the path)."
+        )
+    raise ValueError(f"Invalid Reddit URL. Expected format: reddit.com/r/subreddit/comments/post_id/...")
 
 
 async def fetch_thread(url: str) -> dict:
     """Fetch Reddit thread and return structured data."""
-    try:
-        json_url, post_id = normalize_reddit_url(url)
-    except ValueError as e:
-        if str(e).startswith("SHARE_URL:"):
-            # Resolve share link first
-            resolved = await _resolve_share_url(url)
-            json_url, post_id = normalize_reddit_url(resolved)
-        else:
-            raise
+    json_url, post_id = normalize_reddit_url(url)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
         resp = await client.get(json_url, headers=_HEADERS)

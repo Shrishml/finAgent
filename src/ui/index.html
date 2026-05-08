@@ -10,90 +10,40 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafbfc; color: #1a1a2e; line-height: 1.6; }
         .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
-
-        /* Brand colors */
-        :root {
-            --teal: #0D7377;
-            --teal-light: #0f8a8f;
-            --gold: #D4A843;
-            --gold-light: #f0d78c;
-            --bg: #fafbfc;
-            --text: #1a1a2e;
-            --muted: #5a6178;
-            --border: #e2e8f0;
-        }
-
-        /* Nav */
+        :root { --teal: #0D7377; --teal-light: #0f8a8f; --gold: #D4A843; --gold-light: #f0d78c; --muted: #5a6178; --border: #e2e8f0; }
         nav { padding: 20px 0; display: flex; align-items: center; justify-content: space-between; }
         .logo { font-size: 24px; font-weight: 800; color: var(--teal); }
         .logo span { color: var(--gold); }
         .nav-badge { font-size: 11px; background: var(--gold-light); color: #7a5c00; padding: 4px 10px; border-radius: 12px; font-weight: 600; }
-
-        /* Hero */
         .hero { padding: 60px 0 40px; text-align: center; }
         .hero h1 { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
         .hero h1 em { font-style: normal; color: var(--teal); }
         .hero .subtitle { font-size: 18px; color: var(--muted); max-width: 540px; margin: 0 auto 8px; }
         .hero .tagline { font-size: 14px; color: var(--gold); font-weight: 600; margin-bottom: 32px; }
-
-        /* CTA */
         .cta-section { text-align: center; margin-bottom: 48px; }
         .cta-btn { display: inline-block; background: var(--teal); color: #fff; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; }
         .cta-btn:hover { background: var(--teal-light); }
         .cta-note { font-size: 13px; color: var(--muted); margin-top: 10px; }
-
-        /* Google sign-in overlay */
         .signin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .signin-overlay.active { display: flex; }
         .signin-box { background: #fff; border-radius: 16px; padding: 40px; max-width: 400px; width: 90%; text-align: center; }
         .signin-box h2 { font-size: 22px; margin-bottom: 8px; }
         .signin-box p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
-        .signin-box .close { position: absolute; top: 16px; right: 20px; font-size: 24px; cursor: pointer; color: var(--muted); }
-
-        /* Waitlist page (shown after sign-in) */
-        .waitlist-page { display: none; text-align: center; padding: 80px 0; }
-        .waitlist-page.active { display: block; }
-        .waitlist-page h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; color: var(--teal); }
-        .waitlist-page .msg { font-size: 16px; color: var(--muted); max-width: 480px; margin: 0 auto 24px; }
-        .invite-form { display: flex; gap: 8px; max-width: 320px; margin: 0 auto 16px; }
-        .invite-form input { flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .invite-form input:focus { outline: none; border-color: var(--teal); }
-        .invite-form button { padding: 12px 20px; background: var(--teal); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .invite-error { color: #e53e3e; font-size: 13px; margin-top: 8px; }
-        .invite-success { color: var(--teal); font-size: 14px; font-weight: 600; }
-        .waitlist-info { background: #f0fafa; border: 1px solid #d0eded; border-radius: 12px; padding: 24px; margin-top: 32px; text-align: left; max-width: 480px; margin-left: auto; margin-right: auto; }
-        .waitlist-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-        .waitlist-info li { font-size: 14px; color: var(--muted); margin-bottom: 6px; list-style: none; padding-left: 20px; position: relative; }
-        .waitlist-info li::before { content: "→"; position: absolute; left: 0; color: var(--teal); }
-
-        /* Problem section */
         .problem { padding: 48px 0; }
         .problem h2 { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 24px; }
         .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .problem-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
         .problem-card .who { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
         .problem-card .issue { color: #e53e3e; font-size: 13px; }
-
-        /* What Arth does */
         .features { padding: 48px 0; }
         .features h2 { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 32px; }
         .feature { display: flex; gap: 14px; margin-bottom: 20px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
         .feature .icon { font-size: 24px; flex-shrink: 0; }
         .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
         .feature p { font-size: 14px; color: var(--muted); }
-
-        /* Footer */
         footer { padding: 32px 0; text-align: center; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
         footer a { color: var(--teal); text-decoration: none; }
-
-        /* Mobile */
-        @media (max-width: 640px) {
-            .hero h1 { font-size: 28px; }
-            .problem-grid { grid-template-columns: 1fr; }
-        }
-
-        /* Hide main content when waitlist is shown */
-        .main-content.hidden { display: none; }
+        @media (max-width: 640px) { .hero h1 { font-size: 28px; } .problem-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -103,97 +53,62 @@
             <div class="nav-badge">🧪 Early Beta</div>
         </nav>
 
-        <!-- Waitlist page (shown after sign-in if not approved) -->
-        <div class="waitlist-page" id="waitlistPage">
-            <h2>You're on the list! 🎉</h2>
-            <p class="msg">We're letting brave hearts in gradually to keep quality high. Got an invite code? Enter it below.</p>
-            <div class="invite-form">
-                <input type="text" id="inviteCode" placeholder="ARTH-XXXXXX" maxlength="12">
-                <button onclick="redeemCode()">Enter</button>
-            </div>
-            <div id="inviteMsg"></div>
-            <div class="waitlist-info">
-                <h3>While you wait, here's what Arth does:</h3>
-                <ul>
-                    <li>Sees your complete financial picture (MFs, goals, loans, insurance)</li>
-                    <li>Gives advice with no commission bias — runs on YOUR numbers</li>
-                    <li>Tracks goals, suggests SIP allocations, flags tax inefficiencies</li>
-                    <li>Works like a conversation — ask anything about your money</li>
-                </ul>
-            </div>
+        <section class="hero">
+            <h1>Your AI advisor that runs the math on <em>your</em> numbers</h1>
+            <p class="subtitle">No commissions. No hidden incentives. Just honest financial analysis for salaried professionals.</p>
+            <p class="tagline">अर्थमित्र — Your Wealth Companion</p>
+        </section>
+
+        <div class="cta-section">
+            <button class="cta-btn" onclick="showSignIn()">Get Early Access →</button>
+            <p class="cta-note">Free during beta · Sign in with Google · Invite-only access</p>
         </div>
 
-        <!-- Main landing content -->
-        <div class="main-content" id="mainContent">
-            <section class="hero">
-                <h1>Your AI advisor that runs the math on <em>your</em> numbers</h1>
-                <p class="subtitle">No commissions. No hidden incentives. Just honest financial analysis for salaried professionals.</p>
-                <p class="tagline">अर्थमित्र — Your Wealth Companion</p>
-            </section>
-
-            <div class="cta-section">
-                <button class="cta-btn" onclick="showSignIn()">Get Early Access →</button>
-                <p class="cta-note">Free during beta · Sign in with Google · Invite-only access</p>
+        <section class="problem">
+            <h2>Everyone managing your money has an agenda</h2>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="who">🏦 MF Distributors</div>
+                    <div class="issue">Earn commission on Regular plans — costs you 0.5–1.5% annually</div>
+                </div>
+                <div class="problem-card">
+                    <div class="who">🛡️ Insurance Agents</div>
+                    <div class="issue">30–40% first-year commission — you're locked in for 15+ years</div>
+                </div>
+                <div class="problem-card">
+                    <div class="who">📊 Financial Advisors</div>
+                    <div class="issue">Earn more when AUM grows — won't tell you to prepay your loan</div>
+                </div>
+                <div class="problem-card">
+                    <div class="who">📱 Fintech Apps</div>
+                    <div class="issue">"Recommendations" are ads — they earn from cross-selling</div>
+                </div>
             </div>
+        </section>
 
-            <section class="problem">
-                <h2>Everyone managing your money has an agenda</h2>
-                <div class="problem-grid">
-                    <div class="problem-card">
-                        <div class="who">🏦 MF Distributors</div>
-                        <div class="issue">Earn commission on Regular plans — costs you 0.5–1.5% annually</div>
-                    </div>
-                    <div class="problem-card">
-                        <div class="who">🛡️ Insurance Agents</div>
-                        <div class="issue">30–40% first-year commission — you're locked in for 15+ years</div>
-                    </div>
-                    <div class="problem-card">
-                        <div class="who">📊 Financial Advisors</div>
-                        <div class="issue">Earn more when AUM grows — won't tell you to prepay your loan</div>
-                    </div>
-                    <div class="problem-card">
-                        <div class="who">📱 Fintech Apps</div>
-                        <div class="issue">"Recommendations" are ads — they earn from cross-selling</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="features">
-                <h2>What Arth does differently</h2>
-                <div class="feature">
-                    <div class="icon">🔍</div>
-                    <div>
-                        <h3>Sees your complete picture</h3>
-                        <p>Mutual funds, goals, EPF, loans, insurance — one unified view. No app today does this.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="icon">🧠</div>
-                    <div>
-                        <h3>Reasons across products</h3>
-                        <p>"Your ELSS is pointless — EPF already maxes 80C." Connects dots no single app can.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="icon">🎯</div>
-                    <div>
-                        <h3>Goal-linked planning</h3>
-                        <p>Links every SIP to a goal. Tracks progress. Tells you if you're on track or falling behind.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="icon">💬</div>
-                    <div>
-                        <h3>Conversational, not forms</h3>
-                        <p>Ask "should I increase my SIP?" and get a personalized answer with math, not a generic article.</p>
-                    </div>
-                </div>
-            </section>
-
-            <div class="cta-section" style="padding-bottom: 48px;">
-                <button class="cta-btn" onclick="showSignIn()">Join the Beta →</button>
-                <p class="cta-note">Built by a salaried engineer who got tired of conflicted advice</p>
+        <section class="features">
+            <h2>What Arth does differently</h2>
+            <div class="feature">
+                <div class="icon">🔍</div>
+                <div><h3>Sees your complete picture</h3><p>Mutual funds, goals, EPF, loans, insurance — one unified view. No app today does this.</p></div>
             </div>
+            <div class="feature">
+                <div class="icon">🧠</div>
+                <div><h3>Reasons across products</h3><p>"Your ELSS is pointless — EPF already maxes 80C." Connects dots no single app can.</p></div>
+            </div>
+            <div class="feature">
+                <div class="icon">🎯</div>
+                <div><h3>Goal-linked planning</h3><p>Links every SIP to a goal. Tracks progress. Tells you if you're on track or falling behind.</p></div>
+            </div>
+            <div class="feature">
+                <div class="icon">💬</div>
+                <div><h3>Conversational, not forms</h3><p>Ask "should I increase my SIP?" and get a personalized answer with math, not a generic article.</p></div>
+            </div>
+        </section>
+
+        <div class="cta-section" style="padding-bottom: 48px;">
+            <button class="cta-btn" onclick="showSignIn()">Join the Beta →</button>
+            <p class="cta-note">Built by a salaried engineer who got tired of conflicted advice</p>
         </div>
 
         <footer>
@@ -209,32 +124,14 @@
             <div id="g_id_onload"
                 data-client_id="440412565683-diu4c0a00ka37ut11qhai74907mgsl23.apps.googleusercontent.com"
                 data-callback="handleGoogleCredential"
-                data-auto_prompt="false">
-            </div>
+                data-auto_prompt="false"></div>
             <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="continue_with" data-shape="rectangular" data-width="300"></div>
         </div>
     </div>
 
     <script>
-    // Check if already logged in
-    fetch('/auth/me').then(r => r.json()).then(data => {
-        if (data.status === 'ok') {
-            if (data.access === 'active') {
-                window.location.href = '/app';
-            } else {
-                showWaitlist(data.user);
-            }
-        }
-    }).catch(() => {});
-
-    function showSignIn() {
-        document.getElementById('signinOverlay').classList.add('active');
-    }
-    function hideSignIn(e) {
-        if (e.target === e.currentTarget) {
-            document.getElementById('signinOverlay').classList.remove('active');
-        }
-    }
+    function showSignIn() { document.getElementById('signinOverlay').classList.add('active'); }
+    function hideSignIn(e) { if (e.target === e.currentTarget) document.getElementById('signinOverlay').classList.remove('active'); }
 
     function handleGoogleCredential(response) {
         fetch('/auth/google', {
@@ -243,47 +140,13 @@
             body: JSON.stringify({credential: response.credential})
         }).then(r => r.json()).then(data => {
             if (data.status === 'ok') {
-                document.getElementById('signinOverlay').classList.remove('active');
-                // Check access status
+                // After sign-in, check access and redirect appropriately
                 fetch('/auth/me').then(r => r.json()).then(me => {
-                    if (me.access === 'active') {
-                        window.location.href = '/app';
-                    } else {
-                        showWaitlist(me.user);
-                    }
+                    window.location.href = me.access === 'active' ? '/app' : '/waitlist';
                 });
             }
         });
     }
-
-    function showWaitlist(user) {
-        document.getElementById('mainContent').classList.add('hidden');
-        document.getElementById('waitlistPage').classList.add('active');
-    }
-
-    function redeemCode() {
-        const code = document.getElementById('inviteCode').value.trim();
-        if (!code) return;
-        fetch('/auth/redeem-invite', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({code: code})
-        }).then(r => r.json()).then(data => {
-            const msg = document.getElementById('inviteMsg');
-            if (data.status === 'ok') {
-                msg.innerHTML = '<p class="invite-success">✅ ' + data.message + ' Redirecting...</p>';
-                setTimeout(() => window.location.href = '/app', 1500);
-            } else {
-                msg.innerHTML = '<p class="invite-error">' + data.error + '</p>';
-            }
-        });
-    }
-
-    // Enter key on invite input
-    document.addEventListener('DOMContentLoaded', () => {
-        const input = document.getElementById('inviteCode');
-        if (input) input.addEventListener('keypress', e => { if (e.key === 'Enter') redeemCode(); });
-    });
     </script>
 </body>
 </html>

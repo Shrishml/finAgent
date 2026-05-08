@@ -120,6 +120,11 @@ async def landing():
     f = _UI_DIR / "index.html"
     return f.read_text() if f.exists() else "<h1>Arth</h1>"
 
+@app.get("/waitlist", response_class=HTMLResponse)
+async def waitlist():
+    f = _UI_DIR / "waitlist.html"
+    return f.read_text() if f.exists() else "<h1>Waitlist</h1>"
+
 @app.get("/app", response_class=HTMLResponse)
 @app.get("/demo", response_class=HTMLResponse)
 async def dashboard():

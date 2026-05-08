@@ -63,6 +63,23 @@ def _get_conn() -> sqlite3.Connection:
             last_fetched TEXT
         )
     """)
+    # Migration: add access_status to users
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN access_status TEXT DEFAULT 'waitlist'")
+        # Grandfather existing users
+        conn.execute("UPDATE users SET access_status = 'active' WHERE access_status IS NULL OR access_status = 'waitlist'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    # Invite codes table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS invite_codes (
+            code TEXT PRIMARY KEY,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            max_uses INTEGER DEFAULT 1,
+            used_count INTEGER DEFAULT 0,
+            note TEXT
+        )
+    """)
     conn.commit()
     return conn
 
@@ -81,6 +98,68 @@ def get_or_create_user(google_id: str, email: str = "", name: str = "", picture:
     uid = cur.lastrowid
     conn.close()
     return uid
+
+
+def get_user_access_status(user_id: int) -> str:
+    """Returns 'waitlist', 'active', or 'blocked'."""
+    conn = _get_conn()
+    row = conn.execute("SELECT access_status FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return (row[0] if row and row[0] else "waitlist")
+
+
+def set_user_access_status(user_id: int, status: str) -> None:
+    """Admin: change user access status."""
+    conn = _get_conn()
+    conn.execute("UPDATE users SET access_status = ? WHERE id = ?", (status, user_id))
+    conn.commit()
+    conn.close()
+
+
+def list_waitlist_users() -> list[dict]:
+    """List all users on waitlist."""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT id, email, name, created_at FROM users WHERE access_status = 'waitlist' ORDER BY created_at"
+    ).fetchall()
+    conn.close()
+    return [{"id": r[0], "email": r[1], "name": r[2], "created_at": r[3]} for r in rows]
+
+
+def redeem_invite_code(code: str, user_id: int) -> bool:
+    """Redeem an invite code. Returns True if successful."""
+    conn = _get_conn()
+    row = conn.execute("SELECT max_uses, used_count FROM invite_codes WHERE code = ?", (code,)).fetchone()
+    if not row or row[1] >= row[0]:
+        conn.close()
+        return False
+    conn.execute("UPDATE invite_codes SET used_count = used_count + 1 WHERE code = ?", (code,))
+    conn.execute("UPDATE users SET access_status = 'active' WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+
+def create_invite_codes(count: int = 5, max_uses: int = 1, note: str = "") -> list[str]:
+    """Generate invite codes. Returns list of code strings."""
+    import secrets
+    conn = _get_conn()
+    codes = []
+    for _ in range(count):
+        code = f"ARTH-{secrets.token_hex(3).upper()}"
+        conn.execute("INSERT INTO invite_codes (code, max_uses, note) VALUES (?, ?, ?)", (code, max_uses, note))
+        codes.append(code)
+    conn.commit()
+    conn.close()
+    return codes
+
+
+def list_invite_codes() -> list[dict]:
+    """List all invite codes with usage stats."""
+    conn = _get_conn()
+    rows = conn.execute("SELECT code, max_uses, used_count, note, created_at FROM invite_codes").fetchall()
+    conn.close()
+    return [{"code": r[0], "max_uses": r[1], "used_count": r[2], "note": r[3], "created_at": r[4]} for r in rows]
 
 
 def _merge_transactions(existing: list[dict], incoming: list[dict]) -> list[dict]:

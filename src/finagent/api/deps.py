@@ -5,7 +5,7 @@ import os
 from fastapi import HTTPException, Request
 
 from finagent.auth import get_session_user
-from finagent.storage.sqlite import get_or_create_user
+from finagent.storage.sqlite import get_or_create_user, get_user_access_status
 
 log = logging.getLogger("finagent")
 
@@ -38,8 +38,15 @@ def get_user_id(request: Request) -> int | None:
 
 
 def require_auth(request: Request) -> int:
-    """FastAPI dependency — returns user_id or raises 401."""
+    """FastAPI dependency — returns user_id or raises 401/403."""
     user_id = get_user_id(request)
     if user_id is None:
         raise HTTPException(status_code=401, detail="Authentication required")
+    if _DEV_MODE:
+        return user_id
+    status = get_user_access_status(user_id)
+    if status == "blocked":
+        raise HTTPException(status_code=403, detail="Access denied")
+    if status == "waitlist":
+        raise HTTPException(status_code=403, detail="waitlist")
     return user_id

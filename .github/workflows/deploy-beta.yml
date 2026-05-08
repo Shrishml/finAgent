@@ -1,0 +1,17 @@
+name: Deploy to Beta
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to beta.captwist.in
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.BETA_HOST }}
+          username: ${{ secrets.BETA_USER }}
+          key: ${{ secrets.BETA_SSH_KEY }}
+          script: bash /home/azureuser/finAgent-beta/scripts/update-beta.sh

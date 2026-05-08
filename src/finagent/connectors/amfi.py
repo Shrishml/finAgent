@@ -16,7 +16,7 @@ MFAPI_URL = "https://api.mfapi.in/mf"
 def _fetch_category_from_mfapi(amfi_code: str) -> str:
     """Fallback: get category from mfapi.in's scheme_category field."""
     url = f"{MFAPI_URL}/{amfi_code}/latest"
-    req = urllib.request.Request(url, headers={"User-Agent": "FinBestie/0.1"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Arth/0.1"})
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())

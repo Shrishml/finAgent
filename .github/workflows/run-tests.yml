@@ -1,0 +1,45 @@
+name: Run Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Which tests to run'
+        required: true
+        default: 'fast'
+        type: choice
+        options:
+          - fast
+          - all
+          - smoke
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests on beta host
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.BETA_HOST }}
+          username: ${{ secrets.BETA_USER }}
+          key: ${{ secrets.BETA_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            cd ~/finAgent-beta/src
+            git pull --ff-only origin dev
+
+            SCOPE="${{ github.event.inputs.test_scope }}"
+            case "$SCOPE" in
+              fast)
+                echo "=== Running fast tests (no LLM) ==="
+                .venv/bin/python -m pytest tests/storage/ tests/models/ tests/goals/ tests/extraction/ -v --tb=short 2>&1
+                ;;
+              smoke)
+                echo "=== Running smoke + overview tests ==="
+                .venv/bin/python -m pytest tests/smoke/ -v --tb=short 2>&1
+                ;;
+              all)
+                echo "=== Running ALL tests ==="
+                .venv/bin/python -m pytest tests/ -v --tb=short 2>&1
+                ;;
+            esac

@@ -10,7 +10,7 @@ from .base import LLMProvider
 log = logging.getLogger("finagent")
 
 # Markers gemini-cli may emit that aren't part of the LLM response
-_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\[(?:[0-9;]+)m')
 _STRIP_PATTERNS = [
     # Strip any lines that look like status headers or CLI chrome
     re.compile(r"^# .*", re.MULTILINE),
@@ -29,12 +29,13 @@ class GeminiCLIProvider(LLMProvider):
     def name(self) -> str:
         return "gemini"
 
-    async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
+    async def _complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         full_prompt = self._build_prompt(prompt, system, json_mode)
         log.info(f"[gemini] calling gemini-cli (timeout={self._timeout}s, json_mode={json_mode})")
         t0 = time.time()
         proc = await asyncio.create_subprocess_exec(
             "gemini", "-p", full_prompt, "--approval-mode=yolo",
+            "--output-format", "json",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -54,7 +55,7 @@ class GeminiCLIProvider(LLMProvider):
         log.info(f"[gemini] completed in {time.time()-t0:.1f}s, response_len={len(raw)}")
         return self._extract_response(raw, json_mode)
 
-    async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
+    async def _complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
         full_prompt = self._build_prompt(prompt, system, False)
         log.info(f"[gemini] streaming gemini-cli with stream-json")
         proc = await asyncio.create_subprocess_exec(
@@ -96,6 +97,19 @@ class GeminiCLIProvider(LLMProvider):
 
     def _extract_response(self, raw: str, json_mode: bool) -> str:
         text = _ANSI_RE.sub("", raw)  # strip ANSI color codes first
+
+        # --output-format json wraps response in {"response": "...", "stats": {...}}
+        # Strip any prefix lines (e.g. "YOLO mode is enabled") before the JSON
+        json_start = text.find("{")
+        if json_start > 0:
+            text = text[json_start:]
+        try:
+            wrapper = json.loads(text)
+            if isinstance(wrapper, dict) and "response" in wrapper:
+                text = wrapper["response"]
+        except (json.JSONDecodeError, Exception):
+            pass  # not wrapped, use raw text
+
         for pat in _STRIP_PATTERNS:
             text = pat.sub("", text)
         text = text.strip()

@@ -56,7 +56,7 @@ def _fetch_from_api(amfi_code: str) -> list[tuple[date, float]]:
     """Fetch full NAV history from api.mfapi.in."""
     url = f"{_MFAPI_URL}/{amfi_code}"
     req = urllib.request.Request(url, headers={
-        "User-Agent": "FinBestie/0.1",
+        "User-Agent": "Arth/0.1",
         "Accept-Encoding": "gzip, deflate",
     })
     try:

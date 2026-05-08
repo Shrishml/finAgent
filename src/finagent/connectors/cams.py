@@ -22,6 +22,15 @@ class CAMSConnector(Connector):
         import casparser
 
         data = casparser.read_cas_pdf(str(file_path), password)
+
+        # NSDL CAS is not supported yet — ask user to upload CAMS/KFintech CAS
+        if hasattr(data, 'accounts'):
+            raise ValueError(
+                "This looks like an NSDL/CDSL statement, which we don't support yet. "
+                "Please upload a CAMS or KFintech CAS instead. "
+                "See /help/cas for a step-by-step guide."
+            )
+
         holdings = []
 
         log.debug("=== RAW CASPARSER OUTPUT ===")

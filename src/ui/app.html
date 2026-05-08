@@ -4,9 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 <title>Arth</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230D7377'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='52' font-weight='700' fill='white' font-family='sans-serif'%3Eअ%3C/text%3E%3Cpolyline points='22,72 40,58 55,64 78,32' stroke='%23D4A843' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='78' cy='32' r='4' fill='%23D4A843'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/theme.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+marked.setOptions({ breaks: true, gfm: true });
+function md(src) { return marked.parse(src || '').replace(/<ul>/g, '<ul class="list-disc pl-5 my-2">').replace(/<ol>/g, '<ol class="list-decimal pl-5 my-2">'); }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/common.js"></script>
@@ -20,7 +25,7 @@
   }
 
   @media (max-width: 640px) {
-    #chat-widget { width: 100% !important; height: 100% !important; max-height: 100% !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; }
+    #chat-widget { width: 100% !important; height: 100dvh !important; max-height: 100dvh !important; bottom: 0 !important; right: 0 !important; border-radius: 0 !important; position: fixed !important; top: auto !important; }
     .chat-closed { transform: translateY(100%) !important; }
   }
 </style>
@@ -29,7 +34,12 @@
 
 <header class="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between z-30 shrink-0 w-full">
   <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-    <span class="text-xl sm:text-2xl">💰</span>
+    <svg onclick="location.href='/'" class="cursor-pointer shrink-0" width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="#0D7377"/>
+      <text x="50" y="62" text-anchor="middle" font-size="52" font-weight="700" fill="white" font-family="sans-serif">अ</text>
+      <polyline points="22,72 40,58 55,64 78,32" stroke="#D4A843" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="78" cy="32" r="4" fill="#D4A843"/>
+    </svg>
     <div onclick="location.href='/'" class="cursor-pointer">
       <h1 class="text-base sm:text-lg font-bold text-gray-800 leading-tight">Arth</h1>
       <p class="hidden sm:block text-[9px] sm:text-[10px] text-gray-400 -mt-0.5 font-medium">Your money, your rules.</p>
@@ -69,7 +79,7 @@
 </header>
 
 <div id="app-container" class="flex-1 flex overflow-hidden w-full relative">
-  <main class="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar">
+  <main class="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col min-h-0">
     <div id="loading-state" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-20 w-full">
       <div class="text-center px-6">
         <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">📊</div>
@@ -79,56 +89,105 @@
     </div>
 
   <div id="dashboard" class="hidden w-full">
-    <div class="bg-gray-900 text-white px-4 sm:px-6 py-8 sm:py-14 w-full overflow-hidden">
-      <div id="summary-bar" class="max-w-6xl mx-auto"></div>
-    </div>
-
     <div class="bg-white border-b sticky top-0 z-20 px-4 sm:px-6 w-full">
       <div class="max-w-6xl mx-auto flex gap-6 sm:gap-10">
         <button onclick="switchTab('overview')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-emerald-600 text-emerald-600" data-tab="overview">Overview</button>
-        <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Holdings</button>
+        <button onclick="switchTab('funds')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="funds">Mutual Funds</button>
+        <button onclick="switchTab('goals')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="goals">Goals</button>
+        <button onclick="switchTab('profile')" class="tab-btn px-1 py-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600" data-tab="profile">Profile</button>
       </div>
     </div>
 
-    <div id="tab-overview" class="tab-content max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-16 w-full overflow-x-hidden">
-      <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 w-full">
-          <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Performance</h3><p class="text-xs text-gray-500 mt-1">Total value vs. investment</p></div>
-          <div id="portfolio-period-btns" class="flex p-1 bg-gray-100 rounded-xl self-start overflow-x-auto max-w-full">
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1M">1M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3M">3M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="6M">6M</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="1Y">1Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="3Y">3Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg bg-white text-gray-900 shadow-sm" data-p="5Y">5Y</button>
-            <button class="pp-btn text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-3 sm:px-4 py-2 rounded-lg text-gray-500" data-p="MAX">MAX</button>
+    <div id="tab-overview" class="tab-content w-full overflow-x-hidden flex-1">
+      <!-- Section 1: Wealth Snapshot -->
+      <section class="min-h-[calc(100vh-49px)] flex flex-col justify-center w-full">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
+          <div class="mb-6">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Wealth Snapshot</h2>
+            <p class="text-sm text-gray-500 mt-1">Your complete financial picture at a glance</p>
+          </div>
+          <div id="summary-bar"></div>
+        </div>
+      </section>
+
+      <!-- Section 2: Financial Planning -->
+      <section class="min-h-[calc(100vh-49px)] flex flex-col max-w-6xl mx-auto px-4 sm:px-6 py-8 pt-16">
+        <div class="mb-6 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Financial Planning</h2>
+            <p class="text-sm text-gray-500 mt-1">Goals you're working toward and how close you are</p>
+          </div>
+          <button onclick="switchTab('goals')" class="text-xs font-bold text-emerald-600 hover:text-emerald-800 whitespace-nowrap">View all →</button>
+        </div>
+        <div id="ov-goals-section">
+          <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4">
+              <div class="text-xl font-bold text-emerald-400">Goal Progress</div>
+            </div>
+            <div id="ov-goals-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-5 sm:p-8"></div>
           </div>
         </div>
-        <div id="benchmark-toggles" class="flex flex-wrap gap-2 mt-3 sm:mt-0">
-          <span class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest self-center mr-1">vs</span>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="nifty50">Nifty 50</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="nifty100">Next 50</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="midcap">Midcap</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="smallcap">Smallcap</button>
-          <button class="bench-btn text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors" data-b="gold">Gold</button>
+        <div id="ov-goal-articles" class="hidden mt-4"></div>
+      </section>
+
+      <!-- Section 3: Monthly Money Flow -->
+      <section id="ov-cashflow-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Monthly Money Flow</h2>
+          <p class="text-sm text-gray-500 mt-1">Where your money goes — and where it could go</p>
         </div>
-        <div class="h-[300px] sm:h-[420px] relative max-w-full"><canvas id="chart-portfolio"></canvas></div>
-      </div>
+        <!-- Waterfall Card -->
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden mb-4">
+          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-purple-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-purple-400">Cash Flow</div>
+          </div>
+          <div id="ov-cashflow" class="p-5 sm:p-8"></div>
+        </div>
+        <!-- Growth Projection Card -->
+        <div id="ov-projection-card" class="hidden bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white px-6 py-4 flex items-center justify-between">
+            <div class="text-xl font-bold text-emerald-400">🔮 If you invested your surplus...</div>
+            <div id="ov-proj-toggle" class="flex gap-1 bg-white/10 rounded-lg p-0.5 text-xs"></div>
+          </div>
+          <div id="ov-projection" class="p-5 sm:p-8"></div>
+        </div>
+        <!-- Health Pills -->
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 w-full">
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full"><h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 sm:mb-8">Asset Allocation</h4><div class="h-[250px] sm:h-[320px] relative max-w-full"><canvas id="chart-asset"></canvas></div></div>
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-sm w-full"><h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 sm:mb-8">Category Breakdown</h4><div class="h-[250px] sm:h-[320px] relative max-w-full"><canvas id="chart-category"></canvas></div></div>
-      </div>
+      </section>
 
-      <div id="insights-section" class="w-full">
-        <div class="flex items-center gap-3 mb-8 sm:mb-10"><h3 class="text-lg font-bold text-gray-900 tracking-tight">Portfolio Insights</h3></div>
-        <div id="good-insights-row" class="mb-10 hidden"><h4 class="text-[13px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">What's working</h4><div id="good-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
-        <div id="action-insights-row" class="hidden"><h4 class="text-[13px] font-bold text-amber-600 uppercase tracking-[0.2em] mb-4">Worth a look</h4><div id="action-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"></div></div>
-      </div>
+      <!-- Section 4: What Needs Attention -->
+      <section id="ov-nudges-section" class="hidden min-h-[calc(100vh-49px)] flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="mb-6">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">What Needs Attention</h2>
+          <p class="text-sm text-gray-500 mt-1">Personalized nudges to improve your finances</p>
+        </div>
+        <div id="ov-nudge-summary" class="mb-3"></div>
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-amber-400">Nudges</div>
+          </div>
+          <div id="ov-nudges" class="p-5 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+        </div>
+        <!-- Data Gaps CTA -->
+        <div id="ov-data-gaps" class="hidden mt-4 bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white px-6 py-4">
+            <div class="text-xl font-bold text-emerald-400">📋 Help Arth help you</div>
+            <p class="text-xs text-emerald-200/70 mt-0.5">The more Arth knows, the better the advice</p>
+          </div>
+          <div id="ov-data-gaps-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 sm:p-8"></div>
+        </div>
+      </section>
+
     </div>
 
-    <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden">
-      <div class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-10 w-full">
+    <div id="tab-funds" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
+      <div id="funds-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">📄</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No holdings yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Upload your CAS statement to track your mutual fund portfolio</p>
+        <button onclick="$('upload-modal').classList.remove('hidden')" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Upload CAS Statement</button>
+      </div>
+      <div id="funds-table-wrap" class="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-10 w-full">
         <div class="px-4 sm:px-8 py-4 sm:py-6 border-b bg-gray-50/30"><h3 class="text-base sm:text-lg font-extrabold text-gray-900">Your Portfolio Holdings</h3></div>
         <div class="overflow-x-auto w-full"><table class="w-full text-sm"><thead><tr class="text-left text-gray-400 text-[9px] sm:text-[10px] uppercase tracking-widest border-b">
           <th class="px-4 sm:px-8 py-4 font-bold cursor-pointer hover:bg-gray-50 transition-colors group" onclick="sortHoldings('scheme')">Scheme <span id="sort-scheme" class="text-gray-300 group-hover:text-gray-500"></span></th>
@@ -146,6 +205,475 @@
         </div>
       </div>
     </div>
+
+    <!-- Goals Tab -->
+    <div id="tab-goals" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
+      <div class="flex items-center justify-between mb-8">
+        <div><h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Financial Goals</h3><p class="text-xs text-gray-500 mt-1">Track progress toward your life goals</p></div>
+        <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-lg">+ New Goal</button>
+      </div>
+
+      <!-- Goal Creation Form (hidden by default) -->
+      <div id="goal-form-section" class="hidden mb-10">
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+          <h4 class="text-sm font-bold text-gray-900 mb-4">Choose a template</h4>
+          <div id="goal-template-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"></div>
+          <div class="space-y-4">
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal Name</label><input id="goal-name" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="e.g. Dream House"></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount (₹)</label><input id="goal-amount" type="text" inputmode="numeric" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="50,00,000" oninput="_fmtInrLive(this)"></div>
+              <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Date</label><input id="goal-date" type="date" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none"></div>
+            </div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Link Holdings</label>
+              <div id="goal-holdings-list" class="mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button onclick="submitGoal()" id="goal-submit-btn" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create Goal</button>
+              <button onclick="hideGoalForm()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goal Cards -->
+      <div id="goals-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">🎯</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No goals yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Set a financial goal and track your progress</p>
+        <button onclick="showGoalForm()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">Create your first goal</button>
+      </div>
+      <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+      <!-- Goal Detail Overlay -->
+      <div id="goal-detail-overlay" class="hidden fixed inset-0 bg-white z-50 overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+          <button onclick="closeGoalDetail()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 font-bold mb-6 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Back to Goals
+          </button>
+          <div id="goal-detail-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="tab-profile" class="tab-content hidden max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full overflow-x-hidden flex-1">
+      <div id="profile-loading" class="text-center py-16"><div class="text-4xl mb-4">⏳</div><p class="text-gray-500">Loading profile...</p></div>
+      <div id="profile-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">👤</div>
+        <h4 class="text-lg font-bold text-gray-800 mb-2">No profile yet</h4>
+        <p class="text-sm text-gray-500 mb-6">Chat with Arth to build your financial profile</p>
+        <button onclick="toggleChat()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700">Start Chat →</button>
+      </div>
+      <div id="profile-content" class="hidden space-y-8">
+        <!-- Snapshot -->
+        <div id="snapshot-section" class="hidden bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <h3 class="text-lg font-extrabold text-gray-900 mb-3">📊 Financial Snapshot</h3>
+          <div id="snapshot-content" class="prose prose-sm prose-emerald"></div>
+          <p id="snapshot-time" class="text-[10px] text-gray-400 mt-3"></p>
+        </div>
+        <!-- Profile Accordion Sections -->
+        <div class="space-y-3" id="profile-sections">
+  <div class="space-y-3" id="profile-sections">
+
+    <!-- Section: Personal -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('personal')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-lg">👤</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Personal</h4><p class="text-[10px] text-gray-400">About you, family, risk appetite</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-personal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-personal" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: personalized advice, insurance needs, tax planning</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Name</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How Arth addresses you</p><input data-field="name" type="text" placeholder="Your name" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Age</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps set the right investment horizon</p><input data-field="age" type="number" placeholder="28" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Occupation</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Salaried, freelancer, business — affects tax & insurance advice</p><input data-field="occupation" type="text" placeholder="Software Engineer" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">City</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Cost of living varies — helps set realistic benchmarks</p><input data-field="location" type="text" placeholder="Bangalore" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Marital Status</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">For tax and insurance planning</p>
+            <select data-field="marital_status" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Single</option><option>Married</option></select>
+          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Number of Kids</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps plan education corpus and child insurance needs</p><input data-field="kids" type="number" placeholder="0" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dependent Parents?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">For tax deduction and insurance analysis</p>
+            <select data-field="dependent_parents" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes</option><option>No</option></select>
+          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Parents' Health Insurance?</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Checks if your family has coverage gaps</p>
+            <select data-field="parents_health_insurance" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Yes, I pay</option><option>They have their own</option><option>No coverage</option></select>
+          </div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Risk Appetite</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Conservative = FDs & debt funds · Moderate = mix · Aggressive = mostly equity</p>
+            <select data-field="risk_tolerance" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Conservative</option><option>Moderate</option><option>Aggressive</option></select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('personal')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Income (FILLED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('income')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">💰</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Income Details</h4><p class="text-[10px] text-gray-400">Salary, bonus, other income</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-extrabold rounded-full">✅ Filled</span>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-income" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-income" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly In-Hand Salary</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Used to calculate savings rate and tax bracket</p><input data-field="monthly_income" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Bonus</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total annual bonus before tax</p><input data-field="annual_bonus" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual RSU / Stock Vesting</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Yearly value of RSU/ESOP vesting — taxed as perquisite</p><input data-field="annual_rsu" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Monthly SIP</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total amount invested via SIPs each month</p><input data-field="monthly_sip" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Other Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Rental, freelance, dividends — any regular non-salary income</p><input data-field="other_income" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Spouse Income (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Helps Arth calculate household savings capacity</p><input data-field="spouse_income" type="text" placeholder="Not specified" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-400"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('income')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Expenses (EMPTY) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('expenses')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-lg">🧾</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Expenses</h4><p class="text-[10px] text-gray-400">Monthly fixed, variable, annual big-ticket</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-expenses" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-expenses" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: savings rate analysis, budget optimization</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Monthly Expenses</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Approximate total — break down below if you know the details</p><input data-field="total_monthly_expenses" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm font-bold bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Rent</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Pure housing cost — if you have a home loan instead, skip this (it's in Loans)</p><input data-field="rent" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Groceries & Essentials</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly average for household essentials</p><input data-field="groceries" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilities & Subscriptions</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Wifi, phone, OTT, electricity — all recurring bills</p><input data-field="utilities" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dining & Entertainment</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Restaurants, movies, outings — approximate monthly</p><input data-field="dining" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div class="sm:col-span-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Annual Big-Ticket (vacations, school fees)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Yearly total — vacations, school fees, festivals</p><input data-field="annual_big_ticket" type="text" placeholder="₹ per year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('expenses')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- ASSET CLASS SECTIONS START -->
+
+    <!-- Section: EPF & PPF -->
+
+
+    <!-- Section: EPF & PPF -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('epf-ppf')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-lg">🏦</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">EPF & PPF</h4><p class="text-[10px] text-gray-400">Provident fund balances and contributions</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-epf-ppf" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: retirement readiness score, 80C utilization check</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload EPFO passbook PDF</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">EPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Check your EPFO passbook or payslip</p><input data-field="epf_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly EPF Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Employee + employer share from your payslip</p><input data-field="epf_contribution" type="text" placeholder="₹ (employee + employer)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from your PPF passbook</p><input data-field="ppf_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PPF Annual Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">How much you put in this year (max ₹1.5L)</p><input data-field="ppf_contribution" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('epf_ppf')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: NPS -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('nps')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-lg">📊</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">NPS</h4><p class="text-[10px] text-gray-400">National Pension System balance and allocation</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-nps" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: 80CCD(1B) deduction check, retirement corpus projection</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload NPS CRA statement</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">NPS Balance</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current balance from NPS CRA statement</p><input data-field="nps_balance" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Contribution</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Your monthly NPS contribution amount</p><input data-field="nps_contribution" type="text" placeholder="₹/month" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Equity Allocation %</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">% in equity (E) fund — check your CRA statement</p><input data-field="equity_pct" type="text" placeholder="e.g. 75%" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tier</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Tier I (locked till 60) or Tier II (flexible)</p>
+            <select data-field="tier" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Tier I only</option><option>Tier I + Tier II</option></select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('nps')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Fixed Deposits (CARD-BASED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('fds')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-lg">💵</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Fixed Deposits</h4><p class="text-[10px] text-gray-400">Bank FDs, tax-saver FDs, corporate deposits</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-fds" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: FD laddering analysis, tax-efficient alternatives</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload FD certificates / bank statement</button>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+            </div>
+          </div>
+        </div>
+        <button onclick="addFDCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another FD</button>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-fds','fd')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All FDs</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Real Estate (CARD-BASED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('realestate')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-lg">🏠</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Real Estate</h4><p class="text-[10px] text-gray-400">Flats, plots, houses — owned properties</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-realestate" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: true net worth, asset allocation, rental yield analysis</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
+            </div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label><p class="text-[9px] text-gray-400 mb-0.5">City or area — affects valuation</p><input type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
+              <select onchange="updateRealEstateCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+            </div>
+            <div class="re-rental" style="display:none"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">Monthly rent received</p><input type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
+              <select class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+            </div>
+          </div>
+        </div>
+        <button onclick="addRealEstateCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another property</button>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-realestate','realestate')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Properties</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Gold -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('gold')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-lg">🪙</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Gold</h4><p class="text-[10px] text-gray-400">SGBs, physical gold, Gold ETFs</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-gold" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: gold allocation %, SGB maturity tracking</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
+              <select onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+            </div>
+            <div class="gold-value"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest gold-value-label">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5 gold-value-tip">Amount you invested in this SGB</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
+        </div>
+        <button onclick="addGoldCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another gold holding</button>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-gold','gold')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Gold</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Stocks & Demat -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('stocks')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-lg">📈</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Stocks & Demat</h4><p class="text-[10px] text-gray-400">Direct equity holdings outside mutual funds</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-stocks" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: total equity exposure, LTCG/STCG estimation</p>
+        <button class="w-full border-2 border-dashed border-emerald-200 rounded-xl py-2.5 text-xs font-bold text-emerald-500 hover:border-emerald-400 hover:text-emerald-700 transition-all mb-4">📄 Upload demat holding statement</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Demat Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Current value from Zerodha, Groww etc.</p><input data-field="demat_value" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Invested Value</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total amount you invested (cost basis)</p><input data-field="invested_value" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Broker</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Which platform you use</p><input data-field="broker" type="text" placeholder="e.g. Zerodha" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('stocks')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: ESOP / RSU -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('esop')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center text-lg">🏢</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">ESOP / RSU</h4><p class="text-[10px] text-gray-400">Employee stock options and restricted stock</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-esop" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: concentration risk check, vesting timeline, tax on exercise</p>
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
+        </div>
+        <button onclick="addESOPCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another ESOP/RSU</button>
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-esop','esop')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All ESOPs</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Loans (CARD-BASED) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('loans')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-lg">🏦</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Loans & Liabilities</h4><p class="text-[10px] text-gray-400">Home, car, personal, education, credit cards</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400 transition-transform" id="chevron-loans" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-loans" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: debt-to-income ratio, prepayment vs invest analysis, refinance alerts</p>
+
+        <!-- Loan Card 1 (example filled) -->
+        <div class="bg-white rounded-xl border p-4 mb-3 relative group">
+          <button class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs hidden group-hover:block">✕</button>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-lg">🏠</span>
+            <select onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option selected>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">Current rate from your bank statement</p><input type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+          </div>
+        </div>
+
+        <!-- Add Loan Button -->
+        <button onclick="addLoanCard()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all mt-2">+ Add another loan</button>
+
+        <div class="flex justify-end mt-4"><button onclick="saveCardSection('section-loans','loan')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save All Loans</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Insurance (EMPTY) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('insurance')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🛡️</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Insurance</h4><p class="text-[10px] text-gray-400">Term life, health, existing policies</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-insurance" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: coverage gap analysis, premium optimization</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum assured from your policy document</p><input data-field="term_cover" type="text" placeholder="₹ sum assured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Term Life Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input data-field="term_premium" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Insurance Cover</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Sum insured from your policy</p><input data-field="health_cover" type="text" placeholder="₹ sum insured" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Health Premium</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Annual premium you pay</p><input data-field="health_premium" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <p class="text-[10px] text-gray-400 mt-3">Have ULIP/endowment policies? Tell Arth in chat — we'll analyze surrender value vs continuing.</p>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('insurance')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+    <!-- Section: Tax (EMPTY) -->
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <button onclick="toggleSection('tax')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center text-lg">📋</span>
+          <div class="text-left"><h4 class="font-bold text-gray-900 text-sm">Tax Details</h4><p class="text-[10px] text-gray-400">Regime, 80C/80D, HRA, salary structure</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[9px] font-extrabold rounded-full">○ Empty</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div id="section-tax" class="hidden border-t px-5 py-5 bg-gray-50/50">
+        <p class="text-xs text-emerald-600 font-bold mb-4">🔓 Filling this unlocks: old vs new regime comparison, tax-saving recommendations</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tax Regime</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Select current regime — Arth will compare both</p>
+            <select data-field="tax_regime" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"><option value="">Select...</option><option>Old Regime</option><option>New Regime</option><option>Not sure</option></select>
+          </div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Basic Salary (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">From your payslip — usually 40-50% of CTC</p><input data-field="basic_salary" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HRA Received (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">HRA component from your payslip</p><input data-field="hra_received" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rent Paid (monthly)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Monthly rent — needed for HRA exemption calc</p><input data-field="rent_paid" type="text" placeholder="₹" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80C Used (ELSS, PPF, LIC etc)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Total 80C investments this year (ELSS, PPF, LIC, EPF)</p><input data-field="section_80c" type="text" placeholder="₹/year (max 1.5L)" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+          <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">80D (Health Insurance Premium)</label><p class="text-[10px] text-gray-400 mt-0.5 mb-1">Health insurance premiums paid this year</p><input data-field="section_80d" type="text" placeholder="₹/year" class="w-full border rounded-xl px-4 py-2.5 text-sm bg-white"></div>
+        </div>
+        <div class="flex justify-end mt-4"><button onclick="saveSection('tax')" class="bg-gray-900 text-white px-5 py-2 rounded-xl text-xs font-bold">Save</button></div>
+      </div>
+    </div>
+
+  </div><!-- end profile-sections -->
+        </div>
+      </div>
+      </div>
+    </div>
+    <footer class="bg-gray-900 text-gray-400 text-xs py-8 px-6 mt-auto">
+      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2"><span class="text-lg font-extrabold text-white">अ</span><span class="font-bold text-gray-300">Arth</span><span class="text-gray-500">— अर्थमित्र</span></div>
+        <p>Your data stays yours. Arth runs the math, you make the calls.</p>
+        <div class="flex gap-4"><a href="https://github.com/Suraj1074/finagent" target="_blank" class="hover:text-white transition-colors">GitHub</a><a href="/blogs/retirement-planning" class="hover:text-white transition-colors">Blog</a></div>
+      </div>
+    </footer>
   </main>
 
   <!-- Sidebar Resizer -->
@@ -158,7 +686,7 @@
         <button onclick="toggleChat()" class="p-2 hover:bg-white/10 rounded-xl transition-all" title="Close Chat"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div id="chat-box" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar bg-gray-50/30"><div id="suggestions-area" class="py-6 space-y-8"><div class="text-center px-4"><p class="text-base font-extrabold text-gray-800 mb-2">👋 I've audited your portfolio.</p><p class="text-xs text-gray-500">Ask me anything about your funds.</p></div><div id="smart-suggestions" class="grid grid-cols-1 gap-2"></div></div></div>
-      <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><input type="text" id="chat-input" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
+      <div class="p-4 sm:p-5 bg-white border-t shrink-0"><form id="chat-form" class="relative group"><textarea id="chat-input" rows="1" placeholder="Type a question..." class="w-full bg-gray-100 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none overflow-hidden" style="max-height:120px" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea><button type="submit" class="absolute right-2 top-2 p-1.5 bg-emerald-600 text-white rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"/></svg></button></form><p class="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest opacity-60">Secure & Local</p></div>
     </div>
   </div>
 </div>
@@ -251,6 +779,7 @@ function switchTab(tab) {
   btn.classList.add('border-emerald-600','text-emerald-600');
   btn.classList.remove('border-transparent','text-gray-400');
   window.scrollTo({top: 0, behavior: 'smooth'});
+  if (tab === 'profile' && !window._profileLoaded) loadProfileData();
 }
 
 function classifyAsset(cat) {
@@ -290,12 +819,198 @@ function amcLogo(scheme) {
 }
 
 function renderSummary(holdings, portfolioXirr) {
+  // Legacy compat — called by showPortfolio for Holdings tab summary
   const total = holdings.reduce((s, h) => s + h.value, 0);
   const invested = holdings.reduce((s, h) => s + (h.invested || 0), 0);
   const ret = total - invested;
   const retPct = invested > 0 ? (ret / invested * 100) : 0;
   const xirrHtml = portfolioXirr != null ? `<div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">XIRR</p><p class="text-xl sm:text-2xl font-extrabold ${portfolioXirr >= 0 ? 'text-emerald-400' : 'text-red-400'}">${portfolioXirr.toFixed(1)}%</p></div>` : '';
-  $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-2">Portfolio Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Principal</p><p class="text-xl sm:text-2xl font-extrabold">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><div class="flex items-baseline gap-2"><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div></div>${xirrHtml}</div></div>`;
+  // Only update summary bar if overview hasn't loaded yet
+  if (!window._overviewLoaded) {
+    $('summary-bar').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-10"><div><p class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p><h2 class="text-4xl sm:text-6xl font-extrabold tracking-tighter text-gray-900">${INR(total)}</h2></div><div class="flex gap-8 sm:gap-12 w-full sm:w-auto"><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Invested</p><p class="text-xl sm:text-2xl font-extrabold text-gray-900">${INR(invested)}</p></div><div><p class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Gains</p><p class="text-xl sm:text-2xl font-extrabold ${ret >= 0 ? 'text-emerald-400' : 'text-red-400'}">${sign(ret)}${retPct.toFixed(1)}%</p></div>${xirrHtml}</div></div>`;
+  }
+}
+
+// ── Overview Dashboard ──
+function renderOverviewSummaryBar(nw) {
+  window._overviewLoaded = true;
+  const assets = nw.assets || nw.breakdown || {};
+  const liabilities = nw.liabilities || {};
+  const totalA = nw.total_assets || Object.values(assets).reduce((s,v)=>s+v,0);
+  const totalL = nw.total_liabilities || Object.values(liabilities).reduce((s,v)=>s+v,0);
+  const netWorth = nw.total || (totalA - totalL);
+
+  // Asset icon colors matching landing page palette
+  const ASSET_STYLE = {
+    'Mutual Funds':'bg-emerald-50 text-emerald-600','Mutual Funds (CAS)':'bg-emerald-50 text-emerald-600',
+    'EPF & PPF':'bg-blue-50 text-blue-600','Fixed Deposits':'bg-amber-50 text-amber-600',
+    'Gold':'bg-yellow-50 text-yellow-600','Gold (SGB + Physical)':'bg-yellow-50 text-yellow-600',
+    'NPS':'bg-purple-50 text-purple-600','ESOP/RSU':'bg-pink-50 text-pink-600',
+    'Real Estate':'bg-indigo-50 text-indigo-600','Stocks':'bg-cyan-50 text-cyan-600',
+  };
+  const ASSET_ICON = {
+    'Mutual Funds':'📊','Mutual Funds (CAS)':'📊','EPF & PPF':'🏛️','Fixed Deposits':'🔒',
+    'Gold':'✨','Gold (SGB + Physical)':'✨','NPS':'🏦','ESOP/RSU':'🎫',
+    'Real Estate':'🏡','Stocks':'📈','SIPs (declared)':'🔄',
+  };
+  const LIAB_ICON = {'Car Loan':'🚗','Home Loan':'🏠','Education Loan':'🎓','Personal Loan':'💳','Credit Card':'💳'};
+
+  const assetRows = Object.entries(assets).map(([k,v]) => {
+    const style = ASSET_STYLE[k] || 'bg-gray-50 text-gray-600';
+    const icon = ASSET_ICON[k] || '💰';
+    return `<div class="flex items-center gap-3 py-2">
+      <div class="w-8 h-8 ${style} rounded-lg flex items-center justify-center text-sm flex-shrink-0">${icon}</div>
+      <span class="text-sm text-gray-600 flex-1 truncate">${esc(k)}</span>
+      <span class="text-sm font-bold text-gray-900">${INR_SHORT(v)}</span>
+    </div>`;
+  }).join('');
+
+  const liabRows = Object.entries(liabilities).map(([k,v]) => {
+    const icon = LIAB_ICON[k] || '📄';
+    return `<div class="flex items-center gap-3 py-2">
+      <div class="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center text-sm flex-shrink-0">${icon}</div>
+      <span class="text-sm text-gray-600 flex-1 truncate">${esc(k)}</span>
+      <span class="text-sm font-bold text-red-500">−${INR_SHORT(v)}</span>
+    </div>`;
+  }).join('');
+
+  // Allocation comparison — current vs ideal
+  const alloc = nw.allocation || {};
+  const ideal = nw.ideal_allocation || {};
+  const allocEntries = Object.entries(alloc).filter(([,v]) => v > 0);
+  const allocTotal = allocEntries.reduce((s,[,v]) => s+v, 0);
+  const ALLOC_COLORS = {Equity:'bg-emerald-500',Debt:'bg-blue-500',Gold:'bg-amber-500','Real Estate':'bg-purple-500',Cash:'bg-gray-400'};
+  const allKeys = [...new Set([...Object.keys(alloc), ...Object.keys(ideal)])].filter(k => (alloc[k] || 0) > 0 || (ideal[k] || 0) > 0);
+  let allocHtml = '';
+  if (allKeys.length > 1) {
+    const rows = allKeys.map(k => {
+      const curPct = allocTotal > 0 ? ((alloc[k] || 0) / allocTotal * 100) : 0;
+      const idealPct = ideal[k] || 0;
+      const diff = curPct - idealPct;
+      const barColor = Math.abs(diff) < 3 ? 'bg-emerald-500' : (diff > 0 ? 'bg-amber-500' : 'bg-blue-500');
+      const diffColor = Math.abs(diff) < 3 ? 'text-emerald-600' : (diff > 0 ? 'text-amber-600' : 'text-blue-600');
+      const diffLabel = Math.abs(diff) < 3 ? '✓ On track' : (diff > 0 ? `↑ ${Math.abs(diff).toFixed(0)}% over` : `↓ ${Math.abs(diff).toFixed(0)}% under`);
+      return `<div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-base font-bold text-gray-800">${esc(k)}</span>
+          <span class="text-sm font-semibold ${diffColor}">${diffLabel}</span>
+        </div>
+        <div class="relative h-8 bg-gray-100 rounded-lg overflow-visible">
+          <div class="${barColor} h-8 rounded-lg" style="width:0%" data-bar-width="${Math.min(curPct,100)}%"></div>
+          ${idealPct > 0 ? `<div class="absolute top-0 h-8 flex items-center" style="left:${Math.min(idealPct,100)}%">
+            <div class="w-0.5 h-10 -mt-1 bg-gray-900 rounded-full"></div>
+          </div>` : ''}
+          <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold ${curPct > 8 ? 'text-white' : 'text-gray-700'}">${curPct.toFixed(0)}%</span>
+        </div>
+        <div class="flex justify-between mt-1">
+          <span class="text-[10px] text-gray-400">0%</span>
+          ${idealPct > 0 ? `<span class="text-[10px] font-semibold text-gray-500" style="margin-left:${Math.min(idealPct,100) - 5}%">▲ ${idealPct}% suggested</span>` : ''}
+          <span class="text-[10px] text-gray-400">100%</span>
+        </div>
+      </div>`;
+    }).join('');
+    let bigGap = null, bigDiff = 0;
+    allKeys.forEach(k => {
+      const cur = allocTotal > 0 ? ((alloc[k]||0)/allocTotal*100) : 0;
+      const d = Math.abs(cur - (ideal[k]||0));
+      if (d > bigDiff) { bigDiff = d; bigGap = k; }
+    });
+    const nudge = bigGap && bigDiff >= 5 ? `<p class="text-xs text-gray-500 pt-4 border-t border-gray-100">💡 <span class="font-bold text-gray-700">${bigGap}</span> has the biggest gap — consider rebalancing</p>` : '';
+    allocHtml = `
+      <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 text-white px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="text-xl font-bold text-blue-400">Allocation Check</div>
+            <div class="flex items-center gap-3 text-xs text-gray-300">
+              <span class="flex items-center gap-1.5"><span class="w-4 h-3 bg-emerald-500 rounded inline-block"></span>Yours</span>
+              <span class="flex items-center gap-1.5"><span class="w-0.5 h-4 bg-white rounded-full inline-block"></span>Suggested</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Based on your age and risk profile</p>
+        </div>
+        <div class="p-5 sm:p-8 space-y-6">${rows}</div>
+        ${nudge ? `<div class="px-5 sm:px-8 pb-5">${nudge}</div>` : ''}
+      </div>`;
+  }
+
+  $('summary-bar').innerHTML = `
+    <div class="text-center mb-8">
+      <p class="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest mb-2">Net Worth</p>
+      <h2 class="text-5xl sm:text-7xl font-extrabold tracking-tighter text-gray-900" data-count="${netWorth}" data-fmt="short">${INR_SHORT(netWorth)}</h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+      <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white px-6 py-4 flex items-center justify-between">
+          <div class="text-xl font-bold text-emerald-400">Total Assets</div>
+          <div class="text-2xl font-extrabold" data-count="${totalA}" data-fmt="short">${INR_SHORT(totalA)}</div>
+        </div>
+        <div class="divide-y divide-gray-100 px-2">${assetRows}</div>
+      </div>
+      ${Object.keys(liabilities).length ? `<div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 text-white px-6 py-4 flex items-center justify-between">
+          <div class="text-xl font-bold text-red-400">Total Liabilities</div>
+          <div class="text-2xl font-extrabold" data-count="${totalL}" data-fmt="short" data-prefix="−">−${INR_SHORT(totalL)}</div>
+        </div>
+        <div class="divide-y divide-gray-100 px-2">${liabRows}</div>
+      </div>` : '<div></div>'}
+    </div>
+    ${allocHtml}`;
+}
+
+function renderGoalCards(goals) {
+  const grid = $('ov-goals-grid');
+  if (!goals.length) {
+    grid.innerHTML = `<button onclick="switchTab('goals')" class="bg-gray-50 rounded-2xl p-6 text-center hover:shadow-lg transition-all col-span-full sm:col-span-1"><div class="text-3xl mb-2">🎯<\/div><h4 class="text-sm font-bold text-gray-900">Set your first goal<\/h4><p class="text-xs text-gray-500 mt-1">Track progress toward what matters<\/p><\/button>`;
+    return;
+  }
+  const ICONS = {retirement:'🏖️',house:'🏠',education:'🎓',car:'🚗',marriage:'💍',emergency:'🛡️',travel:'✈️',custom:'🎯'};
+  grid.innerHTML = goals.map(g => {
+    const pct = Math.min(g.progress_pct, 100);
+    const icon = ICONS[g.template] || '🎯';
+    const trackColor = g.on_track ? '#10b981' : '#f59e0b';
+    const trackLabel = g.on_track ? 'On track' : (g.months_left > 0 ? `${g.months_left}mo left` : 'Behind');
+    const trackTextClass = g.on_track ? 'text-emerald-600' : 'text-amber-600';
+    // SVG semi-circle gauge
+    const r = 54, cx = 60, cy = 60, sw = 8;
+    const circ = Math.PI * r;
+    const off = circ - (pct / 100) * circ;
+    const arc = 'M ' + (cx-r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx+r) + ' ' + cy;
+    const svg = '<svg width="120" height="68" viewBox="0 0 120 68">'
+      + '<path d="' + arc + '" fill="none" stroke="#f3f4f6" stroke-width="' + sw + '" stroke-linecap="round"/>'
+      + '<path d="' + arc + '" fill="none" stroke="' + trackColor + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + circ + '" data-arc-offset="' + off + '"/>'
+      + '<\/svg>';
+    return '<div onclick="switchTab(\'goals\')" class="bg-gray-50 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center">'
+      + '<div class="relative inline-block mb-2">' + svg
+      + '<div class="absolute inset-0 flex items-end justify-center pb-1"><span class="text-2xl font-extrabold text-gray-900" data-count="' + pct + '" data-fmt="pct">0%<\/span><\/div>'
+      + '<\/div>'
+      + '<div class="flex items-center justify-center gap-1.5 mb-1"><span class="text-lg">' + icon + '<\/span><span class="text-sm font-bold text-gray-900 truncate">' + esc(g.name) + '<\/span><\/div>'
+      + '<p class="text-xs text-gray-400">' + INR_SHORT(g.current_value) + ' of ' + INR_SHORT(g.target_amount) + '<\/p>'
+      + '<span class="text-[11px] font-bold ' + trackTextClass + '">' + trackLabel + '<\/span>'
+      + '<\/div>';
+  }).join('');
+  // Knowledge cards matched to user's goals
+  const ARTICLES = {
+    retirement: {img:'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=600&h=340&fit=crop', title:"Why ₹1 Crore Won't Save Your Retirement", slug:'retirement-crore-myth'},
+    house: {img:'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=340&fit=crop', title:'Rent vs Buy: The Math Nobody Shows You', slug:'rent-vs-buy'},
+    education: {img:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=340&fit=crop', title:'That ₹20L Degree Will Cost ₹52L in 10 Years', slug:'education-inflation'},
+    emergency: {img:'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=600&h=340&fit=crop', title:"The 6-Month Rule is a Lie", slug:'emergency-fund-truth'},
+    car: {img:'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=600&h=340&fit=crop', title:'Car Loan vs SIP: One Wins by ₹3 Lakhs', slug:'car-loan-vs-sip'},
+    marriage: {img:'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=340&fit=crop', title:'The ₹25 Lakh Wedding Nobody Planned For', slug:'wedding-planning'},
+    travel: {img:'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=340&fit=crop', title:'₹5K/Month to an International Trip Every 2 Years', slug:'travel-fund'}
+  };
+  const templates = [...new Set(goals.map(g => g.template))];
+  const relevant = templates.map(t => ARTICLES[t]).filter(Boolean).slice(0, 3);
+  const artEl = $('ov-goal-articles');
+  if (relevant.length) {
+    artEl.classList.remove('hidden');
+    artEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">' + relevant.map(a =>
+      '<a href="/blogs/' + a.slug + '" target="_blank" class="relative rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all group block aspect-[3/4]">'
+      + '<img src="' + a.img + '" alt="" class="w-full h-full object-cover">'
+      + '<div class="absolute inset-0 bg-black/40"></div>'
+      + '<div class="absolute inset-0 flex items-center justify-center p-5"><h4 class="text-base sm:text-lg font-extrabold text-white leading-snug drop-shadow-lg text-center">' + esc(a.title) + '<\/h4><\/div>'
+      + '<\/a>'
+    ).join('') + '<\/div>';
+  } else { artEl.classList.add('hidden'); }
 }
 
 let _holdings = [];
@@ -420,88 +1135,372 @@ function showPortfolio(holdings, portfolioXirr) {
   $('loading-state').classList.add('hidden');
   $('dashboard').classList.remove('hidden');
   renderSummary(holdings, portfolioXirr);
-  renderCharts(holdings);
   _holdings = holdings;
-  sortHoldings('value'); // Initial sort by Current Value descending
-  loadInsights();
-  loadPortfolioChart('5Y');
+  sortHoldings('value');
+  // Load new overview dashboard
+  loadOverviewDashboard();
 }
 
-function loadInsights() {
-  fetch('/insights').then(safeJson).then(data => {
-    const render = (cards, id) => {
-      if (!cards.length) return;
-      $(id).classList.remove('hidden');
-      $(id === 'good-insights-row' ? 'good-cards' : 'action-cards').innerHTML = cards.map(c => `
-        <div onclick="openAndChat('${esc(c.q)}')" class="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-xl hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer group">
-          <h5 class="font-bold text-gray-900 mb-1 text-sm tracking-tight group-hover:text-emerald-600 transition-colors">${esc(c.title)}</h5>
-          <p class="text-[11px] text-gray-500 leading-relaxed font-medium mb-3">${esc(c.desc)}</p>
-          <div class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-            Discuss with AI
-            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7-7 7"/></svg>
-          </div>
+function loadOverviewDashboard() {
+  const url = isDemo ? '/overview/demo' : '/overview';
+  fetch(url).then(safeJson).then(data => {
+    // 1. Summary bar — net worth
+    if (data.net_worth) renderOverviewSummaryBar(data.net_worth);
+    // 2. Goals
+    renderGoalCards(data.goals || []);
+    // 3. Cash flow
+    renderCashFlow(data.cash_flow);
+    // 4. Nudges
+    renderNudges(data.nudges || []);
+    // 5. Data gaps
+    renderDataGaps(data.data_gaps || []);
+    // 6. Chat suggestions from nudges
+    // 8. Scroll-triggered animations
+    initScrollAnimations();
+  }).catch(e => console.error('Overview load failed:', e));
+}
+
+function initScrollAnimations() {
+  // Animate numbers from 0 → value when section scrolls into view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting || entry.target.dataset.animated) return;
+      entry.target.dataset.animated = '1';
+      // Find all countable elements in this section
+      entry.target.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseFloat(el.dataset.count);
+        const fmt = el.dataset.fmt || 'short'; // 'short' = INR_SHORT, 'pct' = X%
+        const prefix = el.dataset.prefix || '';
+        const duration = 800;
+        const start = performance.now();
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+          const val = target * ease;
+          if (fmt === 'pct') el.textContent = prefix + Math.round(val) + '%';
+          else el.textContent = prefix + INR_SHORT(val);
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+      // Animate bar widths
+      entry.target.querySelectorAll('[data-bar-width]').forEach(el => {
+        el.style.transition = 'width 0.8s cubic-bezier(0.22,1,0.36,1)';
+        el.style.width = el.dataset.barWidth;
+      });
+      // Animate SVG arcs (goal gauges)
+      entry.target.querySelectorAll('[data-arc-offset]').forEach(el => {
+        el.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)';
+        el.style.strokeDashoffset = el.dataset.arcOffset;
+      });
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('#tab-overview > section, #tab-overview > div').forEach(s => observer.observe(s));
+}
+
+function renderCashFlow(cf) {
+  if (!cf || !cf.income) return;
+  $('ov-cashflow-section').classList.remove('hidden');
+  const total = cf.income;
+  const items = [
+    {label: 'Expenses', val: cf.expenses, color: 'bg-red-400', hex: '#f87171'},
+    {label: 'EMIs', val: cf.emi, color: 'bg-orange-400', hex: '#fb923c'},
+    {label: 'Investments', val: cf.investments, color: 'bg-emerald-500', hex: '#10b981'},
+    {label: 'Surplus', val: cf.surplus, color: cf.surplus >= 0 ? 'bg-blue-400' : 'bg-red-500', hex: cf.surplus >= 0 ? '#60a5fa' : '#ef4444'},
+  ].filter(i => i.val > 0);
+
+  // Waterfall bar + breakdown
+  $('ov-cashflow').innerHTML = `
+    <div class="flex items-center justify-between mb-4"><span class="text-sm font-bold text-gray-500">Income</span><span class="text-2xl font-extrabold text-gray-900" data-count="${cf.income}" data-fmt="short">${INR(cf.income)}/mo</span></div>
+    <div class="flex w-full h-8 rounded-lg overflow-hidden mb-4">${items.map(i => `<div class="${i.color}" style="width:0%" data-bar-width="${(i.val/total*100).toFixed(1)}%" title="${i.label}: ${INR(i.val)}"></div>`).join('')}</div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${items.map(i => `<div class="text-center bg-gray-50 rounded-xl p-3"><div class="w-3 h-3 rounded-full ${i.color} mx-auto mb-1.5"></div><p class="text-[10px] font-bold text-gray-400 uppercase">${i.label}</p><p class="text-base font-extrabold text-gray-900">${INR(i.val)}</p><p class="text-[10px] text-gray-400">${(i.val/total*100).toFixed(0)}%</p></div>`).join('')}</div>`;
+
+  // Growth projections
+  if (cf.projections && cf.projections.length) {
+    $('ov-projection-card').classList.remove('hidden');
+    const years = [3, 5, 10, 20, 30];
+    let activeYear = 10;
+    const renderProjection = (yr) => {
+      activeYear = yr;
+      // Toggle buttons
+      $('ov-proj-toggle').innerHTML = years.map(y =>
+        `<button onclick="window._projYear(${y})" class="px-2.5 py-1 rounded-md font-bold transition-all ${y === yr ? 'bg-white text-emerald-800 shadow' : 'text-white/70 hover:text-white'}">${y}Y</button>`
+      ).join('');
+      const maxVal = Math.max(...cf.projections.map(p => p.values[String(yr)]));
+      // SVG growth curves
+      const W = 600, H = 260, PAD = 50, PADR = 70, PADT = 20, PADB = 40;
+      const plotW = W - PAD - PADR, plotH = H - PADT - PADB;
+      const months = yr * 12;
+      const points = cf.projections.map(p => {
+        const rate = p.rate / 100 / 12;
+        let pts = [];
+        for (let m = 0; m <= months; m += Math.max(1, Math.floor(months / 60))) {
+          const fv = rate > 0 ? cf.surplus * ((Math.pow(1 + rate, m) - 1) / rate) : cf.surplus * m;
+          const x = PAD + (m / months) * plotW;
+          const y = PADT + plotH - (fv / maxVal) * plotH;
+          pts.push({x, y, m, fv});
+        }
+        return {...p, pts};
+      });
+      // Y-axis labels
+      const ySteps = 4;
+      let yLabels = '';
+      for (let i = 0; i <= ySteps; i++) {
+        const val = (maxVal / ySteps) * i;
+        const y = PADT + plotH - (i / ySteps) * plotH;
+        yLabels += `<text x="${PAD - 8}" y="${y + 4}" text-anchor="end" fill="#9ca3af" font-size="10" font-weight="600">${INR_SHORT(val)}</text>`;
+        yLabels += `<line x1="${PAD}" y1="${y}" x2="${PAD + plotW}" y2="${y}" stroke="#f3f4f6" stroke-width="1"/>`;
+      }
+      // X-axis labels
+      let xLabels = '';
+      const xSteps = Math.min(yr, 5);
+      for (let i = 0; i <= xSteps; i++) {
+        const x = PAD + (i / xSteps) * plotW;
+        const label = i === 0 ? 'Now' : `${Math.round(yr * i / xSteps)}yr`;
+        xLabels += `<text x="${x}" y="${H - 8}" text-anchor="middle" fill="#9ca3af" font-size="10" font-weight="600">${label}</text>`;
+      }
+      // Paths + dots
+      let paths = '', dots = '', tooltip = '';
+      points.forEach(p => {
+        const d = p.pts.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+        // Gradient area
+        const last = p.pts[p.pts.length - 1];
+        const areaD = d + ` L${last.x.toFixed(1)},${PADT + plotH} L${PAD},${PADT + plotH} Z`;
+        paths += `<path d="${areaD}" fill="${p.color}" opacity="0.08"/>`;
+        paths += `<path d="${d}" fill="none" stroke="${p.color}" stroke-width="2.5" stroke-linecap="round" class="growth-line" style="stroke-dasharray:2000;stroke-dashoffset:2000"/>`;
+        // Interactive year dots
+        const yearDots = years.filter(y => y <= yr);
+        yearDots.forEach(y => {
+          const fv = p.values[String(y)];
+          const dx = PAD + (y / yr) * plotW;
+          const dy = PADT + plotH - (fv / maxVal) * plotH;
+          dots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="5" fill="white" stroke="${p.color}" stroke-width="2.5" class="cursor-pointer hover:r-7 transition-all" onmouseenter="showProjTip(evt,'${p.label}',${fv},'${p.color}')" onmouseleave="hideProjTip()"/>`;
+        });
+        // End label
+        paths += `<text x="${last.x + 8}" y="${last.y + 4}" fill="${p.color}" font-size="11" font-weight="700">${p.icon} ${INR_SHORT(p.values[String(yr)])}</text>`;
+      });
+      $('ov-projection').innerHTML = `
+        <div class="relative">
+          <svg viewBox="0 0 ${W} ${H}" class="w-full" style="max-height:300px">
+            ${yLabels}${xLabels}${paths}${dots}
+          </svg>
+          <div id="proj-tooltip" class="hidden absolute pointer-events-none bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl" style="z-index:50"></div>
         </div>
-      `).join('');
+        <div class="grid grid-cols-3 gap-3 mt-4">${cf.projections.map(p => `<button onclick="openAndChat('I have ${INR_SHORT(cf.surplus)} surplus monthly. Tell me about investing in ${p.label.toLowerCase()}')" class="text-center bg-gray-50 hover:bg-emerald-50 rounded-xl p-3 transition-all cursor-pointer group"><span class="text-lg">${p.icon}</span><p class="text-[10px] font-bold text-gray-400 uppercase mt-1 group-hover:text-emerald-600">${p.label}</p><p class="text-sm font-extrabold text-gray-900">${INR_SHORT(p.values[String(yr)])}</p><p class="text-[10px] text-gray-400">${p.rate}% p.a.</p></button>`).join('')}</div>`;
+      // Animate lines on render
+      setTimeout(() => {
+        document.querySelectorAll('.growth-line').forEach(el => { el.style.transition = 'stroke-dashoffset 1.5s ease-out'; el.style.strokeDashoffset = '0'; });
+      }, 100);
     };
-    render(data.good || [], 'good-insights-row');
-    render(data.action || [], 'action-insights-row');
-    const all = [...(data.good||[]), ...(data.action||[])];
-    $('smart-suggestions').innerHTML = all.slice(0,4).map(i => `<button onclick="sendChat('${esc(i.q)}')" class="w-full text-left bg-white border px-4 py-3 rounded-xl text-xs text-gray-600 font-bold transition-all shadow-sm hover:border-emerald-200 hover:bg-emerald-50">${esc(i.q)}</button>`).join('');
-  });
+    window._projYear = renderProjection;
+    window.showProjTip = (evt, label, val, color) => {
+      const tip = $('proj-tooltip');
+      const svg = evt.target.closest('svg');
+      const rect = svg.getBoundingClientRect();
+      const cx = parseFloat(evt.target.getAttribute('cx'));
+      const cy = parseFloat(evt.target.getAttribute('cy'));
+      const sx = rect.width / 600, sy = rect.height / 260;
+      tip.innerHTML = `<span style="color:${color}">${label}</span>: ${INR_SHORT(val)}`;
+      tip.classList.remove('hidden');
+      tip.style.left = (cx * sx - 40) + 'px';
+      tip.style.top = (cy * sy - 36) + 'px';
+    };
+    window.hideProjTip = () => $('proj-tooltip').classList.add('hidden');
+    renderProjection(5);
+  }
+
+  // Health pills
+}
+
+function renderNudges(nudges) {
+  if (!nudges.length) return;
+  $('ov-nudges-section').classList.remove('hidden');
+  const SEV = {critical: {order: 0, border: 'border-l-red-500', bg: 'bg-red-50', dot: 'bg-red-500', label: 'Critical'},
+               optimize: {order: 1, border: 'border-l-amber-400', bg: 'bg-amber-50', dot: 'bg-amber-400', label: 'Optimize'},
+               info:     {order: 2, border: 'border-l-slate-300', bg: 'bg-gray-50', dot: 'bg-slate-400', label: 'Info'}};
+  const sorted = [...nudges].sort((a, b) => (SEV[a.severity]?.order ?? 2) - (SEV[b.severity]?.order ?? 2));
+  const crit = sorted.filter(n => n.severity === 'critical').length;
+  $('ov-nudge-summary').innerHTML = `<div class="flex items-center gap-2 text-xs font-bold text-gray-500">${crit ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full">${crit} critical</span>` : ''}<span>${sorted.length} item${sorted.length > 1 ? 's' : ''} need attention</span></div>`;
+  $('ov-nudges').innerHTML = sorted.map(n => {
+    const s = SEV[n.severity] || SEV.info;
+    let onclick = '';
+    if (n.tab) onclick = `onclick="switchTab('${n.tab}')"`;
+    else if (n.modal) onclick = `onclick="$('${n.modal}').classList.remove('hidden')"`;
+    else if (n.chat) onclick = `onclick="openAndChat('${esc(n.chat)}')"`;
+    return `<div ${onclick} class="${s.bg} rounded-2xl p-6 border-l-4 ${s.border} hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-center flex flex-col items-center"><span class="text-3xl mb-2">${n.icon}</span><h5 class="text-base font-extrabold text-gray-900">${esc(n.title)}</h5>${n.why ? `<p class="text-sm text-gray-600 mt-1.5 leading-snug">${esc(n.why)}</p>` : ''}<p class="text-xs text-gray-400 mt-1">${esc(n.desc)}</p><span class="mt-3 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">${esc(n.action)} →</span></div>`;
+  }).join('');
+}
+
+function renderDataGaps(gaps) {
+  if (!gaps || !gaps.length) return;
+  $('ov-data-gaps').classList.remove('hidden');
+  $('ov-data-gaps-grid').innerHTML = gaps.map(g =>
+    `<button onclick="openAndChat('${esc(g.chat)}')" class="flex flex-col items-center text-center gap-1.5 bg-gray-50 hover:bg-emerald-50 rounded-2xl p-5 transition-all cursor-pointer group"><span class="text-3xl">${g.icon}</span><span class="text-sm font-bold text-gray-800 group-hover:text-emerald-700">${esc(g.label)}</span>${g.why ? `<span class="text-[11px] text-gray-400 leading-tight">${esc(g.why)}</span>` : ''}<span class="mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full group-hover:bg-emerald-100">+ Tell Arth</span></button>`
+  ).join('');
 }
 
 function openAndChat(q) { trackEvent('insight_click', { question: q.slice(0, 50) }); if ($('chat-widget').classList.contains('chat-closed')) toggleChat(); sendChat(q); }
 function sendChat(q) { $('chat-input').value = q; $('chat-form').dispatchEvent(new Event('submit')); }
 
-function renderCharts(holdings) {
-  Object.values(charts).forEach(c => c.destroy());
-  const assetMap = {}; holdings.forEach(h => { const a = classifyAsset(h.category); assetMap[a] = (assetMap[a]||0) + h.value; });
-  charts.asset = new Chart($('chart-asset'), { type:'doughnut', data:{labels:Object.keys(assetMap), datasets:[{data:Object.values(assetMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
-  const catMap = {}; holdings.forEach(h => { const c = classifyCap(h.category); catMap[c] = (catMap[c]||0) + h.value; });
-  charts.category = new Chart($('chart-category'), { type:'doughnut', data:{labels:Object.keys(catMap), datasets:[{data:Object.values(catMap), backgroundColor:COLORS, borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'80%', plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11, weight:'600'}, usePointStyle:true, padding:15}}}} });
+// Charts moved — renderCharts and loadPortfolioChart removed from overview.
+// Portfolio performance chart is available via Holdings tab.
+
+const CHAT_CARD_TEMPLATES = {
+  fd: { title: '💵 Fixed Deposit', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Bank</label><input data-field="bank" type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Amount</label><input data-field="amount" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Interest Rate</label><input data-field="rate" type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Maturity</label><input data-field="maturity" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tax-Saver?</label><select data-field="tax_saver" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>` },
+  realestate: { title: '🏠 Property', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Location</label><input data-field="location" type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Current Value</label><input data-field="current_value" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Purchase Price</label><input data-field="purchase_price" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Usage</label><select data-field="usage" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Linked Loan?</label><select data-field="linked_loan" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>` },
+  gold: { title: '🪙 Gold', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>SGB</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Value</label><input data-field="value" type="text" placeholder="₹ or grams" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  esop: { title: '🏢 ESOP / RSU', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Company</label><input data-field="company" type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Vested Value</label><input data-field="vested" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Unvested Value</label><input data-field="unvested" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Next Vesting</label><input data-field="next_vesting" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  loan: { title: '🏦 Loan', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="loan_type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Principal</label><input data-field="principal" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly EMI</label><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Start Date</label><input data-field="start_date" type="month" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tenure (years)</label><input data-field="tenure" type="text" placeholder="e.g. 20" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  epf_ppf: { title: '🏛️ EPF & PPF', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">EPF Balance</label><input data-field="epf_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">EPF Monthly</label><input data-field="epf_monthly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">PPF Balance</label><input data-field="ppf_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">PPF Yearly</label><input data-field="ppf_yearly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  nps: { title: '📊 NPS', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">NPS Balance</label><input data-field="nps_balance" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly Contribution</label><input data-field="nps_monthly" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  stocks: { title: '📈 Stocks & Demat', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Demat Value</label><input data-field="demat_value" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Monthly SIP</label><input data-field="stock_sip" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  insurance: { title: '🛡️ Insurance', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Type</label><select data-field="type" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Term Life</option><option>Health</option><option>ULIP</option><option>Endowment</option><option>Vehicle</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Cover Amount</label><input data-field="cover" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Annual Premium</label><input data-field="premium" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+  tax: { title: '🧾 Tax', fields: () => `
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tax Regime</label><select data-field="regime" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"><option>Old Regime</option><option>New Regime</option></select></div>
+      <div><label class="text-[9px] font-bold text-gray-400 uppercase">Annual Tax Paid</label><input data-field="tax_paid" type="text" placeholder="₹" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white mt-0.5"></div>
+    </div>` },
+};
+
+function renderProfileCard(d, container) {
+  const tpl = CHAT_CARD_TEMPLATES[d.card_type];
+  if (!tpl) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm';
+  wrap.dataset.cardType = d.card_type;
+  wrap.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">📝 Fill in your details</h4>
+    <div class="profile-cards-list"><div class="profile-card-item bg-white rounded-xl border p-3 mb-2"><div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)}</span></div>${tpl.fields()}</div></div>
+    <button onclick="addChatCard(this)" class="w-full border-2 border-dashed border-amber-300 rounded-xl py-2 text-xs font-bold text-amber-600 hover:border-amber-500 mb-2">+ Add another</button>
+    <button onclick="submitProfileCards(this, '${esc(d.card_type)}')" class="w-full bg-gray-900 text-white py-2 rounded-xl text-xs font-bold hover:bg-gray-800">Save to Profile</button>`;
+  if (d.prefill) prefillCard(wrap.querySelector('.profile-card-item'), d.prefill);
+  container.appendChild(wrap);
 }
-
-let portfolioChart = null;
-let activeBenchmarks = new Set();
-const BENCH_COLORS = {nifty50:'#6366f1', nifty100:'#f59e0b', midcap:'#ec4899', smallcap:'#8b5cf6', gold:'#eab308'};
-
-function loadPortfolioChart(period='5Y') {
-  const benchParam = activeBenchmarks.size ? '&benchmark=' + [...activeBenchmarks].join(',') : '';
-  fetch('/portfolio-history?period='+period+benchParam).then(safeJson).then(data => {
-    if(portfolioChart) portfolioChart.destroy();
-    if(!data.dates?.length) return;
-    const labels = data.dates.map(d => {
-      const dt = new Date(d);
-      return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
-    });
-    const datasets = [
-      {label:'Net Worth', data:data.values, borderColor:'#10b981', fill:true, backgroundColor:'rgba(16, 185, 129, 0.05)', pointRadius:0, borderWidth:3, tension:0.4},
-      {label:'Invested', data:data.invested, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0, borderWidth:2}
-    ];
-    if(data.benchmarks) {
-      for(const [k, b] of Object.entries(data.benchmarks)) {
-        datasets.push({label:'If '+b.label, data:b.values, borderColor:BENCH_COLORS[k]||'#6366f1', borderDash:[8,4], pointRadius:0, borderWidth:2, tension:0.4, spanGaps:true});
-      }
-    }
-    portfolioChart = new Chart($('chart-portfolio'), { 
-      type:'line', 
-      data:{labels, datasets}, 
-      options:{
-        responsive:true, maintainAspectRatio:false, 
-        interaction:{intersect:false, mode:'index'}, 
-        plugins:{
-          legend:{display: datasets.length > 2, position:'bottom', labels:{boxWidth:12, font:{size:10, weight:'600'}, usePointStyle:true, padding:12}}, 
-          tooltip:{backgroundColor:'#111827', padding:12, titleFont:{size:12}, bodyFont:{size:12, weight:'bold'}, callbacks:{label:c=>c.parsed.y!=null?' '+c.dataset.label+': '+INR(c.parsed.y):''}}
-        }, 
-        scales:{
-          x:{ticks:{maxTicksLimit:6, font:{size:11, weight:'500'}, color:'#64748b', padding:8}, grid:{display:false}}, 
-          y:{ticks:{font:{size:11, weight:'500'}, color:'#64748b', callback:v=>INR_SHORT(v), padding:8}, grid:{color:'#f1f5f9'}}
-        }
-      } 
-    });
+function prefillCard(card, data) {
+  Object.entries(data).forEach(([field, val]) => {
+    const el = card.querySelector(`[data-field="${field}"]`);
+    if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
   });
 }
+function renderProfileCardSaved(d, container) {
+  const tpl = CHAT_CARD_TEMPLATES[d.card_type];
+  const label = tpl ? tpl.title : d.card_type;
+  const pills = Object.entries(d.data || {}).map(([k,v]) => `<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${esc(k)}: ${esc(v)}</span>`).join(' ');
+  const el = document.createElement('div');
+  el.className = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm';
+  el.innerHTML = `<div class="flex items-center gap-2 mb-2"><span class="text-sm">✅</span><span class="font-bold text-gray-900 text-sm">${esc(label)} saved to profile</span></div><div class="flex flex-wrap gap-1">${pills}</div>`;
+  container.appendChild(el);
+}
+function addChatCard(btn) {
+  const wrap = btn.closest('.rounded-2xl');
+  const type = wrap.dataset.cardType;
+  const tpl = CHAT_CARD_TEMPLATES[type];
+  if (!tpl) return;
+  const list = wrap.querySelector('.profile-cards-list');
+  const card = document.createElement('div');
+  card.className = 'profile-card-item bg-white rounded-xl border p-3 mb-2';
+  card.innerHTML = `<div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-gray-700">${esc(tpl.title)}</span><button onclick="this.closest('.profile-card-item').remove()" class="text-gray-300 hover:text-red-500 text-xs">✕</button></div>${tpl.fields()}`;
+  list.appendChild(card);
+}
 
+function submitProfileCards(btn, cardType) {
+  const wrap = btn.closest('.rounded-2xl');
+  const cards = wrap.querySelectorAll('.profile-card-item');
+  const items = [];
+  cards.forEach(card => {
+    const data = {};
+    card.querySelectorAll('[data-field]').forEach(el => { if (el.value) data[el.dataset.field] = el.value; });
+    if (Object.keys(data).length) items.push(data);
+  });
+  if (!items.length) return;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  fetch('/profile/assets', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ asset_type: cardType, items })
+  }).then(r => r.json()).then(res => {
+    if (res.ok) {
+      wrap.innerHTML = `<div class="text-center py-3"><span class="text-emerald-600 font-bold text-sm">✅ ${items.length} ${cardType}(s) saved to your profile</span></div>`;
+      sendChat(`I've saved ${items.length} ${cardType} detail(s) to my profile.`);
+    } else { btn.disabled = false; btn.textContent = 'Save to Profile'; }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Save to Profile'; });
+}
+
+function renderActionComponent(type, data, container) {
+  const renderers = { goal_card: renderGoalCard, comparison_table: renderComparisonTable, profile_card: renderProfileCard, profile_card_saved: renderProfileCardSaved };
+  const fn = renderers[type];
+  if (fn) fn(data, container);
+  else { const el = document.createElement('div'); el.className = 'bg-gray-50 border rounded-2xl p-4 text-xs'; el.innerHTML = `<pre class="whitespace-pre-wrap">${esc(JSON.stringify(data, null, 2))}</pre>`; container.appendChild(el); }
+}
+function renderComparisonTable(d, container) {
+  const el = document.createElement('div');
+  el.className = 'bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm';
+  const rows = (d.items || []).map((p, i) => `<div class="bg-white rounded-xl p-3 border border-blue-100 ${i === 0 ? 'ring-2 ring-blue-400' : ''}">
+    <div class="flex items-start justify-between mb-2"><div><h5 class="font-bold text-gray-900 text-sm">${esc(p.name)}</h5><p class="text-[10px] text-gray-400 font-bold">${esc(p.type)} · CSR ${p.csr}%</p></div>${i === 0 ? '<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-lg">BEST VALUE</span>' : ''}</div>
+    <div class="flex gap-4 mb-2"><div><p class="text-[9px] text-gray-400 font-bold uppercase">Monthly</p><p class="text-sm font-bold text-gray-900">${INR(p.premium_monthly)}</p></div><div><p class="text-[9px] text-gray-400 font-bold uppercase">Annual</p><p class="text-sm font-bold text-gray-900">${INR(p.premium_annual)}</p></div><div><p class="text-[9px] text-gray-400 font-bold uppercase">Cover</p><p class="text-sm font-bold text-gray-900">${INR_SHORT(p.cover_amount)}</p></div></div>
+    <div class="flex flex-wrap gap-1 mb-2">${(p.features || []).map(f => `<span class="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${esc(f)}</span>`).join('')}</div>
+    <a href="${esc(p.url)}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline">View on ${esc(p.provider)} →</a>
+  </div>`).join('');
+  el.innerHTML = `<h4 class="font-bold text-gray-900 text-sm mb-3">🛡️ ${esc(d.title || 'Insurance Plans')}</h4><div class="flex flex-col gap-2">${rows}</div>`;
+  container.appendChild(el);
+}
+function renderGoalCard(d, container) {
+  const emoji = (d.label || '🎯').split(' ')[0];
+  const el = document.createElement('div');
+  el.className = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm';
+  el.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(d.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Target: ${esc(d.target_date)}</p></div></div><div class="flex items-center justify-between"><span class="text-sm font-bold text-emerald-700">${INR(d.target_amount)}</span><span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-lg">✅ Goal Created</span></div>` + renderBreakdown(d.description, true);
+  container.appendChild(el);
+  loadGoals(); // refresh goals tab
+}
 function addMsg(text, sender) {
   const sa = $('suggestions-area'); if (sa) sa.remove();
   const box = $('chat-box'); const div = document.createElement('div');
@@ -510,17 +1509,49 @@ function addMsg(text, sender) {
   div.innerHTML = content; 
   const msgEl = div.querySelector('.chat-msg');
   if (sender === 'user') msgEl.textContent = text;
-  else msgEl.innerHTML = marked.parse(text || '');
+  else msgEl.innerHTML = md(text);
   box.appendChild(div); box.scrollTop = box.scrollHeight; return msgEl;
 }
 
+async function loadChatHistory() {
+  try {
+    const data = await fetch('/chat/history').then(r => r.json());
+    if (data.messages && data.messages.length > 0) {
+      const sa = $('suggestions-area'); if (sa) sa.remove();
+      const box = $('chat-box');
+      if (box.querySelectorAll('.chat-msg').length > 0) return; // already populated
+      data.messages.filter(m => m.content !== '__init__').forEach(m => {
+        const msgEl = addMsg(m.content, m.role === 'user' ? 'user' : 'agent');
+        if (m.role !== 'user' && m.metadata && m.metadata.actions) {
+          const actionsEl = document.createElement('div');
+          actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
+          msgEl.prepend(actionsEl);
+          m.metadata.actions.forEach(a => renderActionComponent(a.type, a.data, actionsEl));
+        }
+      });
+    }
+  } catch(e) { console.error('History load fail', e); }
+}
+
+$('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('chat-form').dispatchEvent(new Event('submit')); } });
 $('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = $('chat-input').value.trim(); if (!q) return;
   if (isDemo) { addMsg(q, 'user'); addMsg('Please **Sign In** to chat with AI about your own portfolio. Demo mode is view-only.', 'agent'); $('chat-input').value = ''; return; }
-  $('chat-input').value = ''; addMsg(q, 'user');
+  $('chat-input').value = ''; $('chat-input').style.height = 'auto'; if (!q.startsWith('__')) addMsg(q, 'user');
   trackEvent('chat_message', { query_length: q.length });
-  const msgEl = addMsg('', 'agent'); msgEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Consulting Brain<span>.</span><span>.</span><span>.</span></span>';
+  // Create structured message with 3 zones: status, chat text, action results
+  const msgWrap = document.createElement('div'); msgWrap.className = 'flex gap-2 items-start';
+  const icon = document.createElement('span'); icon.className = 'text-lg mt-0.5'; icon.textContent = '🤖';
+  const msgBody = document.createElement('div'); msgBody.className = 'flex-1 min-w-0';
+  const statusEl = document.createElement('div'); statusEl.className = 'action-status hidden mb-1';
+  const actionsEl = document.createElement('div'); actionsEl.className = 'action-results mt-2 flex flex-col gap-2';
+  const chatEl = document.createElement('div'); chatEl.className = 'chat-text max-w-none prose prose-sm prose-emerald';
+  msgBody.append(statusEl, actionsEl, chatEl);
+  msgWrap.append(icon, msgBody);
+  const msgEl = addMsg('', 'agent');
+  msgEl.innerHTML = ''; msgEl.appendChild(msgWrap);
+  chatEl.innerHTML = '<span class="thinking-dots font-bold text-gray-400">⏳ Analyzing your finances<span>.</span><span>.</span><span>.</span></span>';
   try {
     const fd = new FormData(); fd.append('query', q);
     const res = await fetch('/chat/stream', { method: 'POST', body: fd });
@@ -532,11 +1563,34 @@ $('chat-form').addEventListener('submit', async (e) => {
         if (!line.trim()) continue;
         if (!line.startsWith('data: ')) continue;
         const d = line.slice(6); if (d === '[DONE]') break;
-        if (d.startsWith('[STATUS] ')) { msgEl.innerHTML = `<span class="thinking-dots font-bold text-emerald-600">⏳ ${esc(d.slice(9))}<span>.</span><span>.</span><span>.</span></span>`; continue; }
-        full += d; msgEl.innerHTML = marked.parse(full); $('chat-box').scrollTop = $('chat-box').scrollHeight;
+        if (d === '[ONBOARDING_COMPLETE]') { if (window.innerWidth > 640) setTimeout(() => switchTab('goals'), 3000); continue; }
+        if (d.startsWith('[STATUS] ')) { chatEl.innerHTML = `<span class="thinking-dots font-bold text-emerald-600">⏳ ${esc(d.slice(9))}<span>.</span><span>.</span><span>.</span></span>`; continue; }
+        if (d.startsWith('[ACTION_STATUS] ')) { statusEl.innerHTML = `<span class="thinking-dots text-xs font-bold text-blue-400">${esc(d.slice(16))}<span>.</span><span>.</span><span>.</span></span>`; statusEl.classList.remove('hidden'); continue; }
+        if (d.startsWith('[ACTION:')) {
+          const m = d.match(/^\[ACTION:(\w+)\]\s*(.+)$/);
+          if (m) { statusEl.classList.add('hidden'); renderActionComponent(m[1], JSON.parse(m[2]), actionsEl); }
+          continue;
+        }
+        if (d.startsWith('[OPTIONS] ')) {
+          try {
+            const opts = JSON.parse(d.slice(10));
+            const chipWrap = document.createElement('div');
+            chipWrap.className = 'flex flex-wrap gap-2 mt-3';
+            opts.forEach(o => {
+              const btn = document.createElement('button');
+              btn.className = 'text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors';
+              btn.textContent = o;
+              btn.onclick = () => { chipWrap.remove(); sendChat(o); };
+              chipWrap.appendChild(btn);
+            });
+            msgBody.appendChild(chipWrap);
+          } catch(e) {}
+          continue;
+        }
+        full += d + '\n'; chatEl.innerHTML = md(full.replace(/\[OPTIONS:.*?\]/g, '')); $('chat-box').scrollTop = $('chat-box').scrollHeight;
       }
     }
-  } catch(err) { msgEl.innerHTML = '<span class="text-red-500 font-bold uppercase text-[9px]">⚠️ Error. Try again.</span>'; }
+  } catch(err) { chatEl.innerHTML = '<span class="text-red-500 font-bold uppercase text-[9px]">⚠️ Error. Try again.</span>'; }
 });
 
 let isDemo = false;
@@ -558,33 +1612,585 @@ async function initApp() {
     try {
       const user = await checkSession();
       if (user) {
+        loadChatHistory();
         const h = await fetch('/holdings').then(safeJson);
         if (h.count > 0) showPortfolio(h.holdings, h.portfolio_xirr);
-        else location.href='/';
+        else {
+          // Check if onboarding is done — show profile tab instead of re-onboarding
+          const pData = await fetch('/profile').then(r => r.json()).catch(() => null);
+          if (pData && pData.onboarding_complete) {
+            $('loading-state').classList.add('hidden');
+            $('dashboard').classList.remove('hidden');
+            loadOverviewDashboard();
+            $('funds-empty').classList.remove('hidden');
+            $('funds-table-wrap').classList.add('hidden');
+          } else {
+            startOnboarding(user);
+          }
+        }
       } else {
         location.href = '/';
       }
     } catch(e) { location.href='/'; }
   }
 }
+
+function startOnboarding(user) {
+  $('loading-state').classList.add('hidden');
+  $('dashboard').classList.remove('hidden');
+  // Hide chat FAB during cards
+  const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = 'none';
+  const firstName = user.name ? user.name.split(' ')[0] : '';
+  $('summary-bar').innerHTML = `
+    <div class="text-center py-4">
+      <h1 class="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Welcome${firstName ? ', ' + firstName : ''}! 👋</h1>
+      <p class="text-gray-400 text-sm">Quick profile setup — takes under a minute</p>
+    </div>`;
+  document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+  $('tab-overview').classList.remove('hidden');
+  $('tab-overview').innerHTML = `
+    <div class="max-w-lg mx-auto py-8 px-4">
+      <div class="flex items-center gap-2 mb-8">
+        <div class="flex-1 h-1.5 rounded-full bg-gray-200"><div id="ob-progress" class="h-1.5 rounded-full bg-emerald-500 transition-all" style="width:33%"></div></div>
+        <span id="ob-step-label" class="text-xs font-bold text-gray-400">Step 1 of 3</span>
+      </div>
+      <div id="ob-card"></div>
+    </div>`;
+  _obData = {name: user.name || ''}; _obStep = 1; _renderObStep();
+}
+
+let _obData = {}, _obStep = 1;
+const _obSteps = [
+  { title: '👤 About You', subtitle: 'Helps us personalize advice for your life stage', fields: [
+    {key:'name',label:'Name',type:'text',placeholder:'Your name',hint:''},
+    {key:'age',label:'Age',type:'number',placeholder:'28',hint:'Your age helps us set the right investment horizon'},
+    {key:'occupation',label:'Occupation',type:'text',placeholder:'Software Engineer',hint:'Salaried, freelancer, business — affects tax & insurance advice'},
+    {key:'location',label:'City',type:'text',placeholder:'Bangalore',hint:'Cost of living varies — helps set realistic expense benchmarks'},
+    {key:'marital_status',label:'Marital Status',type:'select',options:['','Single','Married'],hint:''},
+    {key:'kids',label:'Number of Kids',type:'select',options:['0','1','2','3+'],showIf:'Married',hint:''},
+  ]},
+  { title: '💰 Monthly Money Flow', subtitle: 'What comes in and what goes out each month', fields: [
+    {key:'monthly_income',label:'In-Hand Salary',type:'inr',placeholder:'75,000',hint:'After tax & deductions — the amount that hits your bank'},
+    {key:'total_monthly_expenses',label:'Fixed Expenses',type:'inr',placeholder:'40,000',hint:'Rent, groceries, bills, subscriptions — everything except EMIs'},
+    {key:'emis',label:'Total EMIs',type:'inr',placeholder:'0',hint:'All loan EMIs combined — home, car, personal, education'},
+    {key:'total_investments',label:'Monthly Investments / SIPs',type:'inr',placeholder:'10,000',hint:'Mutual funds, PPF, RD, stocks — anything you invest regularly'},
+  ]},
+  { title: '🛡️ Your Safety Net', subtitle: 'Insurance & risk — the boring stuff that saves you', fields: [
+    {key:'term_cover',label:'Term Life Cover',type:'inr',placeholder:'0',hint:'Total cover amount (not premium) — e.g. ₹1 Cr. Put 0 if none'},
+    {key:'health_cover',label:'Health Insurance Cover',type:'inr',placeholder:'0',hint:'Personal policy cover amount — exclude employer\'s group cover'},
+    {key:'risk_tolerance',label:'Risk Appetite',type:'select',options:['','Conservative','Moderate','Aggressive'],hint:'Conservative = FDs & debt funds · Moderate = mix of equity & debt · Aggressive = mostly equity'},
+  ]},
+];
+
+function _fmtInr(v) {
+  const n = parseInt(String(v).replace(/[^0-9]/g, ''));
+  if (!n) return '';
+  const s = String(n), last3 = s.slice(-3), rest = s.slice(0, -3);
+  if (!rest) return last3;
+  return rest.replace(/\B(?=(\d{2})+$)/g, ',') + ',' + last3;
+}
+function _fmtInrLive(el) {
+  const raw = el.value.replace(/[^0-9]/g, '');
+  const pos = raw.length;
+  el.value = _fmtInr(raw);
+  // place cursor at end
+  const len = el.value.length;
+  el.setSelectionRange(len, len);
+}
+function _renderObStep() {
+  const step = _obSteps[_obStep - 1];
+  $('ob-progress').style.width = (_obStep / 3 * 100) + '%';
+  $('ob-step-label').textContent = `Step ${_obStep} of 3`;
+  const visibleFields = step.fields.filter(f => !f.showIf || _obData.marital_status === f.showIf);
+  $('ob-card').innerHTML = `
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+      <h3 class="text-lg font-extrabold text-gray-900 mb-1">${step.title}</h3>
+      ${step.subtitle ? `<p class="text-xs text-gray-400 mb-6">${step.subtitle}</p>` : '<div class="mb-6"></div>'}
+      <div class="space-y-5">
+        ${visibleFields.map(f => f.type === 'select'
+          ? `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <select id="ob-${f.key}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none bg-white"${f.key==='marital_status'?' onchange="_obCollect();_renderObStep()"':''}>
+               ${f.options.map(o => `<option value="${o}"${_obData[f.key]===o?' selected':''}>${o ? o.charAt(0).toUpperCase()+o.slice(1) : '— Select —'}</option>`).join('')}
+             </select>${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div>`
+          : f.type === 'inr'
+          ? `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <div class="relative mt-1"><span class="absolute left-4 top-3 text-sm text-gray-400">₹</span>
+             <input id="ob-${f.key}" type="text" inputmode="numeric" class="w-full border rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key] ? _fmtInr(_obData[f.key]) : ''}" oninput="_fmtInrLive(this)"></div>
+             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div>`
+          : `<div><label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${f.label}</label>
+             <input id="ob-${f.key}" type="${f.type}" inputmode="${f.type==='number'?'numeric':'text'}" class="w-full border rounded-xl px-4 py-3 text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="${f.placeholder}" value="${_obData[f.key]||''}">
+             ${f.hint ? `<p class="text-[10px] text-gray-400 mt-1">${f.hint}</p>` : ''}</div>`
+        ).join('')}
+      </div>
+      <div class="flex gap-3 mt-8">
+        ${_obStep > 1 ? '<button onclick="_obPrev()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200">← Back</button>' : ''}
+        <button onclick="_obNext()" class="flex-1 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-lg">
+          ${_obStep === 3 ? 'Finish & Start Chat ✨' : 'Next →'}
+        </button>
+      </div>
+      <p class="text-xs text-gray-400 mt-4 text-center">Skip any field — you can always update from your Profile tab</p>
+    </div>`;
+}
+
+function _obCollect() {
+  const step = _obSteps[_obStep - 1];
+  step.fields.forEach(f => {
+    if (f.showIf && _obData.marital_status !== f.showIf) return;
+    const el = document.getElementById('ob-' + f.key);
+    if (!el) return;
+    const v = el.value.trim();
+    if (v) _obData[f.key] = (f.type === 'number' || f.type === 'inr') ? parseFloat(v.replace(/,/g, '')) : v;
+  });
+  // Compute dependents from marital_status + kids
+  const married = _obData.marital_status === 'Married';
+  const kids = married ? parseInt(_obData.kids || '0') : 0;
+  _obData.dependents = (married ? 1 : 0) + (kids >= 3 ? 3 : kids);
+  _obData.kids = kids;
+}
+
+function _obPrev() { _obCollect(); _obStep--; _renderObStep(); }
+
+async function _obNext() {
+  _obCollect();
+  if (_obStep < 3) { _obStep++; _renderObStep(); return; }
+  // Final step — save to user_assets (single storage)
+  const d = _obData;
+  const _post = (t, data) => fetch('/profile/assets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({asset_type:t, items:[data]}) });
+  try {
+    await Promise.all([
+      _post('personal', { name: d.name, age: d.age, occupation: d.occupation, location: d.location, marital_status: d.marital_status, kids: d.kids||0, risk_tolerance: d.risk_tolerance }),
+      _post('income', { monthly_income: d.monthly_income }),
+      d.total_monthly_expenses ? _post('expenses', { total_monthly_expenses: d.total_monthly_expenses, emis: d.emis||0 }) : null,
+      d.term_cover || d.health_cover ? _post('insurance', { term_cover: d.term_cover||0, health_cover: d.health_cover||0 }) : null,
+      _post('meta', { onboarding_complete: true }),
+    ].filter(Boolean));
+  } catch(e) { console.error('Profile save failed', e); }
+  // Restore normal tabs, switch to Goals tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.style.display = '');
+  $('tab-overview').innerHTML = '';
+  _profileLoaded = false;
+  switchTab('goals');
+  // Show chat FAB and open chat — agent will reason about what to ask next
+  const fab = $('chat-toggle-wrapper'); if (fab) fab.style.display = '';
+  if (window.innerWidth >= 768) localStorage.setItem('chatSidebarWidth', '50vw');
+  setTimeout(() => { toggleChat(); sendChat('__onboarding_init__'); }, 600);
+}
+
+function sendOnboardingStart() {
+  // Legacy — kept for backward compat but cards handle onboarding now
+  addMsg("Hey! I'm Arth 👋 Let's talk about your goals and priorities.", 'agent');
+  fetch('/chat', { method: 'POST', body: new URLSearchParams({ query: '__onboarding_init__' }) }).catch(() => {});
+}
 initApp();
+
+// --- Goals ---
+let _goalTemplates = {};
+let _selectedTemplate = 'custom';
+let _editingGoalId = null;
+
+async function loadGoalTemplates() {
+  try {
+    const data = await fetch('/goals/templates').then(safeJson);
+    _goalTemplates = data.templates;
+  } catch(e) { console.error('Failed to load goal templates', e); }
+}
+
+function showGoalForm() {
+  _editingGoalId = null;
+  $('goal-form-section').classList.remove('hidden');
+  $('goal-submit-btn').textContent = 'Create Goal';
+  $('goal-name').value = '';
+  $('goal-amount').value = '';
+  $('goal-date').value = '';
+  renderTemplateGrid();
+  renderHoldingsCheckboxes();
+  $('goal-form-section').scrollIntoView({ behavior: 'smooth' });
+}
+function hideGoalForm() { _editingGoalId = null; $('goal-form-section').classList.add('hidden'); }
+
+function editGoal(id) {
+  fetch('/goals').then(safeJson).then(data => {
+    const g = (data.goals || []).find(x => x.id === id);
+    if (!g) return;
+    _editingGoalId = id;
+    _selectedTemplate = g.template;
+    $('goal-form-section').classList.remove('hidden');
+    $('goal-submit-btn').textContent = 'Update Goal';
+    renderTemplateGrid();
+    renderHoldingsCheckboxes(g.linked_folios);
+    $('goal-name').value = g.name;
+    $('goal-amount').value = parseInt(g.target_amount).toLocaleString('en-IN');
+    $('goal-date').value = g.target_date;
+    selectTemplate(g.template);
+    $('goal-form-section').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+function renderTemplateGrid() {
+  $('goal-template-grid').innerHTML = Object.entries(_goalTemplates).map(([k, t]) =>
+    `<button onclick="selectTemplate('${k}')" id="tmpl-${k}" class="tmpl-btn p-4 rounded-xl border-2 text-center transition-all hover:shadow-md ${k === _selectedTemplate ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 bg-white'}">
+      <div class="text-2xl mb-1">${t.label.split(' ')[0]}</div>
+      <div class="text-xs font-bold text-gray-700">${t.label.split(' ').slice(1).join(' ')}</div>
+      ${t.suggested_amount ? `<div class="text-[9px] text-gray-400 mt-1">${INR_SHORT(t.suggested_amount)}</div>` : ''}
+    </button>`
+  ).join('');
+}
+
+function selectTemplate(key) {
+  _selectedTemplate = key;
+  const t = _goalTemplates[key];
+  $('goal-name').value = t.label.split(' ').slice(1).join(' ');
+  if (t.suggested_amount) $('goal-amount').placeholder = t.suggested_amount.toLocaleString('en-IN');
+  document.querySelectorAll('.tmpl-btn').forEach(b => { b.classList.remove('border-emerald-500', 'bg-emerald-50'); b.classList.add('border-gray-100', 'bg-white'); });
+  $('tmpl-' + key).classList.add('border-emerald-500', 'bg-emerald-50');
+  $('tmpl-' + key).classList.remove('border-gray-100', 'bg-white');
+}
+
+function renderHoldingsCheckboxes(selectedFolios) {
+  // selectedFolios: [{folio, pct}] or [{asset_type, asset_id, pct}] or ["folio"]
+  const selMap = {};
+  const selAssets = {};
+  (selectedFolios || []).forEach(lf => {
+    if (typeof lf === 'object' && lf.asset_type) {
+      selAssets[lf.asset_type + ':' + (lf.asset_id||0)] = lf.pct || 100;
+    } else if (typeof lf === 'object') selMap[lf.folio] = lf.pct || 100;
+    else selMap[lf] = 100;
+  });
+  const excludeParam = _editingGoalId ? '?exclude=' + _editingGoalId : '';
+  Promise.all([
+    fetch('/goals/allocations' + excludeParam).then(safeJson),
+    fetch('/goals/linkable-assets').then(safeJson)
+  ]).then(([allocData, assetData]) => {
+    const alloc = allocData.allocations || {};
+    const assets = assetData.assets || [];
+    // MF holdings
+    let html = _holdings.map(h => {
+      const key = h.folio + '/' + h.scheme;
+      const used = alloc[key] || 0;
+      const avail = 100 - used;
+      const checked = key in selMap;
+      const pct = selMap[key] || Math.min(100, avail);
+      if (avail <= 0 && !checked) return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl opacity-50">
+        <input type="checkbox" disabled class="w-4 h-4 rounded"><div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-400 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-red-400">100% allocated</div></div></div>`;
+      return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+        <input type="checkbox" value="${esc(key)}" class="goal-holding-cb w-4 h-4 text-emerald-600 rounded" ${checked ? 'checked' : ''}>
+        <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(shortName(h.scheme))}</div><div class="text-[10px] text-gray-400">${INR(h.value)}${used > 0 ? ' · <span class="text-amber-500">'+used+'% used</span>' : ''}</div></div>
+        <div class="flex items-center gap-1 shrink-0"><input type="number" min="1" max="${avail}" value="${Math.min(pct, avail)}" data-folio="${esc(key)}" class="goal-pct-input w-14 text-center border rounded-lg px-1 py-1 text-xs font-bold" ${!checked ? 'disabled' : ''}><span class="text-[10px] text-gray-400">%</span></div>
+      </div>`;
+    }).join('');
+    // Assets (FDs, Gold, EPF/PPF, NPS, etc.)
+    if (assets.length) {
+      html += '<p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-2">Other Assets</p>';
+      html += assets.map(a => {
+        const akey = 'asset:' + a.asset_type + ':' + (a.asset_id||0);
+        const used = alloc[akey] || 0;
+        const avail = 100 - used;
+        const checked = (a.asset_type + ':' + (a.asset_id||0)) in selAssets;
+        const pct = selAssets[a.asset_type + ':' + (a.asset_id||0)] || Math.min(100, avail);
+        if (avail <= 0 && !checked) return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl opacity-50">
+          <input type="checkbox" disabled class="w-4 h-4 rounded"><div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-400 truncate">${esc(a.label)}</div><div class="text-[10px] text-red-400">100% allocated</div></div></div>`;
+        return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+          <input type="checkbox" value="${esc(akey)}" class="goal-asset-cb w-4 h-4 text-teal-600 rounded" data-asset-type="${a.asset_type}" data-asset-id="${a.asset_id||0}" ${checked ? 'checked' : ''}>
+          <div class="flex-1 min-w-0"><div class="text-xs font-bold text-gray-800 truncate">${esc(a.label)}</div><div class="text-[10px] text-gray-400">${INR(a.value)}${used > 0 ? ' · <span class="text-amber-500">'+used+'% used</span>' : ''}</div></div>
+          <div class="flex items-center gap-1 shrink-0"><input type="number" min="1" max="${avail}" value="${Math.min(pct, avail)}" data-asset-key="${esc(akey)}" class="goal-asset-pct w-14 text-center border rounded-lg px-1 py-1 text-xs font-bold" ${!checked ? 'disabled' : ''}><span class="text-[10px] text-gray-400">%</span></div>
+        </div>`;
+      }).join('');
+    }
+    $('goal-holdings-list').innerHTML = html || '<p class="text-xs text-gray-400">No holdings or assets to link.</p>';
+    // Enable/disable pct inputs on checkbox toggle
+    $('goal-holdings-list').querySelectorAll('.goal-holding-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
+        if (pi) pi.disabled = !cb.checked;
+      });
+    });
+    $('goal-holdings-list').querySelectorAll('.goal-asset-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const pi = $('goal-holdings-list').querySelector('[data-asset-key="'+cb.value+'"]');
+        if (pi) pi.disabled = !cb.checked;
+      });
+    });
+  }).catch(() => {});
+}
+
+async function submitGoal() {
+  const name = $('goal-name').value.trim();
+  const raw = $('goal-amount').value.replace(/,/g, '');
+  const amount = parseFloat(raw);
+  const date = $('goal-date').value;
+  if (!name || !amount || !date) { alert('Please fill in all fields'); return; }
+  const folios = [...document.querySelectorAll('.goal-holding-cb:checked')].map(cb => {
+    const pi = $('goal-holdings-list').querySelector('[data-folio="'+cb.value+'"]');
+    return { folio: cb.value, pct: parseInt(pi?.value || 100) };
+  });
+  const assetLinks = [...document.querySelectorAll('.goal-asset-cb:checked')].map(cb => {
+    const pi = $('goal-holdings-list').querySelector('[data-asset-key="'+cb.value+'"]');
+    return { asset_type: cb.dataset.assetType, asset_id: parseInt(cb.dataset.assetId), pct: parseInt(pi?.value || 100) };
+  });
+  const body = { name, template: _selectedTemplate, target_amount: amount, target_date: date, linked_folios: [...folios, ...assetLinks] };
+  try {
+    const url = _editingGoalId ? '/goals/' + _editingGoalId : '/goals';
+    const method = _editingGoalId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.status === 'ok') { hideGoalForm(); loadGoals(); trackEvent(_editingGoalId ? 'goal_updated' : 'goal_created', { template: _selectedTemplate }); }
+    else { alert(data.detail || 'Failed to save goal'); }
+  } catch(e) { alert('Failed to save goal: ' + e.message); }
+}
+
+async function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  try { await fetch('/goals/' + id, { method: 'DELETE' }); loadGoals(); } catch(e) { alert('Failed to delete goal'); }
+}
+async function acceptGoal(id) {
+  try { await fetch('/goals/' + id + '/accept', { method: 'POST' }); loadGoals(); } catch(e) { alert('Failed to accept goal'); }
+}
+
+async function loadGoals() {
+  try {
+    const data = await fetch('/goals').then(safeJson);
+    const goals = data.goals || [];
+    if (!goals.length) { $('goals-empty').classList.remove('hidden'); $('goals-grid').innerHTML = ''; return; }
+    $('goals-empty').classList.add('hidden');
+    // Sort: suggested goals first
+    goals.sort((a, b) => (a.status === 'suggested' ? -1 : 1) - (b.status === 'suggested' ? -1 : 1));
+    $('goals-grid').innerHTML = goals.map(g => {
+      const isSuggested = g.status === 'suggested';
+      const statusColor = g.on_track ? 'emerald' : 'amber';
+      const statusText = g.on_track ? 'On Track' : 'Behind';
+      const statusIcon = g.on_track ? '✅' : '⚠️';
+      const tmpl = _goalTemplates[g.template] || {};
+      const emoji = (tmpl.label || '🎯').split(' ')[0];
+      const progressWidth = Math.min(g.progress_pct, 100);
+      if (isSuggested) return `<div class="bg-white/60 rounded-2xl border-2 border-dashed border-teal-300 p-6 shadow-sm relative">
+        <div class="absolute top-3 right-3"><span class="text-[9px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">💡 Arth recommends</span></div>
+        <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-700 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400">Target: ${INR(g.target_amount)} (6 months of expenses)</p></div></div>
+        <p class="text-xs text-gray-500 mb-4">Every financial plan starts with an emergency cushion. Link your FDs, liquid funds, or savings to track progress.</p>
+        <div class="flex gap-2">
+          <button onclick="acceptGoal(${g.id})" class="flex-1 bg-teal-600 text-white text-xs font-bold py-2 px-4 rounded-xl hover:bg-teal-700 transition-colors">✓ Accept Goal</button>
+          <button onclick="deleteGoal(${g.id})" class="text-xs font-bold text-gray-400 hover:text-red-500 py-2 px-4 rounded-xl border border-gray-200 hover:border-red-200 transition-colors">Dismiss</button>
+        </div>
+      </div>`;
+      return `<div onclick="openGoalDetail(${g.id})" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all cursor-pointer">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-center gap-3"><span class="text-2xl">${emoji}</span><div><h4 class="font-bold text-gray-900 text-sm">${esc(g.name)}</h4><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${esc(g.target_date)}</p></div></div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-${statusColor}-600 bg-${statusColor}-50 px-2 py-1 rounded-lg">${statusIcon} ${statusText}</span>
+            <button onclick="event.stopPropagation();editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+            <button onclick="event.stopPropagation();deleteGoal(${g.id})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+          </div>
+        </div>
+        <div class="mb-4">
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold text-gray-600">${INR(g.current_value)}</span><span class="font-bold text-gray-400">${INR(g.target_amount)}</span></div>
+          <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden"><div class="bg-${statusColor}-500 h-3 rounded-full transition-all duration-500" style="width:${progressWidth}%"></div></div>
+          <p class="text-[10px] text-gray-400 mt-1 font-bold">${g.progress_pct.toFixed(1)}% achieved</p>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly SIP</p><p class="text-sm font-bold text-gray-800 mt-1">${g.monthly_sip > 0 ? INR(g.monthly_sip) : '—'}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Projected</p><p class="text-sm font-bold text-gray-800 mt-1">${INR_SHORT(g.projected_value)}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'ETA' : 'SIP Gap'}</p><p class="text-sm font-bold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-1">${g.on_track ? (g.projected_months ? g.projected_months + ' mo' : '—') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p></div>
+        </div>
+        <div class="flex items-center justify-between mt-4">
+          ${g.linked_folios.length ? `<p class="text-[9px] text-gray-400 font-bold">${g.linked_folios.length} holding${g.linked_folios.length > 1 ? 's' : ''}/asset${g.linked_folios.length > 1 ? 's' : ''} linked</p>` : '<p class="text-[9px] text-amber-500 font-bold">No holdings linked</p>'}
+          ${g.description ? '<span class="text-[9px] text-teal-500 font-bold">📐 Calculated</span>' : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error('Failed to load goals', e); }
+}
+
+// --- Goal Detail View ---
+async function openGoalDetail(id) {
+  try {
+    const g = await fetch('/goals/' + id + '/detail').then(safeJson);
+    $('goal-detail-content').innerHTML = renderGoalDetail(g);
+    $('goal-detail-overlay').classList.remove('hidden');
+    $('goal-detail-overlay').scrollTop = 0;
+  } catch(e) { console.error('Failed to load goal detail', e); }
+}
+function closeGoalDetail() { $('goal-detail-overlay').classList.add('hidden'); }
+
+function renderBreakdown(desc, compact) {
+  if (!desc) return '';
+  var lines = desc.split('\n').filter(function(l) { return l.trim() && !l.startsWith('How we'); });
+  var rows = lines.map(function(line) {
+    var clean = line.replace(/^[•·-]\s*/, '');
+    var idx = clean.indexOf(':');
+    if (idx > 0 && idx < clean.length - 1) {
+      var label = esc(clean.substring(0, idx).trim());
+      var value = esc(clean.substring(idx + 1).trim());
+      if (compact) return '<p class="text-[10px] text-gray-600">' + label + ': <b>' + value + '</b></p>';
+      return '<div class="flex justify-between items-baseline gap-4 py-1.5 border-b border-teal-100/50 last:border-0"><span class="text-xs text-gray-500">' + label + '</span><span class="text-xs font-bold text-gray-800 text-right shrink-0">' + value + '</span></div>';
+    }
+    return compact ? '<p class="text-[10px] text-gray-600">' + esc(clean) + '</p>' : '<p class="text-xs text-gray-600 py-1">' + esc(clean) + '</p>';
+  }).join('');
+  if (compact) return '<div class="mt-3 pt-3 border-t border-emerald-200"><p class="text-[10px] font-bold text-teal-700 mb-1.5">📐 Calculation breakdown</p><div class="space-y-1">' + rows + '</div></div>';
+  return '<div class="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm mb-6 overflow-hidden">' +
+    '<button onclick="this.nextElementSibling.classList.toggle(\'hidden\');this.querySelector(\'.chevron\').classList.toggle(\'rotate-90\')" class="w-full flex items-center justify-between px-6 py-4 hover:bg-teal-50/50 transition-colors">' +
+    '<div class="flex items-center gap-2"><span class="text-base">📐</span><h4 class="text-sm font-bold text-gray-900">How we calculated this</h4></div>' +
+    '<svg class="chevron w-4 h-4 text-gray-400 rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>' +
+    '</button><div class="px-6 pb-5"><div class="space-y-2">' + rows + '</div>' +
+    '<p class="text-[10px] text-teal-600 mt-3 font-bold">💡 These are editable assumptions — tell Arth in chat to recalculate with different values</p></div></div>';
+}
+
+const ASSET_ICONS = {fd:'🏦',gold:'🪙',esop:'📈',epf_ppf:'🏛️',nps:'🏛️',realestate:'🏠',mf_sips:'📊',mf:'📊'};
+
+function renderGoalDetail(g) {
+  const statusColor = g.on_track ? 'emerald' : 'amber';
+  const statusText = g.on_track ? 'On Track' : 'Behind Schedule';
+  const statusIcon = g.on_track ? '✅' : '⚠️';
+  const pct = Math.min(g.progress_pct, 100);
+  const monthsLeft = g.months_left || 0;
+  const yearsLeft = monthsLeft >= 12 ? Math.floor(monthsLeft/12) + 'y ' + (monthsLeft%12) + 'mo' : monthsLeft + ' months';
+  const totalLinkedValue = g.linked_assets.reduce((s,a) => s + a.value, 0);
+
+  // SVG progress ring (radius=70, circumference=440)
+  const circ = 440, offset = circ - (circ * pct / 100);
+
+  let html = `
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <span class="text-4xl">${g.emoji}</span>
+        <div>
+          <h2 class="text-2xl font-extrabold text-gray-900">${esc(g.name)}</h2>
+          <p class="text-sm text-gray-400 mt-1">Target: <span class="font-bold text-gray-600">${INR(g.target_amount)}</span> by <span class="font-bold text-gray-600">${g.target_date || 'No deadline'}</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold text-${statusColor}-600 bg-${statusColor}-50 px-3 py-1.5 rounded-xl">${statusIcon} ${statusText}</span>
+        <button onclick="closeGoalDetail();editGoal(${g.id})" class="text-gray-300 hover:text-emerald-500 transition-colors p-2" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Progress Ring + Stats -->
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm mb-6">
+      <div class="flex flex-col sm:flex-row items-center gap-8">
+        <div class="relative shrink-0">
+          <svg width="160" height="160" class="-rotate-90">
+            <circle cx="80" cy="80" r="70" fill="none" stroke="#f3f4f6" stroke-width="12"/>
+            <circle cx="80" cy="80" r="70" fill="none" stroke="${g.on_track ? '#10b981' : '#f59e0b'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" class="transition-all duration-700"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-2xl font-extrabold text-gray-900">${pct.toFixed(1)}%</span>
+            <span class="text-[10px] text-gray-400 font-bold">achieved</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 flex-1 w-full">
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Value</p><p class="text-lg font-extrabold text-gray-900 mt-1">${INR(g.current_value)}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Remaining</p><p class="text-lg font-extrabold text-gray-900 mt-1">${INR(Math.max(0, g.target_amount - g.current_value))}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly SIP</p><p class="text-lg font-extrabold text-gray-900 mt-1">${g.monthly_sip > 0 ? INR(g.monthly_sip) : '—'}</p></div>
+          <div class="bg-gray-50 rounded-xl p-4"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time Left</p><p class="text-lg font-extrabold text-gray-900 mt-1">${monthsLeft > 0 ? yearsLeft : '—'}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projections -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Projected Value</p>
+        <p class="text-xl font-extrabold text-gray-900 mt-2">${INR_SHORT(g.projected_value)}</p>
+        <p class="text-[10px] text-gray-400 mt-1">at ${g.growth_rate ? (g.growth_rate*100).toFixed(0) + '% p.a.' : 'current rate'}</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${g.on_track ? 'Estimated Completion' : 'SIP Gap'}</p>
+        <p class="text-xl font-extrabold ${g.on_track ? 'text-emerald-600' : 'text-amber-600'} mt-2">${g.on_track ? (g.projected_months ? g.projected_months + ' months' : 'Achieved ✓') : (g.sip_gap > 0 ? '+' + INR(g.sip_gap) + '/mo' : '—')}</p>
+        <p class="text-[10px] text-gray-400 mt-1">${g.on_track ? 'to reach target' : 'additional SIP needed'}</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm text-center">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Assets Linked</p>
+        <p class="text-xl font-extrabold text-gray-900 mt-2">${g.linked_assets.length}</p>
+        <p class="text-[10px] text-gray-400 mt-1">contributing ${INR_SHORT(totalLinkedValue)}</p>
+      </div>
+    </div>
+
+    <!-- Calculation Breakdown -->
+    ` + renderBreakdown(g.description) + `
+
+    <!-- Linked Assets -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+        <h4 class="text-sm font-bold text-gray-900">Linked Assets</h4>
+        <button onclick="closeGoalDetail();editGoal(${g.id})" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">+ Link More</button>
+      </div>`;
+
+  if (g.linked_assets.length === 0) {
+    html += `<div class="px-6 py-10 text-center"><p class="text-sm text-gray-400">No assets linked yet</p><p class="text-xs text-gray-300 mt-1">Edit this goal to link holdings and track progress</p></div>`;
+  } else {
+    html += `<div class="divide-y divide-gray-50">`;
+    g.linked_assets.forEach(a => {
+      const icon = ASSET_ICONS[a.asset_type] || '📄';
+      const share = totalLinkedValue > 0 ? (a.value / totalLinkedValue * 100).toFixed(1) : 0;
+      html += `<div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+        <span class="text-xl">${icon}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-gray-800 truncate">${esc(a.label)}</p>
+          <p class="text-[10px] text-gray-400">${a.pct}% of ${INR(a.raw_value)} allocated${a.monthly_sip ? ' · SIP ' + INR(a.monthly_sip) + '/mo' : ''}</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-sm font-bold text-gray-900">${INR(a.value)}</p>
+          <p class="text-[10px] text-gray-400">${share}% of goal value</p>
+        </div>
+        <div class="w-16 shrink-0">
+          <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full" style="width:${share}%"></div></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>
+
+    <!-- Created -->
+    <p class="text-[10px] text-gray-300 text-center">Created ${g.created_at ? new Date(g.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : '—'} · Growth rate: ${(g.growth_rate*100).toFixed(0)}% p.a.</p>`;
+  return html;
+}
+
+// Load goals/profile when tab is switched
+const _origSwitchTab = switchTab;
+switchTab = function(tab) {
+  _origSwitchTab(tab);
+  if (tab === 'goals') { loadGoals(); closeGoalDetail(); }
+  if (tab === 'profile') loadProfile();
+};
+
+function _inr(n) { return n ? '₹' + parseInt(n).toLocaleString('en-IN') : '₹0'; }
+let _profileLoaded = false;
+async function loadProfile() {
+  try {
+    $('profile-empty').classList.add('hidden');
+    $('profile-content').classList.add('hidden');
+    const data = await fetch('/profile').then(r => r.json());
+    $('profile-loading').classList.add('hidden');
+    if (!data.profile || !data.onboarding_complete) { $('profile-empty').classList.remove('hidden'); return; }
+    _profileLoaded = true;
+    $('profile-content').classList.remove('hidden');
+    if (data.financial_snapshot) {
+      $('snapshot-section').classList.remove('hidden');
+      $('snapshot-content').innerHTML = md(data.financial_snapshot);
+    }
+  } catch(e) { $('profile-loading').classList.add('hidden'); $('profile-empty').classList.remove('hidden'); }
+}
+
+// Init goals on app load
+loadGoalTemplates();
+
+// Indian comma formatting for amount input (12,34,567)
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.tagName !== 'INPUT') return;
+  // Format any field with ₹ placeholder as Indian number
+  const ph = (el.placeholder || '').trim();
+  if (ph.startsWith('₹') || el.id === 'goal-amount') {
+    _fmtInrLive(el);
+  }
+});
 
 $('clear-btn').addEventListener('click', async () => { if(confirm('Delete all data?')) { await fetch('/clear', {method:'POST'}); location.href='/'; } });
 
-let currentPeriod = '5Y';
+// Overview dashboard loaded via /overview API
 document.addEventListener('click', e => {
-  if(e.target.classList.contains('pp-btn')) {
-    document.querySelectorAll('.pp-btn').forEach(b=>{ b.classList.remove('bg-white','text-gray-900','shadow-sm'); b.classList.add('text-gray-500'); });
-    e.target.classList.add('bg-white','text-gray-900','shadow-sm'); e.target.classList.remove('text-gray-500');
-    currentPeriod = e.target.dataset.p;
-    loadPortfolioChart(currentPeriod);
-  }
-  if(e.target.classList.contains('bench-btn')) {
-    const b = e.target.dataset.b;
-    if(activeBenchmarks.has(b)) { activeBenchmarks.delete(b); e.target.classList.remove('bg-indigo-50','border-indigo-300','text-indigo-700'); e.target.classList.add('border-gray-200','text-gray-500'); }
-    else { activeBenchmarks.add(b); e.target.classList.add('bg-indigo-50','border-indigo-300','text-indigo-700'); e.target.classList.remove('border-gray-200','text-gray-500'); }
-    loadPortfolioChart(currentPeriod);
-  }
+  // Portfolio chart buttons removed — overview now uses dashboard layout
 });
 </script>
 
@@ -596,6 +2202,17 @@ document.addEventListener('click', e => {
       <button onclick="$('upload-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
     </div>
     <p class="text-sm text-gray-500 mb-4">Upload a newer CAMS/KFintech statement. New transactions will be merged with your existing data.</p>
+    <details class="mb-4 text-xs text-gray-500">
+      <summary class="cursor-pointer text-emerald-600 font-medium hover:text-emerald-800">📋 How to get your CAS statement</summary>
+      <ol class="mt-2 ml-4 space-y-1 list-decimal text-gray-500">
+        <li>Go to <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" class="text-emerald-600 underline">camsonline.com → CAS</a></li>
+        <li>Select <strong>Detailed</strong> statement type</li>
+        <li>Enter your <strong>email</strong> and <strong>PAN</strong></li>
+        <li>Set a <strong>password</strong>, click Submit</li>
+        <li>PDF arrives in your email within 10 min</li>
+      </ol>
+      <p class="mt-1"><a href="/help/cas" target="_blank" class="text-emerald-600 underline">Full guide with screenshots →</a></p>
+    </details>
     <form id="modal-upload-form" class="flex flex-col gap-3">
       <input type="file" id="modal-file" accept=".pdf" class="text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-600 file:font-medium hover:file:bg-emerald-100" required>
       <input type="password" id="modal-password" placeholder="PDF password (if any)" class="border rounded-lg px-3 py-2 text-sm">
@@ -638,6 +2255,266 @@ $('modal-upload-form').addEventListener('submit', async (e) => {
   $('modal-upload-btn').textContent = 'Upload & Merge';
   $('modal-upload-btn').disabled = false;
 });
+// Mobile keyboard: keep input above keyboard
+if (window.visualViewport && window.innerWidth <= 640) {
+  const w = $('chat-widget');
+  const sync = () => {
+    if (!w || w.classList.contains('chat-closed')) return;
+    const h = window.visualViewport.height;
+    w.style.setProperty('height', h + 'px', 'important');
+    w.style.setProperty('max-height', h + 'px', 'important');
+    w.style.setProperty('top', '0', 'important');
+    w.style.setProperty('bottom', 'auto', 'important');
+    const cb = $('chat-box'); if (cb) cb.scrollTop = cb.scrollHeight;
+  };
+  window.visualViewport.addEventListener('resize', sync);
+}
+
+// === Profile Accordion Sections ===
+function toggleSection(id) {
+  const section = document.getElementById('section-'+id);
+  const chevron = document.getElementById('chevron-'+id);
+  section.classList.toggle('hidden');
+  if (chevron) chevron.style.transform = section.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+const LOAN_META = {
+  'Home Loan':        { icon: '🏠', tip: 'Current rate from your bank statement' },
+  'Car Loan':         { icon: '🚗', tip: 'Current rate from your bank statement' },
+  'Personal Loan':    { icon: '💳', tip: 'Check your loan agreement or bank app' },
+  'Education Loan':   { icon: '🎓', tip: 'Check your loan agreement or bank app' },
+  'Credit Card Debt': { icon: '💳', tip: 'Check your card statement for APR' },
+  'Other':            { icon: '📋', tip: 'Annual interest rate on this debt' },
+};
+function updateLoanCard(select) {
+  const card = select.closest('.rounded-xl.border');
+  const meta = LOAN_META[select.value] || LOAN_META['Other'];
+  card.querySelector('.flex.items-center.gap-3 > span').textContent = meta.icon;
+  card.querySelector('.rate-tip').textContent = meta.tip;
+}
+const GOLD_META = {
+  'Sovereign Gold Bond (SGB)': { label: 'Current Value', tip: 'Amount you invested in this SGB', ph: '₹' },
+  'Physical Gold':             { label: 'Weight (grams)', tip: 'Total grams — jewellery, coins, bars', ph: 'e.g. 50g' },
+  'Gold ETF':                  { label: 'Current Value', tip: 'Current value from your demat', ph: '₹' },
+  'Digital Gold':              { label: 'Current Value', tip: 'Value shown in your app', ph: '₹' },
+};
+function updateGoldCard(select) {
+  const card = select.closest('.rounded-xl.border');
+  card.querySelector('.gold-maturity').style.display = select.value === 'Sovereign Gold Bond (SGB)' ? '' : 'none';
+  const m = GOLD_META[select.value] || GOLD_META['Digital Gold'];
+  card.querySelector('.gold-value-label').textContent = m.label;
+  card.querySelector('.gold-value-tip').textContent = m.tip;
+  card.querySelector('.gold-value input').placeholder = m.ph;
+}
+function updateRealEstateCard(select) {
+  const card = select.closest('.rounded-xl.border');
+  card.querySelector('.re-rental').style.display = select.value === 'Rented out' ? '' : 'none';
+}
+
+const CARD_TEMPLATES = {
+  loan: {
+    fields: (meta) => `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-lg">${meta?.icon||'📋'}</span>
+        <select data-field="loan_type" onchange="updateLoanCard(this)" class="text-sm font-bold text-gray-900 bg-transparent border-none p-0 focus:ring-0"><option>Home Loan</option><option>Car Loan</option><option${meta?.selected==='Personal Loan'?' selected':''}>Personal Loan</option><option>Education Loan</option><option>Credit Card Debt</option><option>Other</option></select>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Principal</label><p class="text-[9px] text-gray-400 mb-0.5">Original loan amount</p><input data-field="principal" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Outstanding</label><p class="text-[9px] text-gray-400 mb-0.5">What's left to pay</p><input data-field="outstanding" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5 rate-tip">${meta?.rateTip||'Check your loan agreement or bank app'}</p><input data-field="rate" type="text" placeholder="e.g. 8.5%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly EMI</label><p class="text-[9px] text-gray-400 mb-0.5">Your monthly payment amount</p><input data-field="emi" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan began</p><input data-field="start_date" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tenure (years)</label><p class="text-[9px] text-gray-400 mb-0.5">Total loan duration</p><input data-field="tenure" type="text" placeholder="e.g. 20" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End Date</label><p class="text-[9px] text-gray-400 mb-0.5">When the loan ends — check your schedule</p><input data-field="end_date" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+  fd: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bank</label><p class="text-[9px] text-gray-400 mb-0.5">Which bank or NBFC</p><input data-field="bank" type="text" placeholder="e.g. SBI" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount</label><p class="text-[9px] text-gray-400 mb-0.5">Deposit amount</p><input data-field="amount" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Interest Rate</label><p class="text-[9px] text-gray-400 mb-0.5">Annual rate on this FD</p><input data-field="rate" type="text" placeholder="e.g. 7.1%" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">When this FD matures</p><input data-field="maturity" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tax-Saver?</label><p class="text-[9px] text-gray-400 mb-0.5">5-year lock-in under 80C</p>
+          <select data-field="tax_saver" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>`,
+  },
+  realestate: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">What kind of property</p>
+          <select data-field="type" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Flat / Apartment</option><option>Plot / Land</option><option>Independent House</option><option>Commercial</option></select>
+        </div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label><p class="text-[9px] text-gray-400 mb-0.5">City or area — affects valuation</p><input data-field="location" type="text" placeholder="e.g. Bangalore" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5">Approximate market value today</p><input data-field="current_value" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Purchase Price</label><p class="text-[9px] text-gray-400 mb-0.5">What you paid — for capital gains calc</p><input data-field="purchase_price" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage</label><p class="text-[9px] text-gray-400 mb-0.5">How you use this property</p>
+          <select data-field="usage" onchange="updateRealEstateCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Self-occupied</option><option>Rented out</option><option>Vacant</option></select>
+        </div>
+        <div class="re-rental" style="display:none"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rental Income</label><p class="text-[9px] text-gray-400 mb-0.5">Monthly rent received</p><input data-field="rental_income" type="text" placeholder="₹/month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Has Linked Loan?</label><p class="text-[9px] text-gray-400 mb-0.5">Add details in Loans section</p>
+          <select data-field="linked_loan" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>`,
+  },
+  gold: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</label><p class="text-[9px] text-gray-400 mb-0.5">Form of gold holding</p>
+          <select data-field="type" onchange="updateGoldCard(this)" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"><option>Sovereign Gold Bond (SGB)</option><option>Physical Gold</option><option>Gold ETF</option><option>Digital Gold</option></select>
+        </div>
+        <div class="gold-value"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest gold-value-label">Current Value</label><p class="text-[9px] text-gray-400 mb-0.5 gold-value-tip">Amount you invested in this SGB</p><input data-field="value" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div class="gold-maturity"><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Maturity Date</label><p class="text-[9px] text-gray-400 mb-0.5">For SGBs — 8 year maturity</p><input data-field="maturity" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+  esop: {
+    fields: () => `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Company</label><p class="text-[9px] text-gray-400 mb-0.5">Employer granting the stock</p><input data-field="company" type="text" placeholder="e.g. Amazon" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Vested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Current value of vested shares</p><input data-field="vested" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Unvested Value</label><p class="text-[9px] text-gray-400 mb-0.5">Value yet to vest</p><input data-field="unvested" type="text" placeholder="₹" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+        <div><label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Next Vesting Date</label><p class="text-[9px] text-gray-400 mb-0.5">When next batch vests</p><input data-field="next_vesting" type="month" class="w-full border rounded-lg px-3 py-2 text-xs bg-white"></div>
+      </div>`,
+  },
+};
+
+function addCard(type, sectionId) {
+  const btn = document.querySelector(`#${sectionId} button.border-dashed`);
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl border p-4 mb-3 relative group';
+  const tpl = CARD_TEMPLATES[type];
+  card.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-xs">✕</button>${tpl.fields(tpl.defaultMeta)}`;
+  btn.parentElement.insertBefore(card, btn);
+}
+
+// Convenience wrappers (used by onclick in HTML)
+function addLoanCard() { addCard('loan', 'section-loans'); }
+function addFDCard() { addCard('fd', 'section-fds'); }
+function addRealEstateCard() { addCard('realestate', 'section-realestate'); }
+function addGoldCard() { addCard('gold', 'section-gold'); }
+function addESOPCard() { addCard('esop', 'section-esop'); }
+
+// --- Profile Load ---
+const SIMPLE_SECTIONS = ['personal','income','expenses','epf_ppf','nps','stocks','insurance','tax'];
+const CARD_SECTIONS = {fd:'section-fds', realestate:'section-realestate', gold:'section-gold', esop:'section-esop', loan:'section-loans'};
+
+async function loadProfileData() {
+  window._profileLoaded = true;
+  try {
+    const r = await fetch('/profile/assets');
+    const {items} = await r.json();
+    if (!items?.length) return;
+    // Group by asset_type
+    const byType = {};
+    items.forEach(i => {
+      const t = i.asset_type;
+      if (!t) return;
+      (byType[t] = byType[t] || []).push(i);
+    });
+    // Fill simple sections
+    SIMPLE_SECTIONS.forEach(type => {
+      if (!byType[type]?.length) return;
+      const sectionId = type === 'epf_ppf' ? 'section-epf-ppf' : `section-${type}`;
+      const section = $(sectionId);
+      if (!section) return;
+      const data = byType[type][0];
+      section.querySelectorAll('[data-field]').forEach(el => {
+        if (data[el.dataset.field] != null) {
+          const v = data[el.dataset.field];
+          const ph = (el.placeholder || '').trim();
+          el.value = (ph.startsWith('₹') && typeof v === 'number') ? _fmtInr(v) : v;
+          if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+    // Fill card sections
+    Object.entries(CARD_SECTIONS).forEach(([type, sectionId]) => {
+      if (!byType[type]?.length) return;
+      const section = $(sectionId);
+      if (!section) return;
+      // Remove default empty cards
+      section.querySelectorAll('.bg-white.rounded-xl.border.p-4').forEach(c => c.remove());
+      byType[type].forEach(data => {
+        // Create card via existing addCard
+        const addFn = {fd:'addFDCard', realestate:'addRealEstateCard', gold:'addGoldCard', esop:'addESOPCard', loan:'addLoanCard'}[type];
+        window[addFn]();
+        // Fill the last added card
+        const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
+        const card = cards[cards.length - 1];
+        card.querySelectorAll('input, select').forEach(el => {
+          if (el.dataset.field) {
+            if (data[el.dataset.field] != null) { const v = data[el.dataset.field]; const ph = (el.placeholder||'').trim(); el.value = (ph.startsWith('₹') && !isNaN(v)) ? _fmtInr(v) : v; if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change')); }
+            return;
+          }
+          const label = el.closest('div')?.querySelector('label');
+          if (!label) return;
+          const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          if (data[key] != null) {
+            el.value = data[key];
+            if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+    });
+  } catch(e) { console.error('Load profile failed', e); }
+}
+
+// --- Profile Section Save Functions ---
+async function saveSection(sectionType) {
+  const sectionId = sectionType === 'epf_ppf' ? 'section-epf-ppf' : `section-${sectionType}`;
+  const section = $(sectionId);
+  if (!section) return;
+  const data = {};
+  section.querySelectorAll('[data-field]').forEach(el => {
+    if (!el.value) return;
+    const ph = (el.placeholder||'').trim();
+    data[el.dataset.field] = ph.startsWith('₹') ? parseFloat(el.value.replace(/,/g,'')) || el.value : el.value;
+  });
+  if (!Object.keys(data).length) return;
+  const btn = section.querySelector('button[onclick*="saveSection"]');
+  const origText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    const r = await fetch('/profile/assets', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ asset_type: sectionType, items: [data] }) });
+    const res = await r.json();
+    if (res.ok) {
+      if (btn) { btn.textContent = '✅ Saved'; btn.classList.replace('bg-gray-900','bg-emerald-600'); setTimeout(() => { btn.textContent = origText; btn.disabled = false; btn.classList.replace('bg-emerald-600','bg-gray-900'); }, 2000); }
+    } else { if (btn) { btn.textContent = origText; btn.disabled = false; } }
+  } catch(e) { console.error('Save failed', e); if (btn) { btn.textContent = origText; btn.disabled = false; } }
+}
+
+async function saveCardSection(sectionId, assetType) {
+  const section = $(sectionId);
+  if (!section) return;
+  const cards = section.querySelectorAll('.bg-white.rounded-xl.border.p-4');
+  const items = [];
+  cards.forEach(card => {
+    const data = {};
+    card.querySelectorAll('input, select').forEach(el => {
+      if (!el.value) return;
+      if (el.dataset.field) { const ph=(el.placeholder||'').trim(); data[el.dataset.field] = ph.startsWith('₹') ? parseFloat(el.value.replace(/,/g,'')) || el.value : el.value; return; }
+      const label = el.closest('div')?.querySelector('label');
+      if (label) {
+        const key = label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        data[key] = el.value;
+      }
+    });
+    if (Object.keys(data).length) items.push(data);
+  });
+  if (!items.length) return;
+  const btn = section.querySelector('button[onclick*="saveCardSection"]');
+  const origText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    const r = await fetch('/profile/assets', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ asset_type: assetType, items }) });
+    const res = await r.json();
+    if (res.ok) {
+      if (btn) { btn.textContent = `✅ ${items.length} saved`; btn.classList.replace('bg-gray-900','bg-emerald-600'); setTimeout(() => { btn.textContent = origText; btn.disabled = false; btn.classList.replace('bg-emerald-600','bg-gray-900'); }, 2000); }
+    } else { if (btn) { btn.textContent = origText; btn.disabled = false; } }
+  } catch(e) { console.error('Save failed', e); if (btn) { btn.textContent = origText; btn.disabled = false; } }
+}
+
 </script>
 </body>
 </html>

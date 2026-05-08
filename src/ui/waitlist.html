@@ -39,17 +39,14 @@
             <a href="/" class="logo">Arth<span>.</span></a>
             <button class="sign-out" onclick="signOut()">Sign out</button>
         </nav>
-
         <div class="content">
             <h1>You're on the list! 🎉</h1>
             <p class="msg">We're letting brave hearts in gradually to keep quality high. Got an invite code? Enter it below.</p>
-
             <div class="invite-form">
                 <input type="text" id="inviteCode" placeholder="ARTH-XXXXXX" maxlength="12">
                 <button onclick="redeemCode()">Enter</button>
             </div>
             <div id="inviteMsg"></div>
-
             <div class="info-box">
                 <h3>While you wait, here's what Arth does:</h3>
                 <ul>
@@ -59,13 +56,10 @@
                     <li>Works like a conversation — ask anything about your money</li>
                 </ul>
             </div>
-
             <a href="/" class="back-link">← Back to homepage</a>
         </div>
     </div>
-
     <script>
-    // If not logged in, redirect to landing
     fetch('/auth/me').then(r => {
         if (r.status === 401) window.location.href = '/';
         return r.json();
@@ -76,7 +70,6 @@
     function signOut() {
         fetch('/auth/logout', {method: 'POST'}).then(() => window.location.href = '/');
     }
-
     function redeemCode() {
         const code = document.getElementById('inviteCode').value.trim();
         if (!code) return;
@@ -94,7 +87,6 @@
             }
         });
     }
-
     document.getElementById('inviteCode').addEventListener('keypress', e => { if (e.key === 'Enter') redeemCode(); });
     </script>
 </body>

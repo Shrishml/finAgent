@@ -22,7 +22,7 @@ class GeminiAPIProvider(LLMProvider):
     def name(self) -> str:
         return "gemini-api"
 
-    async def complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
+    async def _complete(self, prompt: str, system: str = "", json_mode: bool = False) -> str:
         import urllib.request
         import urllib.error
 
@@ -72,5 +72,5 @@ class GeminiAPIProvider(LLMProvider):
                     pass
         return text
 
-    async def complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
-        yield await self.complete(prompt, system)
+    async def _complete_stream(self, prompt: str, system: str = "") -> AsyncIterator[str]:
+        yield await self._complete(prompt, system)

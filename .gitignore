@@ -16,3 +16,4 @@ src/config.toml
 
 # OS
 .DS_Store
+finagent.db

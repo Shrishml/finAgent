@@ -108,6 +108,7 @@ async def get_holdings(request: Request):
     """Get current stored holdings summary. Triggers lazy enrichment if needed."""
     user_id = await get_user_id(request) or DEMO_USER_ID
     holdings = await load_mf_assets(user_id)
+    log.info(f"[holdings] user_id={user_id}, count={len(holdings)}")
     if holdings and any(h.expense_ratio == 0 and h.amfi_code for h in holdings):
         try:
             holdings = await enrich_holdings(holdings)
@@ -134,9 +135,10 @@ async def get_holdings(request: Request):
 
 
 @router.post("/demo")
-async def demo():
+async def demo(request: Request):
     """Load a demo portfolio for users to explore without uploading."""
-    user_id = DEMO_USER_ID
+    user_id = get_user_id(request) or DEMO_USER_ID
+    log.info(f"[demo] resolved user_id={user_id}")
     from datetime import date as _date
     from finagent.models.mf import MFHolding, MFTransaction
     _t = lambda d, amt, units: MFTransaction(date=_date.fromisoformat(d), description="SIP", amount=amt, units=units, type="SIP")
@@ -205,9 +207,13 @@ async def demo():
         holdings = await enrich_holdings(holdings)
     except Exception as e:
         log.warning(f"Demo enrichment failed: {e}")
+    # Clear all existing data BEFORE seeding — order matters!
+    await clear_mf_assets(user_id)
+    await clear_goals(user_id)
+    await clear_assets(user_id)
+    # Now seed demo data
     await reconcile_and_save(user_id, "mf", holdings, source_detail="demo")
     # Seed demo goals
-    await clear_goals(user_id)
     from finagent.models.goal import Goal as GoalModel
     demo_goals = [
         GoalModel(user_id=user_id, name="Retirement at 50", template="retirement",
@@ -226,7 +232,6 @@ async def demo():
         await save_goal(g)
 
     # Seed demo profile (personal, income, expenses, insurance)
-    await clear_assets(user_id)
     await save_assets(user_id, "personal", [{"name": "Suraj", "age": 35, "occupation": "Software Engineer",
         "employer": "Amazon", "location": "Bangalore", "marital_status": "Single",
         "kids": 0, "dependent_parents": True, "risk_tolerance": "Moderate"}])

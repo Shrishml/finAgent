@@ -1,9 +1,9 @@
 #!/bin/bash
-# FinBestie server deployment: nginx reverse proxy + HTTPS
+# Arth server deployment: nginx reverse proxy + HTTPS
 # Usage: sudo ./deploy.sh [email@example.com]
 set -e
 
-DOMAIN="captwist.in"
+DOMAIN="askarth.com"
 EMAIL="${1:-admin@$DOMAIN}"
 APP_PORT=8000
 
@@ -19,7 +19,7 @@ else
 fi
 
 # Write nginx config
-cat > /etc/nginx/sites-available/finbestie <<EOF
+cat > /etc/nginx/sites-available/arth <<EOF
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
@@ -39,7 +39,7 @@ server {
 EOF
 
 # Enable site
-ln -sf /etc/nginx/sites-available/finbestie /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/arth /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl restart nginx
 

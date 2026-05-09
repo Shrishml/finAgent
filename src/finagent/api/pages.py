@@ -11,8 +11,15 @@ _UI_DIR = Path(__file__).parent.parent.parent / "ui"
 
 @router.get("/", response_class=HTMLResponse)
 async def landing():
-    f = _UI_DIR / "index.html"
+    f = _UI_DIR / "new-landing.html"
+    if not f.exists():
+        f = _UI_DIR / "index.html"
     return f.read_text() if f.exists() else "<h1>Arth</h1>"
+
+@router.get("/waitlist", response_class=HTMLResponse)
+async def waitlist():
+    f = _UI_DIR / "waitlist.html"
+    return f.read_text() if f.exists() else "<h1>Waitlist</h1>"
 
 @router.get("/landing", response_class=HTMLResponse)
 async def landing_v2():
@@ -49,6 +56,11 @@ async def mockup_profile():
 async def changelog():
     f = _UI_DIR / "changelog.json"
     return json.loads(f.read_text()) if f.exists() else []
+
+@router.get("/reddit-tool", response_class=HTMLResponse)
+async def reddit_tool():
+    f = _UI_DIR / "reddit-tool.html"
+    return f.read_text() if f.exists() else "<h1>Reddit Tool not found</h1>"
 
 @router.get("/blogs/{slug}", response_class=HTMLResponse)
 async def blog_article(slug: str):

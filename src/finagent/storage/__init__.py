@@ -6,7 +6,16 @@ from pathlib import Path
 from finagent.storage.database import get_db, get_engine, init_db, reset_engine, close_engine
 
 # User operations
-from finagent.storage.user_ops import get_or_create_user, get_user_name
+from finagent.storage.user_ops import (
+    get_or_create_user,
+    get_user_name,
+    get_user_access_status,
+    set_user_access_status,
+    list_waitlist_users,
+    redeem_invite_code,
+    create_invite_codes,
+    list_invite_codes,
+)
 
 # Asset operations (unified asset layer)
 from finagent.storage.asset_ops import (
@@ -62,6 +71,12 @@ __all__ = [
     # User
     "get_or_create_user",
     "get_user_name",
+    "get_user_access_status",
+    "set_user_access_status",
+    "list_waitlist_users",
+    "redeem_invite_code",
+    "create_invite_codes",
+    "list_invite_codes",
     # Assets
     "reconcile_and_save",
     "load_mf_assets",

@@ -392,7 +392,7 @@ mfdata.in API (`/api/v1/search?q=...`) returns peer funds with: NAV, expense_rat
 
 ## 8. POC Deploy Plan (Week 2 — Apr 5-6, 2026)
 
-> Goal: Ship the minimum deployable demo so real users can try FinBestie.
+> Goal: Ship the minimum deployable demo so real users can try Arth.
 > Scope: Upload CAMS PDF → instant portfolio insights → chat with portfolio.
 > No login, no accounts, no insurance. Just the core "wow" moment.
 
@@ -474,7 +474,7 @@ mfdata.in API (`/api/v1/search?q=...`) returns peer funds with: NAV, expense_rat
   ```yaml
   services:
     - type: web
-      name: finbestie
+      name: arth
       runtime: docker
       plan: free
       envVars:
@@ -493,7 +493,7 @@ mfdata.in API (`/api/v1/search?q=...`) returns peer funds with: NAV, expense_rat
 
 **Acceptance criteria:**
 - `docker build . && docker run -p 8080:8080 -e GEMINI_API_KEY=xxx` works locally
-- Render deploy succeeds, app accessible at `finbestie.onrender.com`
+- Render deploy succeeds, app accessible at `arth.onrender.com`
 - Upload PDF from browser → get insights → chat works end-to-end
 - CORS allows requests from GitHub Pages landing page
 
@@ -540,13 +540,13 @@ Current state: upload endpoint catches exceptions but returns raw error strings.
 
 **Modify** `website/index.html`:
 - Add prominent "Try it Live →" button in hero section
-- Link to `https://finbestie.onrender.com` (or whatever the deploy URL is)
+- Link to `https://arth.onrender.com` (or whatever the deploy URL is)
 - Style: primary CTA color, large, above the fold
 
 **Modify** `README.md`:
 - Add "🚀 Live Demo" section at top with deploy URL
 - Add "Deploy Your Own" section with Render one-click button
-- Update project description to mention FinBestie name
+- Update project description to mention Arth name
 
 **Acceptance criteria:**
 - Landing page has clickable CTA that opens the deployed app

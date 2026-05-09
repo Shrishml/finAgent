@@ -19,6 +19,7 @@ class User(Base):
     email = Column(String)
     name = Column(String)
     picture = Column(String)
+    access_status = Column(String, default="waitlist")
     created_at = Column(DateTime, default=func.now())
 
     holdings = relationship("Holding", back_populates="user")
@@ -27,6 +28,17 @@ class User(Base):
     conversations = relationship("Conversation", back_populates="user")
     snapshots = relationship("UserSnapshot", back_populates="user")
     profile = relationship("UserProfile", back_populates="user", uselist=False)
+
+
+class InviteCode(Base):
+    """Invite codes for waitlist access."""
+    __tablename__ = "invite_codes"
+
+    code = Column(String, primary_key=True)
+    created_at = Column(DateTime, default=func.now())
+    max_uses = Column(Integer, default=1)
+    used_count = Column(Integer, default=0)
+    note = Column(String, default="")
 
 
 class Holding(Base):

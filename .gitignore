@@ -17,3 +17,4 @@ src/config.toml
 # OS
 .DS_Store
 CLAUDE.md
+finagent.db

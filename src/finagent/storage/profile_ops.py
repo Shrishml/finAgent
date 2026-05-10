@@ -84,7 +84,7 @@ async def load_profile(user_id: int) -> UserProfile | None:
     # Expenses section
     if "expenses" in by_type:
         exp = by_type["expenses"][0]
-        profile.total_monthly_expenses = num(exp, "total_monthly_expenses")
+        profile.total_monthly_expenses = num(exp, "total_monthly_expenses") or num(exp, "monthly_expenses")
         profile.monthly_expenses = profile.total_monthly_expenses  # legacy alias
         profile.rent = num(exp, "rent")
         profile.groceries = num(exp, "groceries")

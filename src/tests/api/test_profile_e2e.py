@@ -709,7 +709,7 @@ class TestExtractionE2E:
         assert resp.status_code == 200
 
         from finagent.storage import load_profile
-        profile = load_profile(_TEST_UID)
+        profile = _run(load_profile(_TEST_UID))
         assert profile.monthly_sip > 0, f"monthly_sip={profile.monthly_sip}, expected > 0"
 
     def test_agent_sees_monthly_sip_in_context(self, client):

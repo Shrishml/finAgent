@@ -132,7 +132,7 @@ class TestOnboardingE2EPersonalisation:
 
         advisor_prompt = captured[-1]
         assert "create_goal" in advisor_prompt, "create_goal tool missing from advisor prompt"
-        assert "analyze_portfolio" in advisor_prompt, "analyze_portfolio tool missing"
+        assert "get_fund_details" in advisor_prompt, "get_fund_details tool missing"
 
     def test_wrapup_sees_full_context(self, client):
         """Profile with goals should be visible to the advisor."""

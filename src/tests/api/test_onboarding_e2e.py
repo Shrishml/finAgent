@@ -43,6 +43,7 @@ def use_tmp_db(tmp_path, monkeypatch):
 @pytest.fixture(autouse=True)
 def mock_auth(monkeypatch):
     """Bypass auth — all requests return a fixed test user_id."""
+    monkeypatch.setattr("finagent.api.deps._DEV_MODE", True)
     monkeypatch.setattr("finagent.api.deps.get_user_id", async_return(_TEST_UID))
     monkeypatch.setattr("finagent.api.chat.get_user_id", async_return(_TEST_UID))
     monkeypatch.setattr("finagent.api.profile.get_user_id", async_return(_TEST_UID))

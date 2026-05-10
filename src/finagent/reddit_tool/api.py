@@ -74,7 +74,7 @@ async def generate(req: GenerateRequest):
     # Extract profile data from text
     extractions = await extract_profile_data(req.text, profile)
     if extractions:
-        apply_extractions(profile, extractions)
+        await apply_extractions(profile, extractions)
         await save_profile(profile)
 
     # Generate advice — prepend formatting instructions to the query

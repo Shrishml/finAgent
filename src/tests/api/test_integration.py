@@ -46,6 +46,7 @@ def skip_enrichment(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def mock_auth(monkeypatch):
+    monkeypatch.setattr("finagent.api.deps._DEV_MODE", True)
     monkeypatch.setattr("finagent.api.deps.get_user_id", async_return(1))
     monkeypatch.setattr("finagent.api.holdings.get_user_id", async_return(1))
     monkeypatch.setattr("finagent.api.chat.get_user_id", async_return(1))
